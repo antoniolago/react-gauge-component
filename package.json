@@ -1,0 +1,78 @@
+{
+  "name": "react-gauge-component",
+  "version": "1.0.0",
+  "main": "dist/index",
+  "module": "dist/index",
+  "typings": "dist/index",
+  "homepage": "https://antoniolago.github.io/react-gauge-component/",
+  "keywords": [
+    "visualization",
+    "data visualization",
+    "react",
+    "gauge chart",
+    "speedometer",
+    "gauge"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/antoniolago/react-gauge-component"
+  },
+  "dependencies": {
+    "@types/d3": "^7.4.0",
+    "@types/jest": "^29.5.1",
+    "@types/node": "^20.1.0",
+    "@types/react": "^17.0.1",
+    "@types/react-dom": "^17.0.1",
+    "d3": "^7.6.1",
+    "prop-types": "^15.8.1",
+    "typescript": "^5.0.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "prebuild": "rimraf dist",
+    "build": "NODE_ENV=production babel src/lib --out-dir dist --copy-files",
+    "build-page": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build-page",
+    "deploy": "gh-pages -d build"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "devDependencies": {
+    "@babel/cli": "^7.12.8",
+    "@babel/core": "^7.6.2",
+    "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/runtime": "^7.6.2",
+    "@types/lodash": "^4.14.194",
+    "babel-preset-react-app": "^8.0.0",
+    "cross-env": "^5.2.1",
+    "gh-pages": "^2.1.1",
+    "react": "^17.0.1",
+    "react-bootstrap": "^1.4.0",
+    "react-dom": "^17.0.1",
+    "react-scripts": "5.0.1",
+    "rimraf": "^2.7.1"
+  },
+  "peerDependencies": {
+    "react": "^16.8.2 || ^17.0 || ^18.x",
+    "react-dom": "^16.8.2 || ^17.0 || ^18.x"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  }
+}
