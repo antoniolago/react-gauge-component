@@ -1,5 +1,5 @@
 {
-  "name": "react-gauge-component",
+  "name": "@antoniolago/react-gauge-component",
   "version": "1.0.0",
   "main": "dist/index",
   "module": "dist/index",
@@ -20,7 +20,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/antoniolago/react-gauge-component"
+    "url": "git+https://github.com/antoniolago/react-gauge-component.git"
   },
   "dependencies": {
     "@types/d3": "^7.4.0",
@@ -74,5 +74,10 @@
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
-  }
+  },
+  "description": "React component for displaying a gauge chart using D3.js",
+  "bugs": {
+    "url": "https://github.com/antoniolago/react-gauge-component/issues"
+  },
+  "author": "Antônio Lago"
 }

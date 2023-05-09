@@ -1,5 +1,5 @@
-# react-gauge-component (this is forked from @Martin36/react-gauge-chart 0b24a45)
-React component for displaying a gauge chart, using D3.js
+# react-gauge-component
+React component for displaying a gauge chart, using D3.js (this is forked from @Martin36/react-gauge-chart 0b24a45)
 
 # Demo
 https://antoniolago.github.io/react-gauge-component/
@@ -61,10 +61,57 @@ Check the demo below for live examples of the charts
 />
 ```
 
+### Gauge with custom minValue/maxValue and formatTextValue for value and mark.
+
+```jsx
+<GaugeComponent
+  id="gauge-component8"
+  arc={{
+    nbSubArcs: 30,
+    colorArray: ['#5BE12C', '#F5CD19', '#EA4228'],
+    width: 0.3,
+  }}
+  labels={{
+    valueLabel: { fontSize: 40, 
+      formatTextValue: value => {
+        if (value >= 1000) {
+          value = value / 1000;
+          if (Number.isInteger(value)) {
+            return value.toFixed(0) + ' mbit/s';
+          } else {
+            return value.toFixed(1) + ' mbit/s';
+          }
+        } else {
+          return value.toFixed(0) + ' kbit/s';
+        }
+      }
+    },
+    markLabel: {
+      marks: [
+        { value: 1500},
+      ],
+      valueConfig: {
+        formatTextValue: value => {
+          if (value >= 1000) {
+            value = value / 1000;
+            if (Number.isInteger(value)) {
+              return value.toFixed(0) + ' mbit/s';
+            } else {
+              return value.toFixed(1) + ' mbit/s';
+            }
+          } else {
+            return value.toFixed(0) + ' kbit/s';
+          }
+        }
+      }
+    }
+  }}
+  value={900}
+  maxValue={3000}
+/>
+```
 
 # API
-
-## <GaugeComponent />
 
 ### Warning: Do not use the same `id` for multiple charts, as it will put multiple charts in the same container
 
