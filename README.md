@@ -59,6 +59,7 @@ Check the demo below for live examples of the charts
   }}
   value={37}
 />
+```
 
 
 # API
