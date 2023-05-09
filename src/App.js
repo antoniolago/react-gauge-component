@@ -5,19 +5,19 @@ import GaugeComponent from './lib';
 import CONSTANTS from './lib/GaugeComponent/constants';
 
 const App = () => {
-  const [currentPercent, setCurrentPercent] = useState(0.5);
+  const [currentValue, setCurrentValue] = useState(50);
   const [arcs, setArcs] = useState([{ limit: 30 }, { limit: 50 }, { limit: 100 }])
 
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     setCurrentPercent(Math.random());
-  //     // setArcs([{ limit: 30 }, { limit: 35 }, { limit: 100 }])
-  //   }, 3000);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentValue(Math.random()*100);
+      // setArcs([{ limit: 30 }, { limit: 35 }, { limit: 100 }])
+    }, 3000);
 
-  //   return () => {
-  //     clearTimeout(timer);
-  //   };
-  // });
+    return () => {
+      clearTimeout(timer);
+    };
+  });
   return (
     CONSTANTS.debugSingleGauge ?
       <Container>
@@ -66,7 +66,7 @@ const App = () => {
         <Container fluid>
           <Row>
             <Col xs={12} lg={{ offset: 2, span: 8 }}>
-              <h1>React Gauge Chart Demo</h1>
+              <h1>React Gauge Component Demo</h1>
             </Col>
           </Row>
           <Row>
@@ -150,7 +150,7 @@ const App = () => {
                 arc={{
                   nbSubArcs: 15
                 }}
-                value={56}
+                value={currentValue}
               />
             </Col>
             <Col xs={12} lg={3}>
@@ -168,14 +168,14 @@ const App = () => {
                     ]
                 }}
                 needle={{ animationDelay: 0 }}
-                value={currentPercent * 100}
+                value={currentValue}
               />
             </Col>
             <Col xs={12} lg={3}>
               <h6>Elastic GaugeComponent with live updates</h6>
               <GaugeComponent
                 id="gauge-component7"
-                value={currentPercent * 100}
+                value={currentValue}
                 needle={{
                   elastic: true
                 }}
