@@ -267,11 +267,38 @@ const App = () => {
                   width: 0.2,
                   padding: 0.01,
                   subArcs: [
-                    { limit: 15, color: '#EA4228', needleColorWhenWithinLimit: '#AA4128', showMark: true },
-                    { limit: 17, color: '#F5CD19', showMark: true },
-                    { limit: 28, color: '#5BE12C', showMark: true },
-                    { limit: 30, color: '#F5CD19', showMark: true },
-                    { color: '#EA4228' }
+                    { 
+                      limit: 15, 
+                      color: '#EA4228', 
+                      showMark: true ,
+                      tooltip: {
+                        text: 'Temperature too low!'
+                      }
+                    },
+                    { 
+                      limit: 17, 
+                      color: '#F5CD19', 
+                      showMark: true,
+                      tooltip: {
+                        text: 'Temperature low!'
+                      }
+                    },
+                    { 
+                      limit: 28, 
+                      color: '#5BE12C', 
+                      showMark: true,
+                      tooltip: {
+                        text: 'Temperature OK!'
+                      } 
+                    },
+                    { limit: 30, color: '#F5CD19', showMark: true ,
+                    tooltip: {
+                      text: 'Temperature high!'
+                    }},
+                    { color: '#EA4228',
+                    tooltip: {
+                      text: 'Temperature too high!'
+                    } }
                   ]
                 }}
                 needle={{

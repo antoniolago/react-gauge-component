@@ -38,3 +38,4 @@ export const degToRad = (degrees: number) => {
   return degrees * (Math.PI / 180);
 }
 export const getCurrentGaugeValuePercentage = (gauge: GaugeComponentProps) => calculatePercentage(gauge.minValue, gauge.maxValue, gauge.value as number);
+export const camelCaseToKebabCase = (str: string): string => str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);

@@ -1,16 +1,37 @@
 import * as utils from './utils';
 import {
-  arc,
-  pie,
   select,
-  easeElastic,
   scaleLinear,
   interpolateHsl,
-  interpolateNumber,
 } from "d3";
+import * as d3 from "d3";
 import { Gauge } from '../types/Gauge';
 import * as chartHooks from './chart';
 import CONSTANTS from '../constants';
+import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
+
+const onArcMouseMove = (event: any, d: any) => {
+  let div = select(`.${CONSTANTS.arcTooltipClassname}`)
+  div.style("display", "none");
+  if(d.data.tooltip != undefined){
+    div.html(d.data.tooltip.text)
+      .style("left", (event.pageX + 15) + "px")
+      .style("top", (event.pageY - 10) + "px")
+      .style("opacity", 1)
+      .style("position", "absolute")
+      .style("display", "block");
+    applyTooltipStyles(d.data.tooltip, d.data.color);
+  }
+}
+const applyTooltipStyles = (tooltip: Tooltip, arcColor: string) => {
+  let div = select(`.${CONSTANTS.arcTooltipClassname}`);
+  //Apply default styles
+  Object.entries(defaultTooltipStyle).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
+  div.style("background-color", arcColor);
+  //Apply custom styles
+  if(tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
+}
+const onArcMouseOut = () => { select(`.${CONSTANTS.arcTooltipClassname}`).html(" ").style("display", "none"); }
 
 export const setArcData = (gauge: Gauge) => {
   const { arc, minValue, maxValue } = gauge.props;
@@ -23,7 +44,7 @@ export const setArcData = (gauge: Gauge) => {
     let lastSubArcLimitPercentageAcc = 0;
     let remainingPercentageEquallyDivided: number | undefined = undefined;
     let subArcsLength: Array<number> = [];
-    let subArcsLabels: Array<string> = [];
+    let subArcsTooltip: Array<Tooltip> = [];
     arc.subArcs?.forEach((subArc, i) => {
       let subArcLength = 0;
       //map limit for non defined subArcs limits
@@ -49,12 +70,12 @@ export const setArcData = (gauge: Gauge) => {
       subArcsLength.push(subArcLength);
       lastSubArcLimitPercentageAcc = subArcsLength.reduce((count, curr) => count + curr, 0);
       lastSubArcLimit = subArc.limit;
-      // subArcsLabels.push(subArc.label);
+      if(subArc.tooltip != undefined) subArcsTooltip.push(subArc.tooltip);
     });
     gauge.arcData.current = subArcsLength.map((length, i) => ({
       value: length,
       color: colorArray[i],
-      label: subArcsLabels[i],
+      tooltip: subArcsTooltip[i],
     }));
   } else {
     const arcValue = maxValue / gauge.nbArcsToDisplay.current;
@@ -62,39 +83,56 @@ export const setArcData = (gauge: Gauge) => {
     gauge.arcData.current = Array.from({ length: gauge.nbArcsToDisplay.current }, (_, i) => ({
       value: arcValue,
       color: colorArray[i],
-      label: null,
+      tooltip: undefined,
     }));
   }
 };
 
+// var mouseclick = function (d: any) {
+//   if (d3.select(d).attr("transform") == null) {
+//     d3.select(d).attr("transform", "translate(42,0)");
+//   } else {
+//     d3.select(d).attr("transform", null);
+//   }
+// };
+
 export const setupArcs = (gauge: Gauge) => {
   const { arc } = gauge.props;
+  //Add tooltip
+  let isTooltipInTheDom = document.getElementsByClassName(CONSTANTS.arcTooltipClassname).length != 0;
+  if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
+
   //Setup the arc
   gauge.arcChart.current
     .outerRadius(gauge.outerRadius.current)
     .innerRadius(gauge.innerRadius.current)
     .cornerRadius(arc.cornerRadius)
     .padAngle(arc.padding);
+    
   chartHooks.clearChart(gauge);
-  //Draw the arc
+
   var arcPaths = gauge.doughnut.current
     .selectAll(".arc")
     .data(gauge.pieChart.current(gauge.arcData.current))
     .enter()
-    .append("g")
-    .attr("class", "arc");
+    .append("g");
+
   arcPaths
     .append("path")
     .attr("d", gauge.arcChart.current)
     // .style("fill", (d) => `linear-gradient(to right, red 0%, green 100%)`);
     .style("fill", (d: any) => d.data.color);
+
+  arcPaths
+    .on("mouseout", onArcMouseOut)
+    .on("mousemove", (event:any, d:any) => onArcMouseMove(event, d))
 };
 //Depending on the number of levels in the chart
 //This function returns the same number of colors
 export const getColors = (gauge: Gauge) => {
   const { arc } = gauge.props;
   let colorsValue: string[] = [];
-  if(!arc.colorArray){
+  if (!arc.colorArray) {
     let subArcColors = arc.subArcs?.map((subArc) => subArc.color);
     colorsValue = subArcColors?.some((color) => color != undefined) ? subArcColors : CONSTANTS.defaultColors;
   } else {
@@ -114,7 +152,6 @@ export const getColors = (gauge: Gauge) => {
   for (var i = 1; i <= gauge.nbArcsToDisplay.current; i++) {
     colorArray.push(colorScale(i));
   }
-  console.log(colorArray);
   return colorArray;
 };
 
