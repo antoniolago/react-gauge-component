@@ -1,5 +1,7 @@
 # react-gauge-component
-React component for displaying a gauge chart, using D3.js (this is forked from @Martin36/react-gauge-chart 0b24a45)
+React component for displaying a gauge chart, using D3.js 
+
+This is forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/react-gauge-chart) [0b24a45](https://github.com/Martin36/react-gauge-chart/pull/131).
 
 # Demo
 https://antoniolago.github.io/react-gauge-component/
@@ -14,8 +16,6 @@ import GaugeComponent from 'react-gauge-component'
 ```
 
 ## Examples
-
-Check the demo below for live examples of the charts
 
 #### To create a default chart
 
@@ -64,6 +64,18 @@ Check the demo below for live examples of the charts
 ### Complex Custom Gauge with minValue/maxValue, marks outside the radius and formatTextValue for value and mark.
 
 ```jsx
+const kbitsToMbits = (value) => {
+  if (value >= 1000) {
+    value = value / 1000;
+    if (Number.isInteger(value)) {
+      return value.toFixed(0) + ' mbit/s';
+    } else {
+      return value.toFixed(1) + ' mbit/s';
+    }
+  } else {
+    return value.toFixed(0) + ' kbit/s';
+  }
+}
 <GaugeComponent
   id="gauge-component8"
   arc={{
@@ -74,21 +86,9 @@ Check the demo below for live examples of the charts
   labels={{
     valueLabel: {
       fontSize: 40,
-      formatTextValue: value => {
-        if (value >= 1000) {
-          value = value / 1000;
-          if (Number.isInteger(value)) {
-            return value.toFixed(0) + ' mbit/s';
-          } else {
-            return value.toFixed(1) + ' mbit/s';
-          }
-        } else {
-          return value.toFixed(0) + ' kbit/s';
-        }
-      }
+      formatTextValue: kbitsToMbits 
     },
     markLabel: {
-      type: "outer",
       marks: [
         { value: 100 },
         { value: 200 },
@@ -104,22 +104,9 @@ Check the demo below for live examples of the charts
         { value: 2000 },
         { value: 2500 },
         { value: 3000 },
-        { value: 3500 },
-        { value: 4000 },
       ],
       valueConfig: {
-        formatTextValue: value => {
-          if (value >= 1000) {
-            value = value / 1000;
-            if (Number.isInteger(value)) {
-              return value.toFixed(0) + ' mbit/s';
-            } else {
-              return value.toFixed(1) + ' mbit/s';
-            }
-          } else {
-            return value.toFixed(0) + ' kbit/s';
-          }
-        }
+        formatTextValue: kbitsToMbits
       }
     }
   }}
@@ -134,27 +121,27 @@ Check the demo below for live examples of the charts
 
 <h2>Props:</h2>
 <ul>
-   <li><code>id: string</code>: A unique identifier for the div surrounding the chart. This is an optional prop, with a default value of <code>undefined</code>.</li>
-   <li><code>className: string</code>: Adds a <code>className</code> to the div container. This is an optional prop, with a default value of <code>undefined</code>.</li>
-   <li><code>style: React.CSSProperties</code>: Adds a style object to the div container. Default value is <code>{width: 100}</code>.</li>
-   <li><code>marginInPercent: number</code>: Sets the margin for the chart inside the containing SVG element. Default value is <code>0.05</code>.</li>
-   <li><code>value: number</code>: The value of the gauge. Default value is <code>0</code>.</li>
-   <li><code>minValue: number</code>: The minimum value of the gauge. Default value is <code>0</code>.</li>
-   <li><code>maxValue: number</code>: The maximum value of the gauge. Default value is <code>100</code>.</li>
+   <li><code>id: string</code>: A unique identifier for the div surrounding the chart. Default:<code>undefined</code>.</li>
+   <li><code>className: string</code>: Adds a <code>className</code> to the div container. Default:<code>undefined</code>.</li>
+   <li><code>style: React.CSSProperties</code>: Adds a style object to the div container. Default: <code>{width: 100}</code>.</li>
+   <li><code>marginInPercent: number</code>: Sets the margin for the chart inside the containing SVG element. Default: <code>0.05</code>.</li>
+   <li><code>value: number</code>: The value of the gauge. Default: <code>0</code>.</li>
+   <li><code>minValue: number</code>: The minimum value of the gauge. Default: <code>0</code>.</li>
+   <li><code>maxValue: number</code>: The maximum value of the gauge. Default: <code>100</code>.</li>
    <li><code>arc: object</code>: The arc of the gauge.
     <ul>
-      <li><code>cornerRadius: number</code>: The corner radius of the arc. Default value is <code>7</code>.</li>
-      <li><code>padding: number</code>: The padding between subArcs, in rad. Default value is <code>0.05</code>.</li>
-      <li><code>width: number</code>: The width of the arc given in percent of the radius. Default value is <code>0.2</code>.</li>
-      <li><code>nbSubArcs: number</code>: The number of subArcs. This overrides <code>subArcs</code>. Default value is <code>undefined</code></li>
-      <li><code>colorArray: Array&lt;string&gt;</code>: The colors of the arcs. This overrides <code>subArcs</code> colors. Default value is <code>undefined</code></li>
+      <li><code>cornerRadius: number</code>: The corner radius of the arc. Default: <code>7</code>.</li>
+      <li><code>padding: number</code>: The padding between subArcs, in rad. Default: <code>0.05</code>.</li>
+      <li><code>width: number</code>: The width of the arc given in percent of the radius. Default: <code>0.2</code>.</li>
+      <li><code>nbSubArcs: number</code>: The number of subArcs. This overrides <code>subArcs</code>. Default: <code>undefined</code></li>
+      <li><code>colorArray: Array&lt;string&gt;</code>: The colors of the arcs. This overrides <code>subArcs</code> colors. Default: <code>undefined</code></li>
       <li><code>subArcs: Array&lt;object&gt;</code>: The subArcs of the gauge.
         <ul>
           <li><code>limit: number</code>: The subArc limit value. When no limits are defined in the next subArcs in the list, it's optional and will auto-calculate remaining arcs limits. Example: <code>[{limit: 70}, {}, {}, {}]</code>. In a default <code>minValue/maxValue</code>, the values will be equal to <code>[{limit: 70}, {limit: 80}, {limit: 90}, {limit: 100}]</code>. But <code>[{},{limit: 100}]</code> will not work properly as the not defined subArc limit has a subArc with limit defined ahead in the array.</li>
               <li><code>color: string</code>: The subArc color. When not provided, it will use default subArc's colors and interpolate first and last colors when subArcs number is greater than <code>colorArray</code>.</li>
-              <li><code>showMark: boolean</code>: Whether or not to show the mark. Default value is <code>false</code>.</li>
+              <li><code>showMark: boolean</code>: Whether or not to show the mark. Default: <code>false</code>.</li>
         </ul>
-        Default value is: 
+        Default:: 
         <code>
           [
             { limit: 33, color: "#5BE12C"},
@@ -166,29 +153,29 @@ Check the demo below for live examples of the charts
     </ul></li>
     <li><code>needle: object</code>: The needle of the gauge.
         <ul>
-            <li><code>color: string</code>: The color of the needle. Default value is <code>#464A4F</code></li>
-            <li><code>baseColor: string</code>: The color of the base of the needle. Default value is <code>#464A4F</code></li>
-            <li><code>length: number</code>: The length of the needle 0-1, 1 being the outer radius length. Default value is <code>0.70</code></li>
-            <li><code>animate: boolean</code>: Whether or not to animate the needle. Default value is <code>true</code></li>
-            <li><code>elastic: boolean</code>: Whether or not to use elastic needle. Default value is <code>false</code></li>
-            <li><code>animationDuration: number</code>: The duration of the needle animation. Default value is <code>3000</code></li>
-            <li><code>animationDelay: number</code>: The delay of the needle animation. Default value is <code>100</code></li>
-            <li><code>width: number</code>: The width of the needle. Default value is <code>15</code></li>
+            <li><code>color: string</code>: The color of the needle. Default: <code>#464A4F</code></li>
+            <li><code>baseColor: string</code>: The color of the base of the needle. Default: <code>#464A4F</code></li>
+            <li><code>length: number</code>: The length of the needle 0-1, 1 being the outer radius length. Default: <code>0.70</code></li>
+            <li><code>animate: boolean</code>: Whether or not to animate the needle. Default: <code>true</code></li>
+            <li><code>elastic: boolean</code>: Whether or not to use elastic needle. Default: <code>false</code></li>
+            <li><code>animationDuration: number</code>: The duration of the needle animation. Default: <code>3000</code></li>
+            <li><code>animationDelay: number</code>: The delay of the needle animation. Default: <code>100</code></li>
+            <li><code>width: number</code>: The width of the needle. Default: <code>15</code></li>
         </ul>
     </li>
     <li><code>labels: object</code>: The labels of the gauge.
       <ul>
-         <li><code>valueLabel: object</code>: The value label of the gauge.
+         <li><code>valueLabel: object</code>: The center value label of the gauge.
             <ul>
-               <li><code>formatTextValue: (value: any) => string</code>: The format of the value label. Default value is <code>undefined</code>.</li>
-               <li><code>fontSize: number</code>: The font size of the value label. Default value is <code>50</code>.</li>
-               <li><code>fontColor: string</code>: The font color of the value label. Default value is <code>"#fff"</code>.</li>
-               <li><code>hide: boolean</code>: Whether or not to hide the value label. Default value is <code>false</code>.</li>
+               <li><code>formatTextValue: (value: any) => string</code>: The format of the value label. Default: <code>undefined</code>.</li>
+               <li><code>fontSize: number</code>: The font size of the value label. Default: <code>35</code>.</li>
+               <li><code>fontColor: string</code>: The font color of the value label. Default: <code>"#fff"</code>.</li>
+               <li><code>hide: boolean</code>: Whether or not to hide the value label. Default: <code>false</code>.</li>
             </ul></li>
           <li><code>markLabel: object</code> The markLabel of the gauge.
             <ul>
-                <li><code>type: string</code>: This makes the marks <code>"inner"</code> or <code>"outer"</code> the radius <code>"outer"</code></li>
-                <li><code>hideMinMax: boolean</code>: Whether or not to hide the min and max labels. Default value is <code>false</code></li>
+                <li><code>type: string</code>: This makes the marks <code>"inner"</code> or <code>"outer"</code> the radius. Default:<code>"outer"</code></li>
+                <li><code>hideMinMax: boolean</code>: Whether or not to hide the min and max labels. Default: <code>false</code></li>
                 <li><code>marks: Array&lt;object&gt;</code>: The marks of the gauge. When not provided, it will use default gauge marks with five values.
                     <ul>
                         <li><code>value: number</code>: The value of the mark.</li>
@@ -198,18 +185,18 @@ Check the demo below for live examples of the charts
                   </li>
                 <li><code>valueConfig: object</code>: The default config of the mark's value label.
                     <ul>
-                        <li><code>formatTextValue: (value: any) => string</code>: The format of the mark's value label. Default value is <code>undefined</code></li>
-                        <li><code>fontSize: number</code>: The font size of the mark's value label. Default value is <code>15</code></li>
-                        <li><code>fontColor: string</code>: The font color of the mark's value label. Default value is <code>#464A4F</code></li>
-                        <li><code>hide: boolean</code>: Whether or not to hide the mark's value label. Default value is <code>false</code></li>
+                        <li><code>formatTextValue: (value: any) => string</code>: The format of the mark's value label. Default: <code>undefined</code></li>
+                        <li><code>fontSize: number</code>: The font size of the mark's value label. Default: <code>15</code></li>
+                        <li><code>fontColor: string</code>: The font color of the mark's value label. Default: <code>#464A4F</code></li>
+                        <li><code>hide: boolean</code>: Whether or not to hide the mark's value label. Default: <code>false</code></li>
                     </ul>
                   </li>
                 <li><code>markerConfig: object</code>: The default config of the mark's char.
                   <ul>
-                      <li><code>char: string</code>: The char of the mark. Default value is <code>'_'</code></li>
-                      <li><code>charSize: number</code>: The font size of the mark's char. Default value is <code>30</code></li>
-                      <li><code>charColor: string</code>: The font color of the mark's char. Default value is <code>#464A4F</code></li>
-                      <li><code>hide: boolean</code>: Whether or not to hide the mark's char. Default value is <code>false</code></li>
+                      <li><code>char: string</code>: The char of the mark. Default: <code>'_'</code></li>
+                      <li><code>charSize: number</code>: The font size of the mark's char. Default: <code>30</code></li>
+                      <li><code>charColor: string</code>: The font color of the mark's char. Default: <code>#464A4F</code></li>
+                      <li><code>hide: boolean</code>: Whether or not to hide the mark's char. Default: <code>false</code></li>
                   </ul>
                 </li>
             </ul>

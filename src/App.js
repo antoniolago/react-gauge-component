@@ -18,6 +18,18 @@ const App = () => {
       clearTimeout(timer);
     };
   });
+  const kbitsToMbits = (value) => {
+    if (value >= 1000) {
+      value = value / 1000;
+      if (Number.isInteger(value)) {
+        return value.toFixed(0) + ' mbit/s';
+      } else {
+        return value.toFixed(1) + ' mbit/s';
+      }
+    } else {
+      return value.toFixed(0) + ' kbit/s';
+    }
+  }
   const debugGauge = () => <GaugeComponent
     arc={{
       padding: 0.01,
@@ -86,6 +98,7 @@ const App = () => {
             <Col xs={12} lg={3}>
               <h6 className="mb-1">GaugeComponent with 20 levels, custom needle color</h6>
               <GaugeComponent
+                id="123"
                 arc={{
                   nbSubArcs: 20
                 }}
@@ -217,18 +230,7 @@ const App = () => {
                 labels={{
                   valueLabel: {
                     fontSize: 40,
-                    formatTextValue: value => {
-                      if (value >= 1000) {
-                        value = value / 1000;
-                        if (Number.isInteger(value)) {
-                          return value.toFixed(0) + ' mbit/s';
-                        } else {
-                          return value.toFixed(1) + ' mbit/s';
-                        }
-                      } else {
-                        return value.toFixed(0) + ' kbit/s';
-                      }
-                    }
+                    formatTextValue: kbitsToMbits 
                   },
                   markLabel: {
                     type: "outer",
@@ -249,18 +251,7 @@ const App = () => {
                       { value: 3000 },
                     ],
                     valueConfig: {
-                      formatTextValue: value => {
-                        if (value >= 1000) {
-                          value = value / 1000;
-                          if (Number.isInteger(value)) {
-                            return value.toFixed(0) + ' mbit/s';
-                          } else {
-                            return value.toFixed(1) + ' mbit/s';
-                          }
-                        } else {
-                          return value.toFixed(0) + ' kbit/s';
-                        }
-                      }
+                      formatTextValue: kbitsToMbits
                     }
                   }
                 }}
@@ -298,7 +289,7 @@ const App = () => {
                     valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 10 },
                     marks: [
                       { value: 13 },
-                      { value: 22.5},
+                      { value: 22.5 },
                       { value: 32 }
                     ],
                   }
