@@ -1,5 +1,6 @@
 export interface MarkLabel {
     hideMinMax: boolean;
+    type: string;
     marks: Array<Mark>;
     valueConfig: MarkValueConfig;
     markerConfig: MarkerConfig;
@@ -23,20 +24,21 @@ export interface MarkerConfig {
 }
 
 const defaultMarkerConfig: MarkerConfig = {
-    char: "_ ",
-    charSize: 30,
+    char: "_",
+    charSize: 25,
     charColor: "#dedbd7",
     hide: false,
 };
 
 const defaultMarkValueConfig: MarkValueConfig = {
     formatTextValue: undefined,
-    fontSize: 15,
+    fontSize: 10,
     fontColor: '#dedbd7',
     hide: false,
 };
 const defaultMarkList: Mark[] = [];
 export const defaultMarkLabel: MarkLabel = {
+    type: 'inner',
     hideMinMax: false,
     marks: defaultMarkList,
     valueConfig: defaultMarkValueConfig,

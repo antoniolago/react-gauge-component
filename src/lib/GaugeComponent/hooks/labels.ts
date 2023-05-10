@@ -50,14 +50,22 @@ export const addMarker = (mark: Mark, gauge: Gauge) => {
   let charSize = mark.markerConfig?.charSize || labels.markLabel.markerConfig.charSize;
   let char = mark.markerConfig?.char || labels.markLabel.markerConfig.char;
   let charColor = mark.markerConfig?.charColor || labels.markLabel.markerConfig.charColor;
-  addText(char, coords.x, coords.y, gauge, charColor, markAnchor, charSize, angle);
+  let markerAnchor = "";
+  if(gauge.props.labels.markLabel.type == "inner"){
+    markerAnchor = "start";
+  } else {
+    markerAnchor = "end"
+  }
+  addText(char, coords.x, coords.y, gauge, charColor, markerAnchor, charSize, angle);
 }
 
 export const addMarkValue = (mark: Mark, gauge: Gauge) => {
-  const { labels, arc } = gauge.props;
+  const { labels, arc, value } = gauge.props;
   const { markAnchor, angle } = calculateAnchorAndAngleByValue(mark.value, gauge);
-  let centerToArcLengthOverride = 30 - arc.width * 10;
-  let coords = getLabelCoordsByValue(mark.value, gauge, centerToArcLengthOverride);
+  let centerToArcLengthSubtract = 30 - arc.width * 10;
+  let isInner = gauge.props.labels.markLabel.type == "inner";
+  if(!isInner) centerToArcLengthSubtract = arc.width * 10 - 20
+  let coords = getLabelCoordsByValue(mark.value, gauge, centerToArcLengthSubtract);
   let fontSize = mark.valueConfig?.fontSize || labels.markLabel.valueConfig.fontSize;
   let fontColor = mark.valueConfig?.fontColor || labels.markLabel.valueConfig.fontColor;
 
@@ -71,8 +79,19 @@ export const addMarkValue = (mark: Mark, gauge: Gauge) => {
     text = utils.floatingNumber(mark.value).toString();
   }
   //This is a position correction for the text being too far away from the marker
-  if(markAnchor === "end") coords.x += 10;
-  if(markAnchor === "start") coords.x -= 10;
+  if(gauge.props.labels.markLabel.type == "inner"){
+    if(markAnchor === "end") coords.x += 10;
+    if(markAnchor === "start") coords.x -= 10;
+    // if(markAnchor === "middle") coords.y -= 7;
+  } else {
+    // if(markAnchor === "end") coords.x -= 10;
+    // if(markAnchor === "start") coords.x += 10;
+    // if(markAnchor === "middle"){
+    //   coords.y += 8;
+    // } else{
+    //   coords.y += 3;
+    // }
+  }
   addText(text, coords.x, coords.y, gauge, fontColor, markAnchor, fontSize);
 }
 
@@ -85,11 +104,11 @@ export const addMark = (mark: Mark, gauge: Gauge) => {
 }
 
 export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLengthSubtract = 0) => {
-  var centerToArcLength = gauge.innerRadius.current * 0.91 - centerToArcLengthSubtract;
+  var centerToArcLength = gauge.innerRadius.current * 0.93 - centerToArcLengthSubtract;
+  if(gauge.props.labels.markLabel.type == "outer") centerToArcLength = gauge.outerRadius.current - centerToArcLengthSubtract + 2;
   let percent = utils.calculatePercentage(gauge.props.minValue, gauge.props.maxValue, value);
-  let theta = utils.percentToRad(percent);
   const startAngle = utils.degToRad(0);
-  const endAngle = utils.degToRad(180);
+  const endAngle = utils.degToRad(181.5);
   const angle = startAngle + (percent) * (endAngle - startAngle);
   let marksRadius = 15 * (gauge.width.current / 500);
   let coord = [0, -marksRadius / 2];
@@ -103,9 +122,10 @@ export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLe
   //This corrects labels in the cener being too close from the arc
   let isValueBetweenCenter = percent > CONSTANTS.rangeBetweenCenteredMarkValueLabel[0] && 
                                 percent < CONSTANTS.rangeBetweenCenteredMarkValueLabel[1];
-  if (isValueBetweenCenter){
-    y+=8;
-  }
+  // if (isValueBetweenCenter){
+  //   let isInner = gauge.props.labels.markLabel.type == "inner";
+  //   y+= isInner ? 8 : -1;
+  // }
   return { x, y }
 }
 export const addText = (text: string, x: number, y: number, gauge: Gauge, color = "#fff", align = "middle", fontSize = 30, rotate = 0) => {
@@ -134,9 +154,10 @@ export const addValueText = (gauge: Gauge) => {
   } else {
     text = utils.floatingNumber(value).toString();
   }
-  const maxLengthBeforeComputation = 4;
+  const maxLengthBeforeComputation = 3;
   const textLength = text?.length || 0;
-  const fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1; // Compute the font size ratio
+  let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1; // Compute the font size ratio
+  fontRatio = gauge.width.current * 0.003 * fontRatio;
   let valueFontSize = labels.valueLabel.fontSize;
   let valueFontColor = labels.valueLabel.fontColor;
   valueFontSize = valueFontSize * fontRatio;
@@ -158,18 +179,14 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   //Values between 40% and 60% are aligned in the middle
   let isValueBetweenTolerance = valuePercentage > CONSTANTS.rangeBetweenCenteredMarkValueLabel[0] && 
                                 valuePercentage < CONSTANTS.rangeBetweenCenteredMarkValueLabel[1];
-  let alignValue = 0;
   let markAnchor = '';
+  let isInner = gauge.props.labels.markLabel.type == "inner";
   if (isValueBetweenTolerance) {
-    alignValue = 0;
-    markAnchor = "middle";
+    markAnchor =  "middle";
   } else if (isValueLessThanHalf) {
-    alignValue = 45;
-    markAnchor = "start";
+    markAnchor = isInner ? "start" : "end";
   } else {
-    alignValue = -45;
-    angle = angle - 180;
-    markAnchor = "end";
+    markAnchor = isInner ? "end" : "start";
   }
   return { markAnchor, angle };
 }

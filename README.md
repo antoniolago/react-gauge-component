@@ -61,7 +61,7 @@ Check the demo below for live examples of the charts
 />
 ```
 
-### Gauge with custom minValue/maxValue and formatTextValue for value and mark.
+### Complex Custom Gauge with minValue/maxValue, marks outside the radius and formatTextValue for value and mark.
 
 ```jsx
 <GaugeComponent
@@ -72,7 +72,8 @@ Check the demo below for live examples of the charts
     width: 0.3,
   }}
   labels={{
-    valueLabel: { fontSize: 40, 
+    valueLabel: {
+      fontSize: 40,
       formatTextValue: value => {
         if (value >= 1000) {
           value = value / 1000;
@@ -87,8 +88,24 @@ Check the demo below for live examples of the charts
       }
     },
     markLabel: {
+      type: "outer",
       marks: [
-        { value: 1500},
+        { value: 100 },
+        { value: 200 },
+        { value: 300 },
+        { value: 400 },
+        { value: 500 },
+        { value: 600 },
+        { value: 700 },
+        { value: 800 },
+        { value: 900 },
+        { value: 1000 },
+        { value: 1500 },
+        { value: 2000 },
+        { value: 2500 },
+        { value: 3000 },
+        { value: 3500 },
+        { value: 4000 },
       ],
       valueConfig: {
         formatTextValue: value => {
@@ -137,11 +154,14 @@ Check the demo below for live examples of the charts
               <li><code>color: string</code>: The subArc color. When not provided, it will use default subArc's colors and interpolate first and last colors when subArcs number is greater than <code>colorArray</code>.</li>
               <li><code>showMark: boolean</code>: Whether or not to show the mark. Default value is <code>false</code>.</li>
         </ul>
-        Default value is: <code>[
-                                    { limit: 33, color: "#5BE12C"},
-                                    { limit: 66, color: "#F5CD19"},
-                                    { color: "#EA4228"},
-                                ]</code>
+        Default value is: 
+        <code>
+          [
+            { limit: 33, color: "#5BE12C"},
+            { limit: 66, color: "#F5CD19"},
+            { color: "#EA4228"},
+          ]
+        </code>
       </li>
     </ul></li>
     <li><code>needle: object</code>: The needle of the gauge.
@@ -165,19 +185,9 @@ Check the demo below for live examples of the charts
                <li><code>fontColor: string</code>: The font color of the value label. Default value is <code>"#fff"</code>.</li>
                <li><code>hide: boolean</code>: Whether or not to hide the value label. Default value is <code>false</code>.</li>
             </ul></li>
-         <li><code>markLabel: object</code>: The mark label of the gauge.
-            <ul>
-               <li><code>hideMinMax: boolean</code>: Whether or not to hide the min and max labels. Default value is <code>false</code>.</li>
-               <li><code>marks: Array</code>: The marks of the gauge.
-                  <ul>
-                     <li><code>markerConfig: object</code>: The value of the mark.</li>
-                     <li><code>valueConfig: string</code>: The name of the mark.</li>
-                  </ul>
-               </li>
-            </ul>
-          </li>
           <li><code>markLabel: object</code> The markLabel of the gauge.
             <ul>
+                <li><code>type: string</code>: This makes the marks <code>"inner"</code> or <code>"outer"</code> the radius <code>"inner"</code></li>
                 <li><code>hideMinMax: boolean</code>: Whether or not to hide the min and max labels. Default value is <code>false</code></li>
                 <li><code>marks: Array&lt;object&gt;</code>: The marks of the gauge. When not provided, it will use default gauge marks with five values.
                     <ul>

@@ -13,7 +13,7 @@ interface ValueLabel {
 
 export const defaultValueLabel: ValueLabel = {
     formatTextValue: undefined,
-    fontSize: 50,
+    fontSize: 35,
     fontColor: '#fff',
     hide: false
 }

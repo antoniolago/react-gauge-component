@@ -5,7 +5,6 @@ import * as chartHooks from "./chart";
 import * as labelsHooks from "./labels";
 import * as needleHooks from "./needle";
 export const initChart = (update: boolean, gauge: Gauge, resize = false) => {
-    console.log(gauge)
     if (update) {
         renderChart(resize, gauge);
         return;
@@ -38,7 +37,7 @@ export const renderChart = (resize: boolean, gauge: Gauge) => {
         );
     gauge.g.current.attr(
         "transform",
-        "translate(" + gauge.margin.current.left + ", " + gauge.margin.current.top + ")"
+        "translate(" + gauge.margin.current.left + ", " + 35 + ")"
     );
     //Set the radius to lesser of width or height and remove the margins
     //Calculate the new radius
@@ -77,7 +76,7 @@ export const centerGraph = (gauge: Gauge) => {
         gauge.width.current / 2 - gauge.outerRadius.current + gauge.margin.current.right;
     gauge.g.current.attr(
         "transform",
-        "translate(" + gauge.margin.current.left + ", " + gauge.margin.current.top + ")"
+        "translate(" + gauge.margin.current.left + ", " + (gauge.margin.current.top+30) + ")"
     );
 };
 
