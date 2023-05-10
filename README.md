@@ -187,7 +187,7 @@ Check the demo below for live examples of the charts
             </ul></li>
           <li><code>markLabel: object</code> The markLabel of the gauge.
             <ul>
-                <li><code>type: string</code>: This makes the marks <code>"inner"</code> or <code>"outer"</code> the radius <code>"inner"</code></li>
+                <li><code>type: string</code>: This makes the marks <code>"inner"</code> or <code>"outer"</code> the radius <code>"outer"</code></li>
                 <li><code>hideMinMax: boolean</code>: Whether or not to hide the min and max labels. Default value is <code>false</code></li>
                 <li><code>marks: Array&lt;object&gt;</code>: The marks of the gauge. When not provided, it will use default gauge marks with five values.
                     <ul>

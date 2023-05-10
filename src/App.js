@@ -8,16 +8,16 @@ const App = () => {
   const [currentValue, setCurrentValue] = useState(50);
   const [arcs, setArcs] = useState([{ limit: 30 }, { limit: 50 }, { limit: 100 }])
 
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     setCurrentValue(Math.random()*100);
-  //     // setArcs([{ limit: 30 }, { limit: 35 }, { limit: 100 }])
-  //   }, 3000);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentValue(Math.random()*100);
+      // setArcs([{ limit: 30 }, { limit: 35 }, { limit: 100 }])
+    }, 3000);
 
-  //   return () => {
-  //     clearTimeout(timer);
-  //   };
-  // });
+    return () => {
+      clearTimeout(timer);
+    };
+  });
   const debugGauge = () => <GaugeComponent
     arc={{
       padding: 0.01,
@@ -109,7 +109,7 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent with custom colors, outer marks and needle length</h6>
+              <h6 className="mb-1">GaugeComponent with custom colors, inner marks and needle length</h6>
               <GaugeComponent
                 nrOfLevels={50}
                 arcPadding={0.02}
@@ -120,7 +120,14 @@ const App = () => {
                 }}
                 labels={{
                   markLabel: {
-                    type: "outer"
+                    type: "inner",
+                    marks: [
+                      { value: 20 },
+                      { value: 40 },
+                      { value: 60 },
+                      { value: 80 },
+                      { value: 100 }
+                    ]
                   }
                 }}
                 needle={{

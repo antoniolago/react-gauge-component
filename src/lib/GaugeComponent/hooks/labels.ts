@@ -56,7 +56,7 @@ export const addMarker = (mark: Mark, gauge: Gauge) => {
 export const addMarkValue = (mark: Mark, gauge: Gauge) => {
   const { labels, arc, value } = gauge.props;
   let { markAnchor, angle } = calculateAnchorAndAngleByValue(mark.value, gauge);
-  let centerToArcLengthSubtract = 30 - arc.width * 10;
+  let centerToArcLengthSubtract = 27 - arc.width * 10;
   let isInner = gauge.props.labels.markLabel.type == "inner";
   if(!isInner) centerToArcLengthSubtract = arc.width * 10 - 20
   let coords = getLabelCoordsByValue(mark.value, gauge, centerToArcLengthSubtract);
@@ -75,17 +75,17 @@ export const addMarkValue = (mark: Mark, gauge: Gauge) => {
   //This is a position correction for the text being too far away from the marker
   if(gauge.props.labels.markLabel.type == "inner"){
     
-    // if(markAnchor === "end") coords.x += 10;
-    // if(markAnchor === "start") coords.x -= 10;
-    // if(markAnchor === "middle") coords.y -= 7;
+    if(markAnchor === "end") coords.x += 10;
+    if(markAnchor === "start") coords.x -= 10;
+    if(markAnchor === "middle") coords.y -= 15;
   } else {
     // if(markAnchor === "end") coords.x -= 10;
     // if(markAnchor === "start") coords.x += 10;
-    // if(markAnchor === "middle"){
-    //   coords.y += 8;
-    // } else{
-    //   coords.y += 3;
-    // }
+  }
+  if(markAnchor === "middle"){
+    coords.y += 8;
+  } else{
+    coords.y += 3;
   }
   addText(text, coords.x, coords.y, gauge, fontColor, markAnchor, fontSize);
 }

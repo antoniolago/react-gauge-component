@@ -38,7 +38,7 @@ const defaultMarkValueConfig: MarkValueConfig = {
 };
 const defaultMarkList: Mark[] = [];
 export const defaultMarkLabel: MarkLabel = {
-    type: 'inner',
+    type: 'outer',
     hideMinMax: false,
     marks: defaultMarkList,
     valueConfig: defaultMarkValueConfig,
