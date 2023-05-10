@@ -147,7 +147,7 @@ const kbitsToMbits = (value) => {
               </ul>
               </li>
         </ul>
-        Default: 
+        Arc default value: 
         <code>
           [
             { limit: 33, color: "#5BE12C"},
