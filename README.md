@@ -140,14 +140,14 @@ const kbitsToMbits = (value) => {
           <li><code>limit: number</code>: The subArc limit value. When no limits are defined in the next subArcs in the list, it's optional and will auto-calculate remaining arcs limits. Example: <code>[{limit: 70}, {}, {}, {}]</code>. In a default <code>minValue/maxValue</code>, the values will be equal to <code>[{limit: 70}, {limit: 80}, {limit: 90}, {limit: 100}]</code>. But <code>[{},{limit: 100}]</code> will not work properly as the not defined subArc limit has a subArc with limit defined ahead in the array.</li>
               <li><code>color: string</code>: The subArc color. When not provided, it will use default subArc's colors and interpolate first and last colors when subArcs number is greater than <code>colorArray</code>.</li>
               <li><code>showMark: boolean</code>: Whether or not to show the mark. Default: <code>false</code>.</li>
-              <li><code>Tooltip: object</code>: Tooltip object.
+              <li><code>tooltip: object</code>: Tooltip object.
               <ul>
                 <li><code>text: string</code>text that will be displayed in the tooltip when hovering the subArc.</li>
                 <li><code>style: React.CSSProperties</code>: Overrides tooltip styles.</li>
               </ul>
               </li>
         </ul>
-        Arc default value: 
+        subArcs default value: 
         <code>
           [
             { limit: 33, color: "#5BE12C"},
