@@ -240,8 +240,6 @@ const App = () => {
                       { value: 2000 },
                       { value: 2500 },
                       { value: 3000 },
-                      { value: 3500 },
-                      { value: 4000 },
                     ],
                     valueConfig: {
                       formatTextValue: value => {
