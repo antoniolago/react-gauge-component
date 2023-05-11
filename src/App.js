@@ -207,6 +207,16 @@ const App = () => {
               <GaugeComponent
                 id="gauge-component7"
                 value={currentValue}
+                labels={{
+                  markLabel: {
+                    marks: [
+                      { value: 20 },
+                      { value: 50 },
+                      { value: 80 },
+                      { value: 100 }
+                    ]
+                  }
+                }}
                 needle={{
                   elastic: true
                 }}

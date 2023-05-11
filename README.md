@@ -23,7 +23,7 @@ import GaugeComponent from 'react-gauge-component'
 <GaugeComponent id="gauge-component1" />
 ```
 
-### Custom Bandwidth Gauge.
+### Simple Gauge.
 ![Image of React Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/simpleGauge.jpg "Simple Gauge Component").
 <details>
   <summary>Show Simple Gauge code</summary>
@@ -33,21 +33,20 @@ import GaugeComponent from 'react-gauge-component'
 ```jsx
 <GaugeComponent
   id="simple-gauge"
-  arc={{ nbSubArcs: 20 }}
+  value={currentValue}
   labels={{
-    valueLabel: { fontSize: 40 },
     markLabel: {
       marks: [
         { value: 20 },
-        { value: 40 },
-        { value: 60 },
+        { value: 50 },
         { value: 80 },
         { value: 100 }
       ]
     }
   }}
-  value={55}
-  needle={{ elastic: true }}
+  needle={{
+    elastic: true
+  }}
 />
 ```
 </details>
@@ -73,7 +72,7 @@ const kbitsToMbits = (value) => {
   }
 }
 <GaugeComponent
-  id="gauge-component8"
+  id="bandwidth-gauge"
   arc={{
     nbSubArcs: 30,
     colorArray: ['#5BE12C', '#F5CD19', '#EA4228'],
@@ -112,7 +111,7 @@ const kbitsToMbits = (value) => {
 ```
 </details>
 
-### Temperature Gauge
+### Custom Temperature Gauge
 ![Image of React Gauge Component for temperature visualization](https://antoniolago.github.io/react-gauge-component/images/tempGauge.jpg "Gauge Component for temperature visualization").
 <details>
   <summary>Show Temperature Gauge code</summary>
@@ -121,6 +120,7 @@ const kbitsToMbits = (value) => {
   
 ```jsx
 <GaugeComponent
+  id="temperature-gauge"
   arc={{
     width: 0.2,
     padding: 0.01,
@@ -129,48 +129,41 @@ const kbitsToMbits = (value) => {
         limit: 15, 
         color: '#EA4228', 
         showMark: true ,
-        tooltip: {
-          text: 'Too low temperature!'
-        }
+        tooltip: { text: 'Too low temperature!' }
       },
       { 
         limit: 17, 
         color: '#F5CD19', 
         showMark: true,
-        tooltip: {
-          text: 'Low temperature!'
-        }
+        tooltip: { text: 'Low temperature!' }
       },
       { 
         limit: 28, 
         color: '#5BE12C', 
         showMark: true,
-        tooltip: {
-          text: 'OK temperature!'
-        } 
+        tooltip: { text: 'OK temperature!' } 
       },
-      { limit: 30, color: '#F5CD19', showMark: true ,
-      tooltip: {
-        text: 'High temperature!'
-      }},
-      { color: '#EA4228',
-      tooltip: {
-        text: 'Too high temperature!'
-      } }
+      { 
+        limit: 30, 
+        color: '#F5CD19', 
+        showMark: true,
+        tooltip: { text: 'High temperature!' }
+      },
+      { 
+        color: '#EA4228',
+        tooltip: { text: 'Too high temperature!' }
+      }
     ]
   }}
   needle={{
     color: '#345243',
     length: 0.90,
     width: 15,
-    // animate: true,
-    // elastic: true,
     animDelay: 200,
   }}
   labels={{
     valueLabel: { formatTextValue: value => value + 'ºC' },
     markLabel: {
-      type: 'outer',
       valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 10 },
       marks: [
         { value: 13 },
