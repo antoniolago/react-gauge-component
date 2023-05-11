@@ -161,8 +161,6 @@ const App = () => {
                 value={60}
               />
             </Col>
-          </Row>
-          <Row>
             <Col xs={12} lg={3}>
               <h6 className="mb-1">GaugeComponent with custom arcs width</h6>
               <GaugeComponent
@@ -261,7 +259,7 @@ const App = () => {
             </Col>
 
             <Col xs={12} lg={6}>
-              <h6 className="mb-1">Custom Temperature gauge</h6>
+              <h6 className="mb-1">Custom Temperature gauge with tooltips on hover</h6>
               <GaugeComponent
                 arc={{
                   width: 0.2,

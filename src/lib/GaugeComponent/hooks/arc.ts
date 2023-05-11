@@ -108,7 +108,7 @@ export const setupArcs = (gauge: Gauge) => {
     .innerRadius(gauge.innerRadius.current)
     .cornerRadius(arc.cornerRadius)
     .padAngle(arc.padding);
-    
+
   chartHooks.clearChart(gauge);
 
   var arcPaths = gauge.doughnut.current
@@ -155,4 +155,4 @@ export const getColors = (gauge: Gauge) => {
   return colorArray;
 };
 
-export const clearArcs = (gauge: Gauge) => gauge.doughnut.current.selectAll(".arc").remove();
+export const clearArcs = (gauge: Gauge) => gauge.doughnut.current.selectAll("g").remove();

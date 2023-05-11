@@ -47,6 +47,7 @@ export const renderChart = (resize: boolean, gauge: Gauge) => {
         "translate(" + gauge.outerRadius.current + ", " + gauge.outerRadius.current + ")"
     );
     gauge.innerRadius.current = gauge.outerRadius.current * (1 - gauge.props.arc.width);
+    clearChart(gauge);
     arcHooks.setupArcs(gauge);
     labelsHooks.setupLabels(gauge);
     needleHooks.drawNeedle(resize, gauge);
@@ -76,7 +77,7 @@ export const centerGraph = (gauge: Gauge) => {
         gauge.width.current / 2 - gauge.outerRadius.current + gauge.margin.current.right;
     gauge.g.current.attr(
         "transform",
-        "translate(" + gauge.margin.current.left + ", " + (gauge.margin.current.top+30) + ")"
+        "translate(" + gauge.margin.current.left + ", " + (gauge.margin.current.top+25) + ")"
     );
 };
 
@@ -86,14 +87,14 @@ export const updateDimensions = (gauge: Gauge) => {
     var divDimensions = gauge.container.current.node().getBoundingClientRect(),
         divWidth = divDimensions.width,
         divHeight = divDimensions.height;
-
+    if(gauge.fixedHeight.current == 0) gauge.fixedHeight.current = divHeight + 200;
     //Set the new width and horizontal margins
     gauge.margin.current.left = divWidth * marginInPercent;
     gauge.margin.current.right = divWidth * marginInPercent;
     gauge.width.current = divWidth - gauge.margin.current.left - gauge.margin.current.right;
 
-    gauge.margin.current.top = divHeight * marginInPercent;
-    gauge.margin.current.bottom = divHeight * marginInPercent;
+    gauge.margin.current.top = gauge.fixedHeight.current * marginInPercent;
+    gauge.margin.current.bottom = gauge.fixedHeight.current * marginInPercent;
     gauge.height.current =
         gauge.width.current / 2 - gauge.margin.current.top - gauge.margin.current.bottom;
     //gauge.height.current = divHeight - gauge.margin.current.top - gauge.margin.current.bottom;

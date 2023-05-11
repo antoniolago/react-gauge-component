@@ -32,6 +32,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const g = useRef<any>({});
   const width = useRef<any>({});
   const height = useRef<any>({});
+  const fixedHeight = useRef<any>(0);
   const doughnut = useRef<any>({});
   const needle = useRef<any>({});
   const outerRadius = useRef<any>({});
@@ -52,6 +53,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     svg,
     g,
     width,
+    fixedHeight,
     height,
     doughnut,
     needle,
@@ -76,7 +78,6 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     initChartCallback(false, gauge);
   }, [props, initChartCallback]);
   useDeepCompareEffect(() => {
-    const { arc } = props;
     let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) === JSON.stringify(props.arc));
     if (arcsPropsChanged) arcHooks.setArcData(gauge)
     const resize = (JSON.stringify(prevProps.current.needle) !== JSON.stringify(props.needle));

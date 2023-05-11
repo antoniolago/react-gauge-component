@@ -6,6 +6,7 @@ export interface Gauge {
     g: React.MutableRefObject<any>;
     width: React.MutableRefObject<any>;
     height: React.MutableRefObject<any>;
+    fixedHeight: React.MutableRefObject<any>;
     doughnut: React.MutableRefObject<any>;
     needle: React.MutableRefObject<any>;
     outerRadius: React.MutableRefObject<any>;
