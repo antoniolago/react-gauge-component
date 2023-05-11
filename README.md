@@ -24,7 +24,7 @@ import GaugeComponent from 'react-gauge-component'
 ```
 
 ### Simple Gauge.
-![Image of React Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/simpleGauge.jpg "Simple Gauge Component").
+![Image of React Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/simpleGauge.jpg "Simple Gauge Component")
 <details>
   <summary>Show Simple Gauge code</summary>
 
@@ -52,7 +52,7 @@ import GaugeComponent from 'react-gauge-component'
 </details>
 
 ### Custom Bandwidth Gauge.
-![Image of React Gauge Component for bandwidth visualization](https://antoniolago.github.io/react-gauge-component/images/bandGauge.jpg "Gauge Component for bandwidth visualization").
+![Image of React Gauge Component for bandwidth visualization](https://antoniolago.github.io/react-gauge-component/images/bandGauge.jpg "Gauge Component for bandwidth visualization")
 <details>
   <summary>Show Bandwidth Gauge code</summary>
 
@@ -112,7 +112,7 @@ const kbitsToMbits = (value) => {
 </details>
 
 ### Custom Temperature Gauge
-![Image of React Gauge Component for temperature visualization](https://antoniolago.github.io/react-gauge-component/images/tempGauge.jpg "Gauge Component for temperature visualization").
+![Image of React Gauge Component for temperature visualization](https://antoniolago.github.io/react-gauge-component/images/tempGauge.jpg "Gauge Component for temperature visualization")
 <details>
   <summary>Show Temperature Gauge code</summary>
 
