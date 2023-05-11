@@ -10,17 +10,11 @@ Install it by running `npm install react-gauge-component --save` or `yarn add re
 ```jsx
 import GaugeComponent from 'react-gauge-component'
 
+//Component with default values
 <GaugeComponent id="gauge-component1" />
 ```
 
 ## Examples
-
-#### Create a Gauge Component with default values
-
-```jsx
-<GaugeComponent id="gauge-component1" />
-```
-
 ### Simple Gauge.
 ![Image of React Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/simpleGauge.jpg "Simple Gauge Component")
 <details>
