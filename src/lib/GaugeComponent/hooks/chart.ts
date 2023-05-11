@@ -66,7 +66,7 @@ export const calculateRadius = (gauge: Gauge) => {
             (gauge.width.current - gauge.margin.current.left - gauge.margin.current.right) / 2;
     } else {
         gauge.outerRadius.current =
-            gauge.height.current - gauge.margin.current.top - gauge.margin.current.bottom;
+            gauge.height.current - gauge.margin.current.top - gauge.margin.current.bottom + 15;
     }
     centerGraph(gauge);
 };
@@ -77,7 +77,7 @@ export const centerGraph = (gauge: Gauge) => {
         gauge.width.current / 2 - gauge.outerRadius.current + gauge.margin.current.right;
     gauge.g.current.attr(
         "transform",
-        "translate(" + gauge.margin.current.left + ", " + (gauge.margin.current.top+25) + ")"
+        "translate(" + gauge.margin.current.left + ", " + (gauge.margin.current.top+15) + ")"
     );
 };
 
