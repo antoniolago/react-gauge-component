@@ -1,6 +1,6 @@
 {
-  "name": "@antoniolago/react-gauge-component",
-  "version": "0.2.0",
+  "name": "react-gauge-component",
+  "version": "0.3.0",
   "main": "dist/index",
   "module": "dist/index",
   "typings": "dist/index",
@@ -36,6 +36,7 @@
     "start": "react-scripts start",
     "prebuild": "rimraf dist",
     "build": "NODE_ENV=production babel src/lib --out-dir dist --copy-files",
+    "deploy-package": "babel src/lib --out-dir dist --copy-files && npm publish --public",
     "build-page": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -75,7 +76,7 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
-  "description": "React component for displaying a gauge chart using D3.js",
+  "description": "Gauge component for React",
   "bugs": {
     "url": "https://github.com/antoniolago/react-gauge-component/issues"
   },

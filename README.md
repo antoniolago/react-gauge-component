@@ -1,13 +1,11 @@
 # react-gauge-component
-React component for displaying a gauge chart, using D3.js 
-
-This is forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/react-gauge-chart) [0b24a45](https://github.com/Martin36/react-gauge-chart/pull/131).
+React Gauge component for data visualization.
 
 # Demo
 https://antoniolago.github.io/react-gauge-component/
 
 # Usage
-Install it by running `npm install react-gauge-component`. Then to use it:
+Install it by running `npm install react-gauge-component --save` or `yarn add react-gauge-component`. Then to use it:
 
 ```jsx
 import GaugeComponent from 'react-gauge-component'
@@ -281,3 +279,5 @@ each arc would a color in the array (colors are assigned from left to right). If
 must match the **number of levels** in the arc.
 If the number of colors does not match the number of levels, then the **first** and the **last** color from the colors array will
 be selected and the arcs will get colors that are interpolated between those. The interpolation is done using [d3.interpolateHsl](https://github.com/d3/d3-interpolate#interpolateHsl).
+
+This is forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/react-gauge-chart) [0b24a45](https://github.com/Martin36/react-gauge-chart/pull/131).
