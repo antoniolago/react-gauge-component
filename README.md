@@ -17,52 +17,48 @@ import GaugeComponent from 'react-gauge-component'
 
 ## Examples
 
-#### To create a default chart
+#### Create a Gauge Component with default values
 
 ```jsx
 <GaugeComponent id="gauge-component1" />
 ```
 
-#### Chart with 20 subArcs and pointer at 86%
+### Custom Bandwidth Gauge.
+![Image of React Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/simpleGauge.jpg "Simple Gauge Component").
+<details>
+  <summary>Show Simple Gauge code</summary>
 
+  ### Simple Gauge
+  
 ```jsx
-<GaugeComponent id="gauge-component2" 
-  arc={{
-    nbSubArcs: 20
+<GaugeComponent
+  id="simple-gauge"
+  arc={{ nbSubArcs: 20 }}
+  labels={{
+    valueLabel: { fontSize: 40 },
+    markLabel: {
+      marks: [
+        { value: 20 },
+        { value: 40 },
+        { value: 60 },
+        { value: 80 },
+        { value: 100 }
+      ]
+    }
   }}
-  value={86} 
+  value={55}
+  needle={{ elastic: true }}
 />
 ```
+</details>
 
-#### Chart with custom colors and larger arc width
+### Custom Bandwidth Gauge.
+![Image of React Gauge Component for bandwidth visualization](https://antoniolago.github.io/react-gauge-component/images/bandGauge.jpg "Gauge Component for bandwidth visualization").
+<details>
+  <summary>Show Bandwidth Gauge code</summary>
 
-```jsx
-<GaugeComponent id="gauge-component3"
-  arc={{
-    nbSubArcs: 30,
-    colorArray: ["#FF5F6D", "#FFC371"]},
-    width: 0.3
-  }}
-  value={37} 
-/>
-```
-
-#### Chart with custom arcs width
-
-```jsx
-<GaugeComponent id="gauge-component5"
-  arc={{
-    nbSubArcs: 420,
-    colorArray: ['#5BE12C', '#EA4228'],
-    padding: 0.02,
-    width: 0.2
-  }}
-  value={37}
-/>
-```
-
-### Complex Custom Gauge with minValue/maxValue, formatTextValue for value and marks.
-
+  ### Bandwidth Gauge
+  
 ```jsx
 const kbitsToMbits = (value) => {
   if (value >= 1000) {
@@ -114,6 +110,81 @@ const kbitsToMbits = (value) => {
   maxValue={3000}
 />
 ```
+</details>
+
+### Temperature Gauge
+![Image of React Gauge Component for temperature visualization](https://antoniolago.github.io/react-gauge-component/images/tempGauge.jpg "Gauge Component for temperature visualization").
+<details>
+  <summary>Show Temperature Gauge code</summary>
+
+  ### Temperature Gauge
+  
+```jsx
+<GaugeComponent
+  arc={{
+    width: 0.2,
+    padding: 0.01,
+    subArcs: [
+      { 
+        limit: 15, 
+        color: '#EA4228', 
+        showMark: true ,
+        tooltip: {
+          text: 'Too low temperature!'
+        }
+      },
+      { 
+        limit: 17, 
+        color: '#F5CD19', 
+        showMark: true,
+        tooltip: {
+          text: 'Low temperature!'
+        }
+      },
+      { 
+        limit: 28, 
+        color: '#5BE12C', 
+        showMark: true,
+        tooltip: {
+          text: 'OK temperature!'
+        } 
+      },
+      { limit: 30, color: '#F5CD19', showMark: true ,
+      tooltip: {
+        text: 'High temperature!'
+      }},
+      { color: '#EA4228',
+      tooltip: {
+        text: 'Too high temperature!'
+      } }
+    ]
+  }}
+  needle={{
+    color: '#345243',
+    length: 0.90,
+    width: 15,
+    // animate: true,
+    // elastic: true,
+    animDelay: 200,
+  }}
+  labels={{
+    valueLabel: { formatTextValue: value => value + 'ºC' },
+    markLabel: {
+      type: 'outer',
+      valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 10 },
+      marks: [
+        { value: 13 },
+        { value: 22.5 },
+        { value: 32 }
+      ],
+    }
+  }}
+  value={22.5}
+  minValue={10}
+  maxValue={35}
+/>
+```
+</details>
 
 # API
 

@@ -96,12 +96,10 @@ const App = () => {
               <GaugeComponent />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent with 20 levels, custom needle color</h6>
+              <h6 className="mb-1">GaugeComponent with 20 levels</h6>
               <GaugeComponent
-                id="123"
-                arc={{
-                  nbSubArcs: 20
-                }}
+                id="gauge-component2"
+                arc={{ nbSubArcs: 20 }}
                 labels={{
                   valueLabel: { fontSize: 40 },
                   markLabel: {
@@ -115,15 +113,13 @@ const App = () => {
                   }
                 }}
                 value={55}
-                needle={{
-                  color: '#345243',
-                  elastic: true,
-                }}
+                needle={{elastic: true}}
               />
             </Col>
             <Col xs={12} lg={3}>
               <h6 className="mb-1">GaugeComponent with custom colors, inner marks and needle length</h6>
               <GaugeComponent
+                id="gauge-component3"
                 nrOfLevels={50}
                 arcPadding={0.02}
                 arc={{
@@ -167,15 +163,15 @@ const App = () => {
                 id="gauge-component5"
                 arc={{
                   width: 0.4,
-                  padding: 0.02,
-                  nbSubArcs: 80
+                  padding: 0.03,
+                  nbSubArcs: 10
                   // colorArray: ['#FF5F6D', '#FFC371']
                 }}
                 value={currentValue}
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent without animation</h6>
+              <h6 className="mb-1">GaugeComponent without animation, custom needle color</h6>
               <GaugeComponent
                 id="gauge-component6"
                 needle={{
@@ -221,9 +217,10 @@ const App = () => {
               <GaugeComponent
                 id="gauge-component8"
                 arc={{
-                  nbSubArcs: 30,
+                  nbSubArcs: 150,
                   colorArray: ['#5BE12C', '#F5CD19', '#EA4228'],
                   width: 0.3,
+                  padding: 0.01
                 }}
                 labels={{
                   valueLabel: {
@@ -270,7 +267,7 @@ const App = () => {
                       color: '#EA4228', 
                       showMark: true ,
                       tooltip: {
-                        text: 'Temperature too low!'
+                        text: 'Too low temperature!'
                       }
                     },
                     { 
@@ -278,7 +275,7 @@ const App = () => {
                       color: '#F5CD19', 
                       showMark: true,
                       tooltip: {
-                        text: 'Temperature low!'
+                        text: 'Low temperature!'
                       }
                     },
                     { 
@@ -286,16 +283,16 @@ const App = () => {
                       color: '#5BE12C', 
                       showMark: true,
                       tooltip: {
-                        text: 'Temperature OK!'
+                        text: 'OK temperature!'
                       } 
                     },
                     { limit: 30, color: '#F5CD19', showMark: true ,
                     tooltip: {
-                      text: 'Temperature high!'
+                      text: 'High temperature!'
                     }},
                     { color: '#EA4228',
                     tooltip: {
-                      text: 'Temperature too high!'
+                      text: 'Too high temperature!'
                     } }
                   ]
                 }}
