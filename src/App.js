@@ -95,7 +95,7 @@ const App = () => {
               <p 
                 className="mx-5" 
                 style={{textAlign: 'justify'}}>
-                  Enhance your IoT and Homelab projects with our exclusive React gauge component. 
+                  Enhance your IoT and Homelab projects with this React Gauge chart built with D3 library. 
                   This component features custom min/max values, marks, and tooltips, 
                   making it perfect for visualizing various metrics such as speed, 
                   temperature, charge, and humidity. Whether you're working on an IoT or Homelab project, 
