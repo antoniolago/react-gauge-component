@@ -91,6 +91,20 @@ const App = () => {
             </Col>
           </Row>
           <Row>
+            <Col xs={12} lg={12}>
+              <p 
+                className="mx-5" 
+                style={{textAlign: 'justify'}}>
+                  Enhance your IoT and Homelab projects with our exclusive React gauge component. 
+                  This component features custom min/max values, marks, and tooltips, 
+                  making it perfect for visualizing various metrics such as speed, 
+                  temperature, charge, and humidity. Whether you're working on an IoT or Homelab project, 
+                  this data visualization tool can be very useful for React developers looking to create engaging and informative dashboards. 
+                  <br/>Documentation at <a href="https://github.com/antoniolago/react-gauge-component" target="_blank">react-gauge-component</a>
+              </p>
+            </Col>
+          </Row>
+          <Row>
             <Col xs={12} lg={3}>
               <h6 className="mb-1">GaugeComponent with default props</h6>
               <GaugeComponent />
