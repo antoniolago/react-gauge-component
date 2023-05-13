@@ -95,11 +95,10 @@ const App = () => {
               <p 
                 className="mx-5" 
                 style={{textAlign: 'justify'}}>
-                  Enhance your IoT and Homelab projects with this React Gauge chart built with D3 library. 
+                  Enhance your projects with this React Gauge chart built with D3 library. 
                   This component features custom min/max values, marks, and tooltips, 
                   making it perfect for visualizing various metrics such as speed, 
-                  temperature, charge, and humidity. Whether you're working on an IoT or Homelab project, 
-                  this data visualization tool can be very useful for React developers looking to create engaging and informative dashboards. 
+                  temperature, charge, and humidity. This data visualization tool can be very useful for React developers looking to create engaging and informative dashboards. 
                   <br/>Documentation at <a href="https://github.com/antoniolago/react-gauge-component" target="_blank">react-gauge-component</a>
               </p>
             </Col>
