@@ -1,9 +1,8 @@
 import CONSTANTS from "../constants";
 import { Gauge } from "../types/Gauge";
 import * as arcHooks from "./arc";
-import * as chartHooks from "./chart";
 import * as labelsHooks from "./labels";
-import * as needleHooks from "./needle";
+import * as pointerHooks from "./pointer";
 export const initChart = (update: boolean, gauge: Gauge, resize = false) => {
     if (update) {
         renderChart(resize, gauge);
@@ -22,7 +21,8 @@ export const initChart = (update: boolean, gauge: Gauge, resize = false) => {
         .startAngle(CONSTANTS.startAngle)
         .endAngle(CONSTANTS.endAngle)
         .sort(null);
-    needleHooks.addNeedleElement(gauge);
+    //Set up pointer
+    pointerHooks.addPointerElement(gauge);
     renderChart(resize, gauge);
 }
 //Renders the chart, should be called every time the window is resized
@@ -50,7 +50,7 @@ export const renderChart = (resize: boolean, gauge: Gauge) => {
     clearChart(gauge);
     arcHooks.setupArcs(gauge);
     labelsHooks.setupLabels(gauge);
-    needleHooks.drawNeedle(resize, gauge);
+    pointerHooks.drawPointer(gauge, resize);
 };
 export const calculateRadius = (gauge: Gauge) => {
     //The radius needs to be constrained by the containing div
@@ -103,6 +103,6 @@ export const updateDimensions = (gauge: Gauge) => {
 export const clearChart = (gauge: Gauge) => {
     //Remove the old stuff
     labelsHooks.clearLabels(gauge);
-    needleHooks.clearNeedleElement(gauge);
+    pointerHooks.clearPointerElement(gauge);
     arcHooks.clearArcs(gauge);
 };

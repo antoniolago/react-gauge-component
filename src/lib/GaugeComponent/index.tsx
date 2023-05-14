@@ -17,8 +17,8 @@ import CONSTANTS from './constants';
 import * as arcHooks from "./hooks/arc";
 import * as chartHooks from "./hooks/chart";
 import * as labelsHooks from "./hooks/labels";
-import * as needleHooks from "./hooks/needle";
 import { mergeObjects } from "./hooks/utils";
+import { PointerType } from "./types/PointerType";
 /*
 GaugeComponent creates a gauge chart using D3
 The chart is responsive and will have the same width as the "container"
@@ -34,7 +34,8 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const height = useRef<any>({});
   const fixedHeight = useRef<any>(0);
   const doughnut = useRef<any>({});
-  const needle = useRef<any>({});
+  const pointer = useRef<any>({});
+  const selectedPointerType = useRef<any>({});
   const outerRadius = useRef<any>({});
   const innerRadius = useRef<any>({});
   const margin = useRef<any>({}); // = {top: 20, right: 50, bottom: 50, left: 50},
@@ -56,7 +57,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     fixedHeight,
     height,
     doughnut,
-    needle,
+    pointer,
     outerRadius,
     innerRadius,
     margin,
@@ -65,9 +66,14 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     arcChart,
     arcData,
     pieChart,
+    selectedPointerType
   };
   const initChartCallback = useCallback(chartHooks.initChart, [mergedProps.current]);
-  const updateMergedProps = () => gauge.props = mergedProps.current = mergeObjects(defaultGaugeProps, props);
+  const updateMergedProps = () => {
+    if(props.needle) gauge.selectedPointerType.current = PointerType.Needle;
+    else if(props.blob) gauge.selectedPointerType.current = PointerType.Blob;
+    gauge.props = mergedProps.current = mergeObjects(defaultGaugeProps, props);
+  }
   useLayoutEffect(() => {
     //Merged properties will get the default props and overwrite by the user's defined props
     //To keep the original default props in the object
@@ -85,6 +91,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     gauge.prevProps.current = mergeObjects(defaultGaugeProps, props);
   }, [
     props.needle,
+    props.blob,
     props.arc,
     props.value,
     props.minValue,

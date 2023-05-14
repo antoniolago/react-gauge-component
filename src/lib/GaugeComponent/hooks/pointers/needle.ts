@@ -1,5 +1,4 @@
-import * as utils from './utils';
-import * as labelsHooks from './labels';
+import * as utils from '../utils';
 import {
   arc,
   pie,
@@ -10,7 +9,7 @@ import {
   interpolateHsl,
   interpolateNumber,
 } from "d3";
-import { Gauge } from "../types/Gauge";
+import { Gauge } from "../../types/Gauge";
 //If 'resize' is true then the animation does not play
 export const drawNeedle = (resize: boolean, gauge: Gauge) => {
   const { needle, value, minValue, maxValue } = gauge.props;
@@ -19,23 +18,23 @@ export const drawNeedle = (resize: boolean, gauge: Gauge) => {
   let currentPercent = utils.calculatePercentage(minValue, maxValue, value as number);
   var prevPercent = utils.calculatePercentage(minValue, maxValue, gauge.prevProps?.current.value || minValue);
   var pathStr = calculateRotation(prevPercent || utils.getCurrentGaugeValuePercentage(gauge.props), gauge);
-  gauge.needle.current.append("path").attr("d", pathStr).attr("fill", needle.color);
+  gauge.pointer.current.append("path").attr("d", pathStr).attr("fill", needle.color);
   //Add a circle at the bottom of needle
-  gauge.needle.current
+  gauge.pointer.current
     .append("circle")
     .attr("cx", centerPoint[0])
     .attr("cy", centerPoint[1])
     .attr("r", needleRadius)
     .attr("fill", needle.color);
   //Translate the needle starting point to the middle of the arc
-  gauge.needle.current.attr(
+  gauge.pointer.current.attr(
     "transform",
     "translate(" + gauge.outerRadius.current + ", " + gauge.outerRadius.current + ")"
   );
   // if(prevPercent == currentPercent) return;
   //Rotate the needle
   if (!resize && needle.animate) {
-    gauge.needle.current
+    gauge.pointer.current
       .transition()
       .delay(needle.animationDelay)
       .ease(needle.elastic ? easeElastic : easeExpOut)
@@ -84,5 +83,5 @@ export const getNeedleRadius = (gauge: Gauge) => {
   return needle.width * (gauge.width.current / 500);
 }
 
-export const addNeedleElement = (gauge: Gauge) => gauge.needle.current = gauge.g.current.append("g").attr("class", "needle");
-export const clearNeedleElement = (gauge: Gauge) => gauge.needle.current.selectAll("*").remove();
+export const addNeedleElement = (gauge: Gauge) => gauge.pointer.current = gauge.g.current.append("g").attr("class", "needle");
+export const clearNeedleElement = (gauge: Gauge) => gauge.pointer.current.selectAll("*").remove();

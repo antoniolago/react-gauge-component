@@ -1,6 +1,7 @@
 import { Arc, defaultArc } from "./Arc";
 import { Labels, defaultLabels } from './Labels';
 import { Needle, defaultNeedle } from './Needle';
+import { Blob } from './Blob';
 export interface GaugeComponentProps {
     id: string,
     className: string,
@@ -11,7 +12,8 @@ export interface GaugeComponentProps {
     maxValue: number,
     arc: Arc,
     labels: Labels,
-    needle: Needle
+    needle: Needle,
+    blob?: Blob
 }
 
 export const defaultGaugeProps: GaugeComponentProps = {
