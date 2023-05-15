@@ -3,6 +3,7 @@
     "target": "es5",
     "module": "commonjs",
     "jsx": "react",
+    "declaration": true,
     "strict": true,
     "esModuleInterop": true
   }
