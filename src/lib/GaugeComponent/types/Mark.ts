@@ -24,7 +24,7 @@ export interface MarkerConfig {
 const defaultMarkerConfig: MarkerConfig = {
     char: "_",
     style:{
-        fontSize: "10px",
+        fontSize: "18px",
         fill: "#dedbd7",
         textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"
     },

@@ -268,7 +268,7 @@ const kbitsToMbits = (value) => {
                 <li><code>markerConfig: object</code>: The default config of the mark's char.
                   <ul>
                       <li><code>char: string</code>: The char of the mark. Default: <code>'_'</code></li>
-                      <li><code>style: React.CSSProperties</code>: Overrides markerConfig styles. Default: <code>{fontSize: "10px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
+                      <li><code>style: React.CSSProperties</code>: Overrides markerConfig styles. Default: <code>{fontSize: "18px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
                       <li><code>hide: boolean</code>: Whether or not to hide the mark's char. Default: <code>false</code></li>
                   </ul>
                 </li>
