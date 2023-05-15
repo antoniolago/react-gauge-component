@@ -6,15 +6,17 @@ export interface Labels {
 
 interface ValueLabel {
     formatTextValue?: (value: any) => string;
-    fontSize: number;
-    fontColor: string;
+    style: React.CSSProperties;
     hide: boolean;
 }
 
 export const defaultValueLabel: ValueLabel = {
     formatTextValue: undefined,
-    fontSize: 35,
-    fontColor: '#fff',
+    style: {
+        fontSize: "35px",
+        fill: '#fff',
+        textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"
+    },
     hide: false
 }
 export const defaultLabels: Labels = {

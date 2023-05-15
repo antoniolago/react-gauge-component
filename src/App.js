@@ -8,16 +8,16 @@ const App = () => {
   const [currentValue, setCurrentValue] = useState(50);
   const [arcs, setArcs] = useState([{ limit: 30 }, { limit: 50 }, { limit: 100 }])
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentValue(Math.random()*100);
-      // setArcs([{ limit: 30 }, { limit: 35 }, { limit: 100 }])
-    }, 3000);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setCurrentValue(Math.random()*100);
+  //     // setArcs([{ limit: 30 }, { limit: 35 }, { limit: 100 }])
+  //   }, 3000);
 
-    return () => {
-      clearTimeout(timer);
-    };
-  });
+  //   return () => {
+  //     clearTimeout(timer);
+  //   };
+  // });
   const kbitsToMbits = (value) => {
     if (value >= 1000) {
       value = value / 1000;

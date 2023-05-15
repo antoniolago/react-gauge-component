@@ -2,6 +2,9 @@ import * as utils from './utils';
 import CONSTANTS from '../constants';
 import { Gauge } from '../types/Gauge';
 import { Mark } from '../types/Mark';
+import { defaultValueLabel } from '../types/Labels';
+import React from 'react';
+import { select, style } from 'd3';
 export const setupLabels = (gauge: Gauge) => {
   const { minValue, maxValue, labels, arc } = gauge.props;
   //Add value label
@@ -47,10 +50,12 @@ export const addMarker = (mark: Mark, gauge: Gauge) => {
   const { labels } = gauge.props;
   const { markAnchor, angle } = calculateAnchorAndAngleByValue(mark.value, gauge);
   let coords = getLabelCoordsByValue(mark.value, gauge);
-  let charSize = mark.markerConfig?.charSize || labels.markLabel.markerConfig.charSize;
+  // let charSize = mark.markerConfig?.style.fontSize || labels.markLabel.markerConfig.style.fontSize;
   let char = mark.markerConfig?.char || labels.markLabel.markerConfig.char;
-  let charColor = mark.markerConfig?.charColor || labels.markLabel.markerConfig.charColor;
-  addText(char, coords.x, coords.y, gauge, charColor, markAnchor, charSize, angle);
+  // let charColor = mark.markerConfig?.style.color || labels.markLabel.markerConfig.style.color;
+  let charStyle = mark.markerConfig?.style || labels.markLabel.markerConfig.style
+  charStyle.textAnchor = markAnchor as any;
+  addText(char, coords.x, coords.y, gauge, charStyle, angle);
 }
 
 export const addMarkValue = (mark: Mark, gauge: Gauge) => {
@@ -60,9 +65,9 @@ export const addMarkValue = (mark: Mark, gauge: Gauge) => {
   let isInner = gauge.props.labels.markLabel.type == "inner";
   if(!isInner) centerToArcLengthSubtract = arc.width * 10 - 20
   let coords = getLabelCoordsByValue(mark.value, gauge, centerToArcLengthSubtract);
-  let fontSize = mark.valueConfig?.fontSize || labels.markLabel.valueConfig.fontSize;
-  let fontColor = mark.valueConfig?.fontColor || labels.markLabel.valueConfig.fontColor;
-
+  let fontSize = mark.valueConfig?.style.fontSize || labels.markLabel.valueConfig.style.fontSize;
+  let fontColor = mark.valueConfig?.style.color || labels.markLabel.valueConfig.style.color;
+  let markValueStyle = mark.valueConfig?.style || labels.markLabel.valueConfig.style;
   let text = '';
   if(labels.markLabel.valueConfig.formatTextValue){
     text = labels.markLabel.valueConfig.formatTextValue(utils.floatingNumber(mark.value));
@@ -87,7 +92,8 @@ export const addMarkValue = (mark: Mark, gauge: Gauge) => {
   } else{
     coords.y += 3;
   }
-  addText(text, coords.x, coords.y, gauge, fontColor, markAnchor, fontSize);
+  markValueStyle.textAnchor = markAnchor as any;
+  addText(text, coords.x, coords.y, gauge, markValueStyle);
 }
 
 export const addMark = (mark: Mark, gauge: Gauge) => {
@@ -123,17 +129,22 @@ export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLe
   }
   return { x, y }
 }
-export const addText = (text: string, x: number, y: number, gauge: Gauge, color = "#fff", align = "middle", fontSize = 30, rotate = 0) => {
-  gauge.g.current
+export const addText = (html: any, x: number, y: number, gauge: Gauge, style: React.CSSProperties, rotate = 0) => {
+  let div = gauge.g.current
     .append("g")
     .attr("class", "text-group")
     .attr("transform", `translate(${x}, ${y})`)
     .append("text")
-    .text(text)
-    .style("font-size", `${fontSize}px`)
-    .style("fill", color)
-    .style("text-anchor", align)
-    .attr("transform", `rotate(${rotate})`);
+    .text(html) // use html() instead of text()
+  applyTextStyles(div, style)
+  div.attr("transform", `rotate(${rotate})`);
+}
+
+const applyTextStyles = (div: any, style: React.CSSProperties) => {
+  //Apply default styles
+  Object.entries(style).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
+  //Apply custom styles
+  if(style != undefined) Object.entries(style).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
 }
 
 //Adds text undeneath the graft to display which percentage is the current one
@@ -153,12 +164,14 @@ export const addValueText = (gauge: Gauge) => {
   const textLength = text?.length || 0;
   let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1; // Compute the font size ratio
   fontRatio = gauge.width.current * 0.003 * fontRatio;
-  let valueFontSize = labels.valueLabel.fontSize;
-  let valueFontColor = labels.valueLabel.fontColor;
-  valueFontSize = valueFontSize * fontRatio;
+  let valueFontSize = labels.valueLabel.style.fontSize as string;
+  // let valueFontColor = labels.valueLabel.style.color;
+  let valueTextStyle = {... labels.valueLabel.style};
+  valueTextStyle.fontSize = parseInt(valueFontSize, 10) * fontRatio + "px";
   let x = gauge.outerRadius.current;
   let y = gauge.outerRadius.current / 1.5 + textPadding;
-  addText(text, x, y, gauge, valueFontColor, "middle", valueFontSize);
+  valueTextStyle.textAnchor = "middle";
+  addText(text, x, y, gauge, valueTextStyle);
 };
 
 export const clearLabels = (gauge: Gauge) => gauge.g.current.selectAll(".text-group").remove();

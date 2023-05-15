@@ -244,8 +244,7 @@ const kbitsToMbits = (value) => {
          <li><code>valueLabel: object</code>: The center value label of the gauge.
             <ul>
                <li><code>formatTextValue: (value: any) => string</code>: The format of the value label. Default: <code>undefined</code>.</li>
-               <li><code>fontSize: number</code>: The font size of the value label. Default: <code>35</code>.</li>
-               <li><code>fontColor: string</code>: The font color of the value label. Default: <code>"#fff"</code>.</li>
+               <li><code>style: React.CSSProperties</code>: Overrides valueLabel styles. Default: <code>{fontSize: "35px", fill: "#fff", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
                <li><code>hide: boolean</code>: Whether or not to hide the value label. Default: <code>false</code>.</li>
             </ul></li>
           <li><code>markLabel: object</code> The markLabel of the gauge.
@@ -262,16 +261,14 @@ const kbitsToMbits = (value) => {
                 <li><code>valueConfig: object</code>: The default config of the mark's value label.
                     <ul>
                         <li><code>formatTextValue: (value: any) => string</code>: The format of the mark's value label. Default: <code>undefined</code></li>
-                        <li><code>fontSize: number</code>: The font size of the mark's value label. Default: <code>15</code></li>
-                        <li><code>fontColor: string</code>: The font color of the mark's value label. Default: <code>#464A4F</code></li>
+                        <li><code>style: React.CSSProperties</code>: Overrides valueConfig styles. Default: <code>{fontSize: "10px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
                         <li><code>hide: boolean</code>: Whether or not to hide the mark's value label. Default: <code>false</code></li>
                     </ul>
                   </li>
                 <li><code>markerConfig: object</code>: The default config of the mark's char.
                   <ul>
                       <li><code>char: string</code>: The char of the mark. Default: <code>'_'</code></li>
-                      <li><code>charSize: number</code>: The font size of the mark's char. Default: <code>30</code></li>
-                      <li><code>charColor: string</code>: The font color of the mark's char. Default: <code>#464A4F</code></li>
+                      <li><code>style: React.CSSProperties</code>: Overrides markerConfig styles. Default: <code>{fontSize: "10px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
                       <li><code>hide: boolean</code>: Whether or not to hide the mark's char. Default: <code>false</code></li>
                   </ul>
                 </li>

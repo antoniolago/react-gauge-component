@@ -12,28 +12,32 @@ export interface Mark {
 }
 export interface MarkValueConfig {
     formatTextValue?: (value: any) => string;
-    fontSize: number;
-    fontColor: string;
+    style: React.CSSProperties;
     hide: boolean;
 }
 export interface MarkerConfig {
     char: string;
-    charSize: number;
-    charColor: string;
+    style: React.CSSProperties;
     hide: boolean;
 }
 
 const defaultMarkerConfig: MarkerConfig = {
     char: "_",
-    charSize: 25,
-    charColor: "#dedbd7",
-    hide: false,
+    style:{
+        fontSize: "10px",
+        fill: "#dedbd7",
+        textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"
+    },
+    hide: false
 };
 
 const defaultMarkValueConfig: MarkValueConfig = {
     formatTextValue: undefined,
-    fontSize: 10,
-    fontColor: '#dedbd7',
+    style:{
+        fontSize: "10px",
+        fill: "#dedbd7",
+        textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"
+    },
     hide: false,
 };
 const defaultMarkList: Mark[] = [];
