@@ -4,6 +4,7 @@ export interface Arc {
     padding: number, //The padding between subArcs, in rad
     width: number, //The width of the arc given in percent of the radius
     nbSubArcs?: number, //The number of subArcs, this overrides "subArcs" limits
+    gradient: boolean,
     colorArray?: Array<string>, //The colors of the arcs, this overrides "subArcs" colors
     subArcs: Array<SubArc>
 }
@@ -27,4 +28,5 @@ export const defaultArc: Arc = {
     nbSubArcs: undefined,
     colorArray: undefined,
     subArcs: defaultSubArcs,
+    gradient: false
 };

@@ -13,7 +13,7 @@ import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 const onArcMouseMove = (event: any, d: any) => {
   let div = select(`.${CONSTANTS.arcTooltipClassname}`)
   div.style("display", "none");
-  if(d.data.tooltip != undefined){
+  if (d.data.tooltip != undefined) {
     div.html(d.data.tooltip.text)
       .style("left", (event.pageX + 15) + "px")
       .style("top", (event.pageY - 10) + "px")
@@ -29,7 +29,7 @@ const applyTooltipStyles = (tooltip: Tooltip, arcColor: string) => {
   Object.entries(defaultTooltipStyle).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
   div.style("background-color", arcColor);
   //Apply custom styles
-  if(tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
+  if (tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
 }
 const onArcMouseOut = () => { select(`.${CONSTANTS.arcTooltipClassname}`).html(" ").style("display", "none"); }
 
@@ -70,7 +70,7 @@ export const setArcData = (gauge: Gauge) => {
       subArcsLength.push(subArcLength);
       lastSubArcLimitPercentageAcc = subArcsLength.reduce((count, curr) => count + curr, 0);
       lastSubArcLimit = subArc.limit;
-      if(subArc.tooltip != undefined) subArcsTooltip.push(subArc.tooltip);
+      if (subArc.tooltip != undefined) subArcsTooltip.push(subArc.tooltip);
     });
     gauge.arcData.current = subArcsLength.map((length, i) => ({
       value: length,
@@ -97,7 +97,7 @@ export const setArcData = (gauge: Gauge) => {
 // };
 
 export const setupArcs = (gauge: Gauge) => {
-  const { arc } = gauge.props;
+  const { arc, maxValue } = gauge.props;
   //Add tooltip
   let isTooltipInTheDom = document.getElementsByClassName(CONSTANTS.arcTooltipClassname).length != 0;
   if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
@@ -110,23 +110,49 @@ export const setupArcs = (gauge: Gauge) => {
     .padAngle(arc.padding);
 
   chartHooks.clearChart(gauge);
-
+  let data = {}
+  //When gradient enabled, it'll have only 1 arc
+  if(gauge.props.arc.gradient){
+    data = [{value: 1}];
+  } else {
+    data = gauge.arcData.current
+  }
   var arcPaths = gauge.doughnut.current
     .selectAll(".arc")
-    .data(gauge.pieChart.current(gauge.arcData.current))
+    .data(gauge.pieChart.current(data))
     .enter()
     .append("g");
-
-  arcPaths
+  let subArcs = arcPaths
     .append("path")
     .attr("d", gauge.arcChart.current)
-    // .style("fill", (d) => `linear-gradient(to right, red 0%, green 100%)`);
-    .style("fill", (d: any) => d.data.color);
+  applyColors(subArcs, gauge);
 
   arcPaths
     .on("mouseout", onArcMouseOut)
-    .on("mousemove", (event:any, d:any) => onArcMouseMove(event, d))
+    .on("mousemove", (event: any, d: any) => onArcMouseMove(event, d))
 };
+
+export const applyColors = (subArcsPath: any, gauge: Gauge) => {
+  if(gauge.props.arc.gradient){
+    let uniqueId = `subArc-linear-gradient-${Math.random()}`
+    let gradEl = createGradientElement(gauge.doughnut.current, uniqueId);
+    applyGradientColors(gradEl, gauge)
+    subArcsPath.style("fill", (d: any) => `url(#${uniqueId})`);
+  }else{
+    subArcsPath.style("fill", (d: any) => d.data.color);
+  }
+
+}
+export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
+  const { arc } = gauge.props;
+  arc.subArcs.forEach((subArc) => 
+    gradEl.append("stop")
+        .attr("offset", `${subArc.limit}%`)
+        .style("stop-color", subArc.color)//end in red
+        .style("stop-opacity", 1)
+  )
+}
+
 //Depending on the number of levels in the chart
 //This function returns the same number of colors
 export const getColors = (gauge: Gauge) => {
@@ -154,5 +180,15 @@ export const getColors = (gauge: Gauge) => {
   }
   return colorArray;
 };
-
+export const createGradientElement = (div: any, uniqueId: string) => {
+  //make defs and add the linear gradient
+  var lg = div.append("defs").append("linearGradient")
+    .attr("id", uniqueId)//id of the gradient
+    .attr("x1", "0%")
+    .attr("x2", "100%")
+    .attr("y1", "0%")
+    .attr("y2", "0%")//since its a vertical linear gradient 
+    ;
+  return lg
+}
 export const clearArcs = (gauge: Gauge) => gauge.doughnut.current.selectAll("g").remove();

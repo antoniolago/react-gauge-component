@@ -159,13 +159,34 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent with larger padding between elements</h6>
+              <h6 className="mb-1">GaugeComponent with gradient arc</h6>
               <GaugeComponent
                 id="gauge-component4"
                 arc={{
-                  cornerRadius: 3,
-                  padding: 0.1,
-                  nbSubArcs: 10
+                  gradient: true,
+                  subArcs: [
+                    { 
+                      limit: 15, 
+                      color: '#EA4228', 
+                      showMark: true 
+                    },
+                    { 
+                      limit: 37, 
+                      color: '#F5CD19', 
+                      showMark: true
+                    },
+                    { 
+                      limit: 58, 
+                      color: '#5BE12C', 
+                      showMark: true
+                    },
+                    { 
+                      limit: 75, 
+                      color: '#F5CD19', 
+                      showMark: true
+                    },
+                    { color: '#EA4228' }
+                  ]
                 }}
                 value={60}
               />
@@ -284,6 +305,7 @@ const App = () => {
                 arc={{
                   width: 0.2,
                   padding: 0.01,
+                  // gradient: true,
                   subArcs: [
                     { 
                       limit: 15, 

@@ -9,6 +9,7 @@ Key differences:
   <li>Added inner/outer marks to the gauge for reference of the values</li>
   <li>Added tooltips on hover for the arcs</li>
   <li>Added further customizations of the needle like animation and width</li>
+  <li>Added arc with linear gradient colors</li>
   <li>Refactored project structure to separated files</li>
   <li>Refactored to Typescript</li>
   <li>Added complex objects for better modulation and organization of the project</li>
@@ -191,20 +192,21 @@ const kbitsToMbits = (value) => {
 
 <h2>Props:</h2>
 <ul>
-   <li><code>id: string</code>: A unique identifier for the div surrounding the chart. Default:<code>undefined</code>.</li>
-   <li><code>className: string</code>: Adds a <code>className</code> to the div container. Default:<code>undefined</code>.</li>
+   <li><code>id: string</code>: A unique identifier for the div surrounding the chart. Default:<code>"gauge-component-id"</code>.</li>
+   <li><code>className: string</code>: Adds a <code>className</code> to the div container. Default:<code>"gauge-component-class"</code>.</li>
    <li><code>style: React.CSSProperties</code>: Adds a style object to the div container. Default: <code>{width: 100}</code>.</li>
    <li><code>marginInPercent: number</code>: Sets the margin for the chart inside the containing SVG element. Default: <code>0.05</code>.</li>
-   <li><code>value: number</code>: The value of the gauge. Default: <code>0</code>.</li>
+   <li><code>value: number</code>: The value of the gauge. Default: <code>33</code>.</li>
    <li><code>minValue: number</code>: The minimum value of the gauge. Default: <code>0</code>.</li>
    <li><code>maxValue: number</code>: The maximum value of the gauge. Default: <code>100</code>.</li>
    <li><code>arc: object</code>: The arc of the gauge.
     <ul>
       <li><code>cornerRadius: number</code>: The corner radius of the arc. Default: <code>7</code>.</li>
       <li><code>padding: number</code>: The padding between subArcs, in rad. Default: <code>0.05</code>.</li>
-      <li><code>width: number</code>: The width of the arc given in percent of the radius. Default: <code>0.2</code>.</li>
+      <li><code>width: number</code>: The width of the arc given in percent of the radius. Default: <code>0.15</code>.</li>
       <li><code>nbSubArcs: number</code>: The number of subArcs. This overrides <code>subArcs</code>. Default: <code>undefined</code></li>
       <li><code>colorArray: Array&lt;string&gt;</code>: The colors of the arcs. This overrides <code>subArcs</code> colors. Default: <code>undefined</code></li>
+      <li><code>gradient: boolean</code>: This will draw a single chart with all colors provided in subArcs, using limits as references to draw the linear-gradient result. Default: <code>false</code>.</li>
       <li><code>subArcs: Array&lt;object&gt;</code>: The subArcs of the gauge.
         <ul>
           <li><code>limit: number</code>: The subArc limit value. When no limits are defined in the next subArcs in the list, it's optional and will auto-calculate remaining arcs limits. Example: <code>[{limit: 70}, {}, {}, {}]</code>. In a default <code>minValue/maxValue</code>, the values will be equal to <code>[{limit: 70}, {limit: 80}, {limit: 90}, {limit: 100}]</code>. But <code>[{},{limit: 100}]</code> will not work properly as the not defined subArc limit has a subArc with limit defined ahead in the array.</li>
