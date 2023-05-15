@@ -1,5 +1,21 @@
 # react-gauge-component
-React Gauge component for data visualization.
+React Gauge Chart Component for data visualization.
+
+This is forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/react-gauge-chart) [0b24a45](https://github.com/Martin36/react-gauge-chart/pull/131).
+Key differences:
+<ul>
+  <li>Added min/max values</li>
+  <li>Added arcs limits in value instead of percent</li>
+  <li>Added inner/outer marks to the gauge for reference of the values</li>
+  <li>Added tooltips on hover for the arcs</li>
+  <li>Added further customizations of the needle like animation and width</li>
+  <li>Refactored project structure to separated files</li>
+  <li>Refactored to Typescript</li>
+  <li>Added complex objects for better modulation and organization of the project</li>
+  <li>Added a single context to all hooks making coding easier</li>
+  <li>Fixed Rerenderings making arcs to be repeated in different sizes</li>
+  <li>Fixed needing to set height bug (tho it may still be necessary to set it depending on your use case, top marks can be cut by margin depending on screen size)</li>
+</ul>
 
 # Demo
 https://antoniolago.github.io/react-gauge-component/
@@ -25,7 +41,7 @@ import GaugeComponent from 'react-gauge-component'
 ```jsx
 <GaugeComponent
   id="simple-gauge"
-  value={currentValue}
+  value={24.72}
   labels={{
     markLabel: {
       marks: [
@@ -36,9 +52,7 @@ import GaugeComponent from 'react-gauge-component'
       ]
     }
   }}
-  needle={{
-    elastic: true
-  }}
+  needle={{ elastic: true }}
 />
 ```
 </details>
@@ -268,10 +282,8 @@ const kbitsToMbits = (value) => {
 </ul>
 ##### Colors for the chart
 
-The colors could either be specified as an array of hex color values, such as `["#FF0000", "#00FF00", "#0000FF"]` where
+The 'colorArray' prop could either be specified as an array of hex color values, such as `["#FF0000", "#00FF00", "#0000FF"]` where
 each arc would a color in the array (colors are assigned from left to right). If that is the case, then the **length of the array**
 must match the **number of levels** in the arc.
 If the number of colors does not match the number of levels, then the **first** and the **last** color from the colors array will
 be selected and the arcs will get colors that are interpolated between those. The interpolation is done using [d3.interpolateHsl](https://github.com/d3/d3-interpolate#interpolateHsl).
-
-This is forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/react-gauge-chart) [0b24a45](https://github.com/Martin36/react-gauge-chart/pull/131).

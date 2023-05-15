@@ -1,17 +1,16 @@
 {
   "name": "react-gauge-component",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "dist/index",
   "module": "dist/index",
   "typings": "dist/index",
   "homepage": "https://antoniolago.github.io/react-gauge-component/",
   "keywords": [
-    "visualization",
-    "data visualization",
-    "react",
-    "gauge chart",
+    "gauge",
+    "chart",
     "speedometer",
-    "gauge"
+    "data visualization",
+    "react"
   ],
   "license": "MIT",
   "files": [
@@ -24,13 +23,7 @@
   },
   "dependencies": {
     "@types/d3": "^7.4.0",
-    "@types/jest": "^29.5.1",
-    "@types/node": "^20.1.0",
-    "@types/react": "^17.0.1",
-    "@types/react-dom": "^17.0.1",
-    "d3": "^7.6.1",
-    "prop-types": "^15.8.1",
-    "typescript": "^5.0.4"
+    "d3": "^7.6.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -40,7 +33,7 @@
     "build-page": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "predeploy": "npm run build-page",
+    "predeploy": "yarn run build-page",
     "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
@@ -60,14 +53,18 @@
     "@babel/preset-react": "^7.0.0",
     "@babel/runtime": "^7.6.2",
     "@types/lodash": "^4.14.194",
+    "@types/node": "^20.1.0",
+    "@types/react": "^17.0.1",
+    "@types/react-dom": "^17.0.1",
     "babel-preset-react-app": "^8.0.0",
+    "react-scripts": "^5.0.1",
     "cross-env": "^5.2.1",
     "gh-pages": "^2.1.1",
     "react": "^17.0.1",
     "react-bootstrap": "^1.4.0",
     "react-dom": "^17.0.1",
-    "react-scripts": "5.0.1",
-    "rimraf": "^2.7.1"
+    "rimraf": "^2.7.1",
+    "typescript": "^5.0.4"
   },
   "peerDependencies": {
     "react": "^16.8.2 || ^17.0 || ^18.x",
