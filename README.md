@@ -206,7 +206,7 @@ const kbitsToMbits = (value) => {
       <li><code>width: number</code>: The width of the arc given in percent of the radius. Default: <code>0.15</code>.</li>
       <li><code>nbSubArcs: number</code>: The number of subArcs. This overrides <code>subArcs</code>. Default: <code>undefined</code></li>
       <li><code>colorArray: Array&lt;string&gt;</code>: The colors of the arcs. This overrides <code>subArcs</code> colors. Default: <code>undefined</code></li>
-      <li><code>gradient: boolean</code>: This will draw a single chart with all colors provided in subArcs, using limits as references to draw the linear-gradient result. Default: <code>false</code>.</li>
+      <li><code>gradient: boolean</code>: This will draw a single arc with all colors provided in subArcs, using limits as references to draw the linear-gradient result. (limits may not be accurate in this mode) Default: <code>false</code>.</li>
       <li><code>subArcs: Array&lt;object&gt;</code>: The subArcs of the gauge.
         <ul>
           <li><code>limit: number</code>: The subArc limit value. When no limits are defined in the next subArcs in the list, it's optional and will auto-calculate remaining arcs limits. Example: <code>[{limit: 70}, {}, {}, {}]</code>. In a default <code>minValue/maxValue</code>, the values will be equal to <code>[{limit: 70}, {limit: 80}, {limit: 90}, {limit: 100}]</code>. But <code>[{},{limit: 100}]</code> will not work properly as the not defined subArc limit has a subArc with limit defined ahead in the array.</li>
