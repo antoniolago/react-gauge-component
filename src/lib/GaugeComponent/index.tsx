@@ -107,10 +107,13 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
 
   const { id, style, className } = props;
   return (
-    <div
+    <meter
       id={id}
       className={className}
       style={style}
+      min={minValue}
+      max={maxValue}
+      value={value}
       ref={(svg) => (selectedRef.current = svg)}
     />
   );
