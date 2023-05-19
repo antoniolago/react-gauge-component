@@ -106,7 +106,6 @@ export const setupArcs = (gauge: Gauge) => {
   let isTooltipInTheDom = document.getElementsByClassName(CONSTANTS.arcTooltipClassname).length != 0;
   if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
   gauge.tooltip.current = select(`.${CONSTANTS.arcTooltipClassname}`);
-  console.log(gauge.tooltip.current)
   //Setup the arc
   gauge.arcChart.current
     .outerRadius(gauge.outerRadius.current)

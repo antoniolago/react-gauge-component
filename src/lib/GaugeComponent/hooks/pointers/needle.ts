@@ -6,14 +6,14 @@ import {
 } from "d3";
 import { Gauge } from "../../types/Gauge";
 
-//If 'resize' is true then the animation does not play
+
 export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
   const { needle, value, minValue, maxValue } = gauge.props;
-  var needleRadius = getNeedleRadius(gauge) // Make the needle radius responsive
+  var needleRadius = getNeedleRadius(gauge) 
   var centerPoint = [0, -needleRadius / 2];
   let currentPercent = utils.calculatePercentage(minValue, maxValue, value as number);
   var prevPercent = utils.calculatePercentage(minValue, maxValue, gauge.prevProps?.current.value || minValue);
-  var pathLength = gauge.outerRadius.current * needle.length; //TODO: Maybe it should be specified as a percentage of the arc radius?
+  var pathLength = gauge.outerRadius.current * needle.length;
   var needleRadius = getNeedleRadius(gauge);
   let isFirstTime = gauge.prevProps?.current.value == undefined;
   if(isFirstTime || resize){
@@ -32,10 +32,9 @@ export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
       "translate(" + gauge.outerRadius.current + ", " + gauge.outerRadius.current + ")"
     );
   }
-  // if(prevPercent == currentPercent) return;
   //Rotate the needle
   let needlePath = gauge.container.current.select(`.needle path`);
-  if (!resize && needle.animate) {
+  if ((!resize || isFirstTime) && needle.animate) {
     gauge.pointer.current
       .transition()
       .delay(needle.animationDelay)
