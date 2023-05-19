@@ -12,15 +12,18 @@ import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 
 const onArcMouseMove = (event: any, d: any) => {
   let div = select(`.${CONSTANTS.arcTooltipClassname}`)
-  div.style("display", "none");
+  //div.style("display", "none");
   if (d.data.tooltip != undefined) {
-    div.html(d.data.tooltip.text)
-      .style("left", (event.pageX + 15) + "px")
-      .style("top", (event.pageY - 10) + "px")
-      .style("opacity", 1)
+    let shouldChangeText = d.data.tooltip.text != div.text();
+    if(shouldChangeText){
+      div.html(d.data.tooltip.text)
       .style("position", "absolute")
-      .style("display", "block");
-    applyTooltipStyles(d.data.tooltip, d.data.color);
+      .style("display", "block")
+      .style("opacity", 1);
+      applyTooltipStyles(d.data.tooltip, d.data.color);
+    }
+    div.style("left", (event.pageX + 15) + "px")
+      .style("top", (event.pageY - 10) + "px");
   }
 }
 const applyTooltipStyles = (tooltip: Tooltip, arcColor: string) => {
@@ -44,11 +47,13 @@ export const setArcData = (gauge: Gauge) => {
     let lastSubArcLimitPercentageAcc = 0;
     let remainingPercentageEquallyDivided: number | undefined = undefined;
     let subArcsLength: Array<number> = [];
+    let subArcsLimits: Array<number> = [];
     let subArcsTooltip: Array<Tooltip> = [];
     arc.subArcs?.forEach((subArc, i) => {
       let subArcLength = 0;
       //map limit for non defined subArcs limits
       let subArcRange = 0;
+      let limit = subArc.limit as number;
       if (subArc.limit == undefined) {
         subArcRange = lastSubArcLimit;
         let remainingSubArcs = arc.subArcs.slice(i);
@@ -57,23 +62,26 @@ export const setArcData = (gauge: Gauge) => {
           remainingPercentageEquallyDivided = (remainingPercentage / Math.max(remainingSubArcs.length, 1)) / 100;
         }
         subArcLength = remainingPercentageEquallyDivided;
-        subArc.limit = lastSubArcLimit + (remainingPercentageEquallyDivided * 100);
+        limit = lastSubArcLimit + (remainingPercentageEquallyDivided * 100);
       } else {
-        subArcRange = subArc.limit - lastSubArcLimit;
+        subArcRange = limit - lastSubArcLimit;
         // Calculate arc length based on previous arc percentage
         if (i !== 0) {
-          subArcLength = utils.calculatePercentage(minValue, maxValue, subArc.limit) - lastSubArcLimitPercentageAcc;
+          subArcLength = utils.calculatePercentage(minValue, maxValue, limit) - lastSubArcLimitPercentageAcc;
         } else {
           subArcLength = utils.calculatePercentage(minValue, maxValue, subArcRange);
         }
       }
       subArcsLength.push(subArcLength);
+      subArcsLimits.push(limit);
       lastSubArcLimitPercentageAcc = subArcsLength.reduce((count, curr) => count + curr, 0);
-      lastSubArcLimit = subArc.limit;
+      lastSubArcLimit = limit;
+      //subArc.limit = limit;
       if (subArc.tooltip != undefined) subArcsTooltip.push(subArc.tooltip);
     });
     gauge.arcData.current = subArcsLength.map((length, i) => ({
       value: length,
+      limitValue: subArcsLimits[i],
       color: colorArray[i],
       tooltip: subArcsTooltip[i],
     }));
@@ -145,10 +153,10 @@ export const applyColors = (subArcsPath: any, gauge: Gauge) => {
 }
 export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
   const { arc } = gauge.props;
-  arc.subArcs.forEach((subArc) => 
+  gauge.arcData.current.forEach((subArcData) => 
     gradEl.append("stop")
-        .attr("offset", `${subArc.limit}%`)
-        .style("stop-color", subArc.color)//end in red
+        .attr("offset", `${subArcData.limitValue}%`)
+        .style("stop-color", subArcData.color)//end in red
         .style("stop-opacity", 1)
   )
 }

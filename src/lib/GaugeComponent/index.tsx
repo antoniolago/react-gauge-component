@@ -68,38 +68,28 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     pieChart,
     selectedPointerType
   };
-  const initChartCallback = useCallback(chartHooks.initChart, [mergedProps.current]);
+  //Merged properties will get the default props and overwrite by the user's defined props
+  //To keep the original default props in the object
   const updateMergedProps = () => {
     if(props.needle) gauge.selectedPointerType.current = PointerType.Needle;
     else if(props.blob) gauge.selectedPointerType.current = PointerType.Blob;
     gauge.props = mergedProps.current = mergeObjects(defaultGaugeProps, props);
   }
+  const shouldInitChart = () => {
+    let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc));
+    let needlePropsChanged = (JSON.stringify(prevProps.current.needle) !== JSON.stringify(mergedProps.current.needle));
+    let valueChanged = (JSON.stringify(prevProps.current.value) !== JSON.stringify(mergedProps.current.value));
+    return arcsPropsChanged || needlePropsChanged || valueChanged;
+  }
   useLayoutEffect(() => {
-    //Merged properties will get the default props and overwrite by the user's defined props
-    //To keep the original default props in the object
     updateMergedProps();
-    arcHooks.setArcData(gauge);
     container.current = select(selectedRef.current);
-    //Initialize chart
-    initChartCallback(false, gauge);
-  }, [props, initChartCallback]);
-  useDeepCompareEffect(() => {
-    let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) === JSON.stringify(props.arc));
-    if (arcsPropsChanged) arcHooks.setArcData(gauge)
-    const resize = (JSON.stringify(prevProps.current.needle) !== JSON.stringify(props.needle));
-    initChartCallback(true, gauge, resize);
+    if(shouldInitChart()) chartHooks.initChart(gauge);
     gauge.prevProps.current = mergeObjects(defaultGaugeProps, props);
-  }, [
-    props.needle,
-    props.blob,
-    props.arc,
-    props.value,
-    props.minValue,
-    props.maxValue,
-  ]);
+  }, [props]);
 
   useEffect(() => {
-    const handleResize = () => chartHooks.renderChart(true, gauge);
+    const handleResize = () => chartHooks.renderChart(gauge, true);
     //Set up resize event listener to re-render the chart everytime the window is resized
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);

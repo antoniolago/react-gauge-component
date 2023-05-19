@@ -9,6 +9,9 @@ export const calculatePercentage = (minValue: number, maxValue: number, value: n
         return (percentage);
     }
 }
+export const isEmptyObject = (obj: any) => {
+  return Object.keys(obj).length === 0 && obj.constructor === Object;
+} 
 export const mergeObjects = (obj1: any, obj2: Partial<any>): any => {
     const mergedObj = { ...obj1 } as any;
   

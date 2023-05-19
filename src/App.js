@@ -164,6 +164,7 @@ const App = () => {
                 id="gauge-component4"
                 arc={{
                   gradient: true,
+                  padding: 0,
                   subArcs: [
                     { 
                       limit: 15, 

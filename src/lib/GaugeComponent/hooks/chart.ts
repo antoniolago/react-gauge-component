@@ -3,9 +3,12 @@ import { Gauge } from "../types/Gauge";
 import * as arcHooks from "./arc";
 import * as labelsHooks from "./labels";
 import * as pointerHooks from "./pointer";
-export const initChart = (update: boolean, gauge: Gauge, resize = false) => {
-    if (update) {
-        renderChart(resize, gauge);
+import * as utilHooks from "./utils";
+export const initChart = (gauge: Gauge) => {
+    let updatedValue = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
+    let isFirstTime = utilHooks.isEmptyObject(gauge.svg.current);
+    if (updatedValue && !isFirstTime) {
+        renderChart(gauge);
         return;
     }
     gauge.container.current.select("svg").remove();
@@ -23,34 +26,55 @@ export const initChart = (update: boolean, gauge: Gauge, resize = false) => {
         .sort(null);
     //Set up pointer
     pointerHooks.addPointerElement(gauge);
-    renderChart(resize, gauge);
+    renderChart(gauge, true);
 }
 //Renders the chart, should be called every time the window is resized
-export const renderChart = (resize: boolean, gauge: Gauge) => {
-    updateDimensions(gauge);
-    //Set dimensions of svg element and translations
-    gauge.svg.current
-        .attr("width", gauge.width.current + gauge.margin.current.left + gauge.margin.current.right)
-        .attr(
-            "height",
-            gauge.height.current + gauge.margin.current.top + gauge.margin.current.bottom
+export const renderChart = (gauge: Gauge, resize: boolean = false) => {
+    //if resize recalculate dimensions, clear chart and redraw
+    //if not resize, treat each prop separately
+    if(resize){
+        updateDimensions(gauge);
+        //Set dimensions of svg element and translations
+        gauge.svg.current
+            .attr("width", gauge.width.current + gauge.margin.current.left + gauge.margin.current.right)
+            .attr(
+                "height",
+                gauge.height.current + gauge.margin.current.top + gauge.margin.current.bottom
+            );
+        gauge.g.current.attr(
+            "transform",
+            "translate(" + gauge.margin.current.left + ", " + 35 + ")"
         );
-    gauge.g.current.attr(
-        "transform",
-        "translate(" + gauge.margin.current.left + ", " + 35 + ")"
-    );
-    //Set the radius to lesser of width or height and remove the margins
-    //Calculate the new radius
-    calculateRadius(gauge);
-    gauge.doughnut.current.attr(
-        "transform",
-        "translate(" + gauge.outerRadius.current + ", " + gauge.outerRadius.current + ")"
-    );
-    gauge.innerRadius.current = gauge.outerRadius.current * (1 - gauge.props.arc.width);
-    clearChart(gauge);
-    arcHooks.setupArcs(gauge);
-    labelsHooks.setupLabels(gauge);
-    pointerHooks.drawPointer(gauge, resize);
+        //Set the radius to lesser of width or height and remove the margins
+        //Calculate the new radius
+        calculateRadius(gauge);
+        gauge.doughnut.current.attr(
+            "transform",
+            "translate(" + gauge.outerRadius.current + ", " + gauge.outerRadius.current + ")"
+        );
+        gauge.innerRadius.current = gauge.outerRadius.current * (1 - gauge.props.arc.width);
+        clearChart(gauge);
+        arcHooks.setArcData(gauge);
+        arcHooks.setupArcs(gauge);
+        labelsHooks.setupLabels(gauge);
+        pointerHooks.drawPointer(gauge, resize);
+    } else {
+        let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
+        let needlePropsChanged = (JSON.stringify(gauge.prevProps.current.needle) !== JSON.stringify(gauge.props.needle));
+        let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
+        if(arcsPropsChanged) {
+            arcHooks.clearArcs(gauge);
+            arcHooks.setArcData(gauge);
+            arcHooks.setupArcs(gauge);
+        }
+        if(needlePropsChanged || valueChanged) {
+            pointerHooks.drawPointer(gauge);
+        }
+        if(arcsPropsChanged || valueChanged) {
+            labelsHooks.clearLabels(gauge);
+            labelsHooks.setupLabels(gauge);
+        }
+    }
 };
 export const calculateRadius = (gauge: Gauge) => {
     //The radius needs to be constrained by the containing div
