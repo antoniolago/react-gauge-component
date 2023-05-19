@@ -6,21 +6,33 @@ import { defaultValueLabel } from '../types/Labels';
 import React from 'react';
 import { select, style } from 'd3';
 export const setupLabels = (gauge: Gauge) => {
-  const { minValue, maxValue, labels, arc } = gauge.props;
-  //Add value label
+  setupValueLabel(gauge);
+  setupMarks(gauge);
+}
+export const setupValueLabel = (gauge: Gauge) => {
+  const { labels } = gauge.props;
   if (!labels.valueLabel.hide) addValueText(gauge)
+}
+export const setupMarks = (gauge: Gauge) => {
+  const { minValue, maxValue, labels } = gauge.props;
   if (CONSTANTS.debugMarkersRadius) {
     for (let index = 0; index < maxValue; index++) {
       let indexMark = mapMark(index, gauge);
       addMark(indexMark, gauge);
     }
   } else if (!labels.markLabel?.hideMinMax) {
-    //Add min value mark
-    let minValueMark = mapMark(minValue, gauge);
-    addMark(minValueMark, gauge);
-    // //Add max value mark
-    let maxValueMark = mapMark(maxValue, gauge);
-    addMark(maxValueMark, gauge);
+    let alreadyHaveMinValueMark = labels.markLabel.marks.some((mark) => mark.value == minValue);
+    if(!alreadyHaveMinValueMark) {
+      //Add min value mark
+      let minValueMark = mapMark(minValue, gauge);
+      addMark(minValueMark, gauge);
+    }
+    let alreadyHaveMaxValueMark = labels.markLabel.marks.some((mark) => mark.value == maxValue);
+    if(!alreadyHaveMaxValueMark){
+      // //Add max value mark
+      let maxValueMark = mapMark(maxValue, gauge);
+      addMark(maxValueMark, gauge);
+    }
   }
   if (labels.markLabel.marks.length > 0) {
     labels.markLabel.marks.forEach((mark) => {
@@ -55,7 +67,7 @@ export const addMarker = (mark: Mark, gauge: Gauge) => {
   // let charColor = mark.markerConfig?.style.color || labels.markLabel.markerConfig.style.color;
   let charStyle = mark.markerConfig?.style || labels.markLabel.markerConfig.style
   charStyle.textAnchor = markAnchor as any;
-  addText(char, coords.x, coords.y, gauge, charStyle, angle);
+  addText(char, coords.x, coords.y, gauge, charStyle, CONSTANTS.markerClassname, angle);
 }
 
 export const addMarkValue = (mark: Mark, gauge: Gauge) => {
@@ -65,8 +77,6 @@ export const addMarkValue = (mark: Mark, gauge: Gauge) => {
   let isInner = gauge.props.labels.markLabel.type == "inner";
   if(!isInner) centerToArcLengthSubtract = arc.width * 10 - 20
   let coords = getLabelCoordsByValue(mark.value, gauge, centerToArcLengthSubtract);
-  let fontSize = mark.valueConfig?.style.fontSize || labels.markLabel.valueConfig.style.fontSize;
-  let fontColor = mark.valueConfig?.style.color || labels.markLabel.valueConfig.style.color;
   let markValueStyle = mark.valueConfig?.style || labels.markLabel.valueConfig.style;
   let text = '';
   if(labels.markLabel.valueConfig.formatTextValue){
@@ -79,7 +89,6 @@ export const addMarkValue = (mark: Mark, gauge: Gauge) => {
   }
   //This is a position correction for the text being too far away from the marker
   if(gauge.props.labels.markLabel.type == "inner"){
-    
     if(markAnchor === "end") coords.x += 10;
     if(markAnchor === "start") coords.x -= 10;
     if(markAnchor === "middle") coords.y -= 15;
@@ -93,7 +102,7 @@ export const addMarkValue = (mark: Mark, gauge: Gauge) => {
     coords.y += 3;
   }
   markValueStyle.textAnchor = markAnchor as any;
-  addText(text, coords.x, coords.y, gauge, markValueStyle);
+  addText(text, coords.x, coords.y, gauge, markValueStyle, CONSTANTS.markValueClassname);
 }
 
 export const addMark = (mark: Mark, gauge: Gauge) => {
@@ -129,10 +138,10 @@ export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLe
   }
   return { x, y }
 }
-export const addText = (html: any, x: number, y: number, gauge: Gauge, style: React.CSSProperties, rotate = 0) => {
+export const addText = (html: any, x: number, y: number, gauge: Gauge, style: React.CSSProperties, className: string, rotate = 0) => {
   let div = gauge.g.current
     .append("g")
-    .attr("class", "text-group")
+    .attr("class", className)
     .attr("transform", `translate(${x}, ${y})`)
     .append("text")
     .text(html) // use html() instead of text()
@@ -171,10 +180,11 @@ export const addValueText = (gauge: Gauge) => {
   let x = gauge.outerRadius.current;
   let y = gauge.outerRadius.current / 1.5 + textPadding;
   valueTextStyle.textAnchor = "middle";
-  addText(text, x, y, gauge, valueTextStyle);
+  addText(text, x, y, gauge, valueTextStyle, CONSTANTS.valueLabelClassname);
 };
 
-export const clearLabels = (gauge: Gauge) => gauge.g.current.selectAll(".text-group").remove();
+export const clearValueLabel = (gauge: Gauge) => gauge.g.current.selectAll(`.${CONSTANTS.valueLabelClassname}`).remove();
+export const clearMarks = (gauge: Gauge) => gauge.g.current.selectAll(`.${CONSTANTS.markerClassname} .${CONSTANTS.markValueClassname}`).remove();
 
 export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   const { minValue, maxValue } = gauge.props;

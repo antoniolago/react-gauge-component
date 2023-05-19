@@ -62,6 +62,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
         let needlePropsChanged = (JSON.stringify(gauge.prevProps.current.needle) !== JSON.stringify(gauge.props.needle));
         let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
+        let marksChanged = (JSON.stringify(gauge.prevProps.current.labels.markLabel) !== JSON.stringify(gauge.props.labels.markLabel));
         if(arcsPropsChanged) {
             arcHooks.clearArcs(gauge);
             arcHooks.setArcData(gauge);
@@ -70,9 +71,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         if(needlePropsChanged || valueChanged) {
             pointerHooks.drawPointer(gauge);
         }
-        if(arcsPropsChanged || valueChanged) {
-            labelsHooks.clearLabels(gauge);
-            labelsHooks.setupLabels(gauge);
+        if(arcsPropsChanged || marksChanged) {
+            labelsHooks.clearMarks(gauge);
+            labelsHooks.setupMarks(gauge);
+        }
+        if(valueChanged) {
+            labelsHooks.clearValueLabel(gauge);
+            labelsHooks.setupValueLabel(gauge);
         }
     }
 };
@@ -126,7 +131,8 @@ export const updateDimensions = (gauge: Gauge) => {
 
 export const clearChart = (gauge: Gauge) => {
     //Remove the old stuff
-    labelsHooks.clearLabels(gauge);
+    labelsHooks.clearMarks(gauge);
+    labelsHooks.clearValueLabel(gauge);
     pointerHooks.clearPointerElement(gauge);
     arcHooks.clearArcs(gauge);
 };
