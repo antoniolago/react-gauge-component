@@ -51,8 +51,7 @@ export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
           const progress = currentInterpolatedPercent(percentOfPercent);
           return needlePath.attr("d", calculateNeedlePath(progress, pathLength, needleRadius, centerPoint));
         };
-      })
-      .attr("steps", 5);;
+      });
   } else {
     needlePath.attr("d", calculateNeedlePath(utils.getCurrentGaugeValuePercentage(gauge.props), pathLength, needleRadius, centerPoint));
   }
