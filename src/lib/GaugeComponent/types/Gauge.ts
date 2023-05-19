@@ -18,4 +18,5 @@ export interface Gauge {
     arcChart: React.MutableRefObject<any>;
     arcData: React.MutableRefObject<any[]>;
     pieChart: React.MutableRefObject<any>;
+    tooltip: React.MutableRefObject<any>;
 }

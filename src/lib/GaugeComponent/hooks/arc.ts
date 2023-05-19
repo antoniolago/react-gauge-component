@@ -4,35 +4,31 @@ import {
   scaleLinear,
   interpolateHsl,
 } from "d3";
-import * as d3 from "d3";
 import { Gauge } from '../types/Gauge';
 import * as chartHooks from './chart';
 import CONSTANTS from '../constants';
 import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 
-const onArcMouseMove = (event: any, d: any) => {
-  let div = select(`.${CONSTANTS.arcTooltipClassname}`)
-  //div.style("display", "none");
+const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
   if (d.data.tooltip != undefined) {
-    let shouldChangeText = d.data.tooltip.text != div.text();
+    let shouldChangeText = d.data.tooltip.text != gauge.tooltip.current.text();
     if(shouldChangeText){
-      div.html(d.data.tooltip.text)
+      gauge.tooltip.current.html(d.data.tooltip.text)
       .style("position", "absolute")
       .style("display", "block")
       .style("opacity", 1);
-      applyTooltipStyles(d.data.tooltip, d.data.color);
+      applyTooltipStyles(d.data.tooltip, d.data.color, gauge);
     }
-    div.style("left", (event.pageX + 15) + "px")
+    gauge.tooltip.current.style("left", (event.pageX + 15) + "px")
       .style("top", (event.pageY - 10) + "px");
   }
 }
-const applyTooltipStyles = (tooltip: Tooltip, arcColor: string) => {
-  let div = select(`.${CONSTANTS.arcTooltipClassname}`);
+const applyTooltipStyles = (tooltip: Tooltip, arcColor: string, gauge: Gauge) => {
   //Apply default styles
-  Object.entries(defaultTooltipStyle).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
-  div.style("background-color", arcColor);
+  Object.entries(defaultTooltipStyle).forEach(([key, value]) => gauge.tooltip.current.style(utils.camelCaseToKebabCase(key), value))
+  gauge.tooltip.current.style("background-color", arcColor);
   //Apply custom styles
-  if (tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
+  if (tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => gauge.tooltip.current.style(utils.camelCaseToKebabCase(key), value))
 }
 const onArcMouseOut = () => { select(`.${CONSTANTS.arcTooltipClassname}`).html(" ").style("display", "none"); }
 
@@ -109,7 +105,8 @@ export const setupArcs = (gauge: Gauge) => {
   //Add tooltip
   let isTooltipInTheDom = document.getElementsByClassName(CONSTANTS.arcTooltipClassname).length != 0;
   if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
-
+  gauge.tooltip.current = select(`.${CONSTANTS.arcTooltipClassname}`);
+  console.log(gauge.tooltip.current)
   //Setup the arc
   gauge.arcChart.current
     .outerRadius(gauge.outerRadius.current)
@@ -137,7 +134,7 @@ export const setupArcs = (gauge: Gauge) => {
 
   arcPaths
     .on("mouseout", onArcMouseOut)
-    .on("mousemove", (event: any, d: any) => onArcMouseMove(event, d))
+    .on("mousemove", (event: any, d: any) => onArcMouseMove(event, d, gauge))
 };
 
 export const applyColors = (subArcsPath: any, gauge: Gauge) => {

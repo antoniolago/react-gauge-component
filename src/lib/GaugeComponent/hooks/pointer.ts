@@ -1,14 +1,3 @@
-import * as utils from './utils';
-import {
-  arc,
-  pie,
-  select,
-  easeElastic,
-  easeExpOut,  
-  scaleLinear,
-  interpolateHsl,
-  interpolateNumber,
-} from "d3";
 import { Gauge } from "../types/Gauge";
 import { PointerType } from '../types/PointerType';
 import * as needleHooks from "./pointers/needle";

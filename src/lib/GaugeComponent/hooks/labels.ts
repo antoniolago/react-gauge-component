@@ -2,9 +2,7 @@ import * as utils from './utils';
 import CONSTANTS from '../constants';
 import { Gauge } from '../types/Gauge';
 import { Mark } from '../types/Mark';
-import { defaultValueLabel } from '../types/Labels';
 import React from 'react';
-import { select, style } from 'd3';
 export const setupLabels = (gauge: Gauge) => {
   setupValueLabel(gauge);
   setupMarks(gauge);

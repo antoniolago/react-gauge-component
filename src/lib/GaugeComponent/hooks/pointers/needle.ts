@@ -1,15 +1,11 @@
 import * as utils from '../utils';
 import {
-  arc,
-  pie,
-  select,
   easeElastic,
-  easeExpOut,  
-  scaleLinear,
-  interpolateHsl,
+  easeExpOut,
   interpolateNumber,
 } from "d3";
 import { Gauge } from "../../types/Gauge";
+
 //If 'resize' is true then the animation does not play
 export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
   const { needle, value, minValue, maxValue } = gauge.props;

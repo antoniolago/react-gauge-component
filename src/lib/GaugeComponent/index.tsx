@@ -1,22 +1,8 @@
-import React, { useCallback, useEffect, useRef, useLayoutEffect } from "react";
-import PropTypes from "prop-types";
-import {
-  arc,
-  pie,
-  select,
-  easeElastic,
-  scaleLinear,
-  interpolateHsl,
-  interpolateNumber,
-  BaseType
-} from "d3";
+import React, { useEffect, useRef, useLayoutEffect } from "react";
+import { arc, pie, select } from "d3";
 import { defaultGaugeProps, GaugeComponentProps } from "./types/GaugeComponentProps";
 import { Gauge } from "./types/Gauge";
-import useDeepCompareEffect from "./hooks/customHooks";
-import CONSTANTS from './constants';
-import * as arcHooks from "./hooks/arc";
 import * as chartHooks from "./hooks/chart";
-import * as labelsHooks from "./hooks/labels";
 import { mergeObjects } from "./hooks/utils";
 import { PointerType } from "./types/PointerType";
 /*
@@ -29,6 +15,7 @@ The svg element surrounding the gauge will always be square
 */
 const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const svg = useRef<any>({});
+  const tooltip = useRef<any>({});
   const g = useRef<any>({});
   const width = useRef<any>({});
   const height = useRef<any>({});
@@ -66,15 +53,17 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     arcChart,
     arcData,
     pieChart,
-    selectedPointerType
+    selectedPointerType,
+    tooltip
   };
-  //Merged properties will get the default props and overwrite by the user's defined props
-  //To keep the original default props in the object
-  const updateMergedProps = () => {
+  const updateSelectedPointerType = () => {
     if(props.needle) gauge.selectedPointerType.current = PointerType.Needle;
     else if(props.blob) gauge.selectedPointerType.current = PointerType.Blob;
-    gauge.props = mergedProps.current = mergeObjects(defaultGaugeProps, props);
   }
+  //Merged properties will get the default props and overwrite by the user's defined props
+  //To keep the original default props in the object
+  const updateMergedProps = () => gauge.props = mergedProps.current = mergeObjects(defaultGaugeProps, props);
+
   const shouldInitChart = () => {
     let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc));
     let needlePropsChanged = (JSON.stringify(prevProps.current.needle) !== JSON.stringify(mergedProps.current.needle));
@@ -82,6 +71,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     return arcsPropsChanged || needlePropsChanged || valueChanged;
   }
   useLayoutEffect(() => {
+    updateSelectedPointerType();
     updateMergedProps();
     container.current = select(selectedRef.current);
     if(shouldInitChart()) chartHooks.initChart(gauge);
