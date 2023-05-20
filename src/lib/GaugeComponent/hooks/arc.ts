@@ -12,6 +12,8 @@ import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
   if (d.data.tooltip != undefined) {
     let shouldChangeText = d.data.tooltip.text != gauge.tooltip.current.text();
+    event.target.style.stroke = "powderblue";
+    console.log(event.target.style.stroke)
     if(shouldChangeText){
       gauge.tooltip.current.html(d.data.tooltip.text)
       .style("position", "absolute")
@@ -30,7 +32,10 @@ const applyTooltipStyles = (tooltip: Tooltip, arcColor: string, gauge: Gauge) =>
   //Apply custom styles
   if (tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => gauge.tooltip.current.style(utils.camelCaseToKebabCase(key), value))
 }
-const onArcMouseOut = () => { select(`.${CONSTANTS.arcTooltipClassname}`).html(" ").style("display", "none"); }
+const onArcMouseOut = (event: any) => { 
+  select(`.${CONSTANTS.arcTooltipClassname}`).html(" ").style("display", "none"); 
+  event.target.style.stroke = "none";
+}
 
 export const setArcData = (gauge: Gauge) => {
   const { arc, minValue, maxValue } = gauge.props;
@@ -132,7 +137,7 @@ export const setupArcs = (gauge: Gauge) => {
   applyColors(subArcs, gauge);
 
   arcPaths
-    .on("mouseout", onArcMouseOut)
+    .on("mouseout", (event: any) => onArcMouseOut(event))
     .on("mousemove", (event: any, d: any) => onArcMouseMove(event, d, gauge))
 };
 

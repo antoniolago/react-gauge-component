@@ -262,7 +262,8 @@ const App = () => {
                   }
                 }}
                 needle={{
-                  elastic: true
+                  elastic: true,
+                  animationDelay: 0
                 }}
               />
             </Col>
