@@ -168,9 +168,11 @@ export const getColors = (gauge: Gauge) => {
   } else {
     colorsValue = arc.colorArray;
   }
+  //defaults colorsValue to white in order to avoid compilation error
+  if(!colorsValue) colorsValue = ["#fff"];
   //Check if the number of colors equals the number of levels
   //Otherwise make an interpolation
-  let arcsEqualsColorsLength = gauge.nbArcsToDisplay.current === colorsValue.length;
+  let arcsEqualsColorsLength = gauge.nbArcsToDisplay.current === colorsValue?.length;
   if (arcsEqualsColorsLength) return colorsValue;
   var colorScale = scaleLinear()
     .domain([1, gauge.nbArcsToDisplay.current])

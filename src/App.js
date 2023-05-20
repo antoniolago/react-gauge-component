@@ -10,7 +10,7 @@ const App = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCurrentValue(Math.random()*100);
+      setCurrentValue(Math.random() * 100);
       // setArcs([{ limit: 30 }, { limit: 35 }, { limit: 100 }])
     }, 3000);
 
@@ -92,24 +92,24 @@ const App = () => {
           </Row>
           <Row>
             <Col xs={12} lg={12}>
-              <p 
-                className="mx-5" 
-                style={{textAlign: 'justify'}}>
-                  Enhance your projects with this React Gauge chart built with D3 library. 
-                  This component features custom min/max values, marks, and tooltips, 
-                  making it perfect for visualizing various metrics such as speed, 
-                  temperature, charge, and humidity. This data visualization tool can be very useful for React developers looking to create engaging and informative dashboards. 
-                  <br/>Documentation at <a href="https://github.com/antoniolago/react-gauge-component" target="_blank">react-gauge-component</a>
+              <p
+                className="mx-5"
+                style={{ textAlign: 'justify' }}>
+                Enhance your projects with this React Gauge chart built with D3 library.
+                This component features custom min/max values, marks, and tooltips,
+                making it perfect for visualizing various metrics such as speed,
+                temperature, charge, and humidity. This data visualization tool can be very useful for React developers looking to create engaging and informative dashboards.
+                <br />Documentation at <a href="https://github.com/antoniolago/react-gauge-component" target="_blank">react-gauge-component</a>
               </p>
             </Col>
           </Row>
           <Row>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent with default props</h6>
+              <h6 className="mb-1">Default props</h6>
               <GaugeComponent />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent with 20 levels</h6>
+              <h6 className="mb-1">20 levels</h6>
               <GaugeComponent
                 id="gauge-component2"
                 arc={{ nbSubArcs: 20 }}
@@ -126,17 +126,15 @@ const App = () => {
                   }
                 }}
                 value={55}
-                needle={{elastic: true}}
+                needle={{ elastic: true }}
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent with custom colors, inner marks and needle length</h6>
+              <h6 className="mb-1">Custom colors, inner marks and needle length</h6>
               <GaugeComponent
                 id="gauge-component3"
-                nrOfLevels={50}
-                arcPadding={0.02}
                 arc={{
-                  width: 0.3,
+                  width: 0.2,
                   nbSubArcs: 20,
                   colorArray: ['#FF5F6D', '#FFC371']
                 }}
@@ -159,31 +157,31 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent with gradient arc</h6>
+              <h6 className="mb-1">Gradient arc</h6>
               <GaugeComponent
                 id="gauge-component4"
                 arc={{
                   gradient: true,
                   padding: 0,
                   subArcs: [
-                    { 
-                      limit: 15, 
-                      color: '#EA4228', 
-                      showMark: true 
-                    },
-                    { 
-                      limit: 37, 
-                      color: '#F5CD19', 
+                    {
+                      limit: 15,
+                      color: '#EA4228',
                       showMark: true
                     },
-                    { 
-                      limit: 58, 
-                      color: '#5BE12C', 
+                    {
+                      limit: 37,
+                      color: '#F5CD19',
                       showMark: true
                     },
-                    { 
-                      limit: 75, 
-                      color: '#F5CD19', 
+                    {
+                      limit: 58,
+                      color: '#5BE12C',
+                      showMark: true
+                    },
+                    {
+                      limit: 75,
+                      color: '#F5CD19',
                       showMark: true
                     },
                     { color: '#EA4228' }
@@ -193,7 +191,7 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent with custom arcs width</h6>
+              <h6 className="mb-1">Custom arcs width</h6>
               <GaugeComponent
                 id="gauge-component5"
                 arc={{
@@ -206,28 +204,39 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent without animation, custom needle color</h6>
+              <h6 className="mb-1">No animation, custom needle color</h6>
               <GaugeComponent
                 id="gauge-component6"
                 needle={{
                   animate: false,
-                  color: '#345243'
+                  color: '#4A05EC'
                 }}
                 arc={{
-                  nbSubArcs: 15
+                  colorArray: ['#830C7336', '#0077FF'],
+                  subArcs:
+                    [
+                      { limit: 20 },
+                      { limit: 40 },
+                      { limit: 60 },
+                      {},
+                      {}
+                    ]
                 }}
                 value={currentValue}
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">GaugeComponent with live updates</h6>
+              <h6 className="mb-1">Live updates</h6>
               <GaugeComponent
                 id="gauge-component7"
                 arc={{
-                  colorArray: ['#FF5F6D', '#FFF321'],
+                  colorArray: ['#00FF15', '#FF2121'],
                   subArcs:
                     [
-                      { limit: 20 },
+                      { limit: 40 },
+                      { limit: 60},
+                      { limit: 70},
+                      {},
                       {},
                       {},
                       {}
@@ -238,7 +247,7 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Elastic GaugeComponent with live updates</h6>
+              <h6 className="mb-1">Elastic</h6>
               <GaugeComponent
                 id="gauge-component7"
                 value={currentValue}
@@ -258,7 +267,7 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={6}>
-              <h6 className="mb-1">GaugeComponent with min/max values and  formatted text</h6>
+              <h6 className="mb-1">Min/max values and formatted text</h6>
               <GaugeComponent
                 id="gauge-component8"
                 arc={{
@@ -270,7 +279,7 @@ const App = () => {
                 labels={{
                   valueLabel: {
                     fontSize: 40,
-                    formatTextValue: kbitsToMbits 
+                    formatTextValue: kbitsToMbits
                   },
                   markLabel: {
                     type: "outer",
@@ -301,45 +310,49 @@ const App = () => {
             </Col>
 
             <Col xs={12} lg={6}>
-              <h6 className="mb-1">Custom Temperature gauge with tooltips on hover</h6>
+              <h6 className="mb-1">Custom Temperature Gauge with tooltips on hover</h6>
               <GaugeComponent
                 arc={{
                   width: 0.2,
                   padding: 0.01,
                   // gradient: true,
                   subArcs: [
-                    { 
-                      limit: 15, 
-                      color: '#EA4228', 
-                      showMark: true ,
+                    {
+                      limit: 15,
+                      color: '#EA4228',
+                      showMark: true,
                       tooltip: {
                         text: 'Too low temperature!'
                       }
                     },
-                    { 
-                      limit: 17, 
-                      color: '#F5CD19', 
+                    {
+                      limit: 17,
+                      color: '#F5CD19',
                       showMark: true,
                       tooltip: {
                         text: 'Low temperature!'
                       }
                     },
-                    { 
-                      limit: 28, 
-                      color: '#5BE12C', 
+                    {
+                      limit: 28,
+                      color: '#5BE12C',
                       showMark: true,
                       tooltip: {
                         text: 'OK temperature!'
-                      } 
+                      }
                     },
-                    { limit: 30, color: '#F5CD19', showMark: true ,
-                    tooltip: {
-                      text: 'High temperature!'
-                    }},
-                    { color: '#EA4228',
-                    tooltip: {
-                      text: 'Too high temperature!'
-                    } }
+                    {
+                      limit: 30, color: '#F5CD19', showMark: true,
+                      tooltip: {
+                        text: 'High temperature!'
+                      }
+                    },
+                    {
+                      color: '#EA4228',
+                      tooltip: {
+                        text: 'Too high temperature!'
+                      }
+                    }
                   ]
                 }}
                 needle={{
