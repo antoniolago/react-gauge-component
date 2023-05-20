@@ -240,7 +240,7 @@ const kbitsToMbits = (value) => {
             <li><code>animate: boolean</code>: Whether or not to animate the needle. Default: <code>true</code></li>
             <li><code>elastic: boolean</code>: Whether or not to use elastic needle. Default: <code>false</code></li>
             <li><code>animationDuration: number</code>: The duration of the needle animation. Default: <code>3000</code></li>
-            <li><code>animationDelay: number</code>: The delay of the needle animation. Default: <code>500</code></li>
+            <li><code>animationDelay: number</code>: The delay of the needle animation. Default: <code>100</code></li>
             <li><code>width: number</code>: The width of the needle. Default: <code>15</code></li>
         </ul>
     </li>

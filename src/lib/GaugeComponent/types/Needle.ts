@@ -17,5 +17,5 @@ export const defaultNeedle: Needle = {
     animate: true,
     elastic: false,
     animationDuration: 3000,
-    animationDelay: 500,
+    animationDelay: 100,
 };
