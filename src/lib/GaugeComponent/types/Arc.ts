@@ -13,7 +13,10 @@ interface SubArc {
     color?: string, //The color of the subArc
     // needleColorWhenWithinLimit?: string, //The color of the needle when it is within the subArc
     showMark?: boolean, //Whether or not to show the mark
-    tooltip?: Tooltip
+    tooltip?: Tooltip,
+    onClick?: () => void,
+    onMouseMove?: () => void,
+    onMouseLeave?: () => void
 }
 export const defaultSubArcs: SubArc[] = [
     { limit: 33, color: "#5BE12C"}, // needleColorWhenWithinLimit: "#AA4128"},

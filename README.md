@@ -218,6 +218,9 @@ const kbitsToMbits = (value) => {
                 <li><code>style: React.CSSProperties</code>: Overrides tooltip styles.</li>
               </ul>
               </li>
+              <li><code>onClick: (event: any) => void</code>: onClick callback. Default: <code>undefined</code>.</li>
+              <li><code>onMouseMove: (event: any) => void</code>: onMouseMove callback. Default: <code>undefined</code>.</li>
+              <li><code>onMouseLeave: (event: any) => void</code>: onMouseLeave callback. Default: <code>undefined</code>.</li>
         </ul>
         subArcs default value: 
         <code>

@@ -324,7 +324,10 @@ const App = () => {
                       showMark: true,
                       tooltip: {
                         text: 'Too low temperature!'
-                      }
+                      },
+                      onClick: () => console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+                      onMouseMove: () => console.log("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
+                      onMouseLeave: () => console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
                     },
                     {
                       limit: 17,

@@ -12,9 +12,8 @@ import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
   if (d.data.tooltip != undefined) {
     let shouldChangeText = d.data.tooltip.text != gauge.tooltip.current.text();
-    event.target.style.stroke = "powderblue";
-    console.log(event.target.style.stroke)
     if(shouldChangeText){
+      event.target.style.stroke = "powderblue";
       gauge.tooltip.current.html(d.data.tooltip.text)
       .style("position", "absolute")
       .style("display", "block")
@@ -24,6 +23,7 @@ const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
     gauge.tooltip.current.style("left", (event.pageX + 15) + "px")
       .style("top", (event.pageY - 10) + "px");
   }
+  if(d.data.onMouseMove != undefined) d.data.onMouseMove(event);
 }
 const applyTooltipStyles = (tooltip: Tooltip, arcColor: string, gauge: Gauge) => {
   //Apply default styles
@@ -32,9 +32,13 @@ const applyTooltipStyles = (tooltip: Tooltip, arcColor: string, gauge: Gauge) =>
   //Apply custom styles
   if (tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => gauge.tooltip.current.style(utils.camelCaseToKebabCase(key), value))
 }
-const onArcMouseOut = (event: any) => { 
+const onArcMouseOut = (event: any, d: any) => { 
   select(`.${CONSTANTS.arcTooltipClassname}`).html(" ").style("display", "none"); 
   event.target.style.stroke = "none";
+  if(d.data.onMouseLeave != undefined) d.data.onMouseLeave(event);
+}
+const onArcMouseClick = (event: any, d: any) => { 
+  if(d.data.onMouseClick != undefined) d.data.onMouseClick(event);
 }
 
 export const setArcData = (gauge: Gauge) => {
@@ -85,6 +89,9 @@ export const setArcData = (gauge: Gauge) => {
       limitValue: subArcsLimits[i],
       color: colorArray[i],
       tooltip: subArcsTooltip[i],
+      onMouseMove: arc.subArcs[i].onMouseMove,
+      onMouseLeave: arc.subArcs[i].onMouseLeave,
+      onMouseClick: arc.subArcs[i].onClick
     }));
   } else {
     const arcValue = maxValue / gauge.nbArcsToDisplay.current;
@@ -97,16 +104,8 @@ export const setArcData = (gauge: Gauge) => {
   }
 };
 
-// var mouseclick = function (d: any) {
-//   if (d3.select(d).attr("transform") == null) {
-//     d3.select(d).attr("transform", "translate(42,0)");
-//   } else {
-//     d3.select(d).attr("transform", null);
-//   }
-// };
-
 export const setupArcs = (gauge: Gauge) => {
-  const { arc, maxValue } = gauge.props;
+  const { arc } = gauge.props;
   //Add tooltip
   let isTooltipInTheDom = document.getElementsByClassName(CONSTANTS.arcTooltipClassname).length != 0;
   if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
@@ -137,8 +136,9 @@ export const setupArcs = (gauge: Gauge) => {
   applyColors(subArcs, gauge);
 
   arcPaths
-    .on("mouseout", (event: any) => onArcMouseOut(event))
+    .on("mouseout", (event: any, d: any) => onArcMouseOut(event, d))
     .on("mousemove", (event: any, d: any) => onArcMouseMove(event, d, gauge))
+    .on("click", (event: any, d: any) => onArcMouseClick(event, d))
 };
 
 export const applyColors = (subArcsPath: any, gauge: Gauge) => {
