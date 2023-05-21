@@ -1,5 +1,6 @@
 import CONSTANTS from "../constants";
 import { Gauge } from "../types/Gauge";
+import { GaugeType } from "../types/GaugeComponentProps";
 import * as arcHooks from "./arc";
 import * as labelsHooks from "./labels";
 import * as pointerHooks from "./pointer";
@@ -15,14 +16,22 @@ export const initChart = (gauge: Gauge) => {
     gauge.svg.current = gauge.container.current.append("svg");
     gauge.g.current = gauge.svg.current.append("g"); //Used for margins
     gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
-
+    let startAngle = undefined;
+    let endAngle = undefined;
+    if(gauge.props.type == GaugeType.Semicircle){
+        startAngle = -Math.PI / 2 + 0.02;
+        endAngle = Math.PI / 2 - 0.02;
+    } else if(gauge.props.type == GaugeType.Radial) {
+        startAngle = -Math.PI / 1.37; //Negative x-axis
+        endAngle = Math.PI / 1.37; //Positive x-axis
+    }
     //Set up the pie generator
     //Each arc should be of equal length (or should they?)
     gauge.pieChart.current
         .value((d: any) => d.value)
         //.padAngle(arcPadding)
-        .startAngle(CONSTANTS.startAngle)
-        .endAngle(CONSTANTS.endAngle)
+        .startAngle(startAngle)
+        .endAngle(endAngle)
         .sort(null);
     //Set up pointer
     pointerHooks.addPointerElement(gauge);
@@ -34,13 +43,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     //if not resize, treat each prop separately
     if(resize){
         updateDimensions(gauge);
+        //Adds height to svg element when radial for better fitting
+        let addHeight = gauge.props.type == GaugeType.Radial ? 95 : 0;
         //Set dimensions of svg element and translations
-        gauge.svg.current
-            .attr("width", gauge.width.current + gauge.margin.current.left + gauge.margin.current.right)
-            .attr(
-                "height",
-                gauge.height.current + gauge.margin.current.top + gauge.margin.current.bottom
-            );
         gauge.g.current.attr(
             "transform",
             "translate(" + gauge.margin.current.left + ", " + 35 + ")"
@@ -58,6 +63,11 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         arcHooks.setupArcs(gauge);
         labelsHooks.setupLabels(gauge);
         pointerHooks.drawPointer(gauge, resize);
+        let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height + 50;
+        let boundWidth = gauge.container.current.node().getBoundingClientRect().width;
+        gauge.svg.current
+            .attr("width", boundWidth)
+            .attr("height", boundHeight);
     } else {
         let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
         let needlePropsChanged = (JSON.stringify(gauge.prevProps.current.needle) !== JSON.stringify(gauge.props.needle));

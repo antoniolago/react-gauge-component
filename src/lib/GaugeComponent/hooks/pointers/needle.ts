@@ -17,7 +17,7 @@ export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
   var needleRadius = getNeedleRadius(gauge);
   let isFirstTime = gauge.prevProps?.current.value == undefined;
   if(isFirstTime || resize){
-    var pathStr = calculateNeedlePath(prevPercent || utils.getCurrentGaugeValuePercentage(gauge.props), pathLength, needleRadius, centerPoint);
+    var pathStr = calculateNeedlePath(gauge, prevPercent || utils.getCurrentGaugeValuePercentage(gauge.props), pathLength, needleRadius, centerPoint);
     gauge.pointer.current.append("path").attr("d", pathStr).attr("fill", needle.color);
     //Add a circle at the bottom of needle
     gauge.pointer.current
@@ -34,6 +34,7 @@ export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
   }
   //Rotate the needle
   let needlePath = gauge.container.current.select(`.needle path`);
+  let prevProgress = 0;
   if ((!resize || isFirstTime) && needle.animate) {
     gauge.pointer.current
       .transition()
@@ -44,26 +45,34 @@ export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
         const currentInterpolatedPercent = interpolateNumber(prevPercent, currentPercent);
         return function (percentOfPercent: number) {
           const progress = currentInterpolatedPercent(percentOfPercent);
-          return needlePath.attr("d", calculateNeedlePath(progress, pathLength, needleRadius, centerPoint));
+          //Avoid unnecessary re-rendering (when progress is too small) but allow the needle to reach the final value
+          if( Math.abs(progress - prevProgress) < 0.0001 && progress != currentPercent){
+            prevProgress = progress;
+            return; 
+          }
+          prevProgress = progress;
+          return needlePath.attr("d", calculateNeedlePath(gauge, progress, pathLength, needleRadius, centerPoint));
         };
       });
   } else {
-    needlePath.attr("d", calculateNeedlePath(utils.getCurrentGaugeValuePercentage(gauge.props), pathLength, needleRadius, centerPoint));
+    needlePath.attr("d", calculateNeedlePath(gauge, utils.getCurrentGaugeValuePercentage(gauge.props), pathLength, needleRadius, centerPoint));
   }
 };
 
-export const calculateNeedlePath = (percent: number, pathLength: number, needleRadius: number, centerPoint: any) => {
-  var theta = utils.percentToRad(percent);
+export const calculateNeedlePath = (gauge: Gauge, percent: number, pathLength: number, needleRadius: number, centerPoint: any) => {
+  let startAngle = utils.degToRad(gauge.props.type == "semicircle" ? 0 : -42);
+  let endAngle = utils.degToRad(gauge.props.type == "semicircle" ? 180 : 222);
+  const angle = startAngle + (percent) * (endAngle - startAngle);
   var topPoint = [
-    centerPoint[0] - pathLength * Math.cos(theta),
-    centerPoint[1] - pathLength * Math.sin(theta),
+    centerPoint[0] - pathLength * Math.cos(angle),
+    centerPoint[1] - pathLength * Math.sin(angle),
   ];
-  var thetaMinusHalfPi = theta - Math.PI / 2;
+  var thetaMinusHalfPi = angle - Math.PI / 2;
   var leftPoint = [
     centerPoint[0] - needleRadius * Math.cos(thetaMinusHalfPi),
     centerPoint[1] - needleRadius * Math.sin(thetaMinusHalfPi),
   ];
-  var thetaPlusHalfPi = theta + Math.PI / 2;
+  var thetaPlusHalfPi = angle + Math.PI / 2;
   var rightPoint = [
     centerPoint[0] - needleRadius * Math.cos(thetaPlusHalfPi),
     centerPoint[1] - needleRadius * Math.sin(thetaPlusHalfPi),

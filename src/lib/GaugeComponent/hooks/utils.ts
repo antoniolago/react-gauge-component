@@ -31,8 +31,8 @@ export const mergeObjects = (obj1: any, obj2: Partial<any>): any => {
     return mergedObj;
   }
 //Returns the angle (in rad) for the given 'percent' value where percent = 1 means 100% and is 180 degree angle
-export const percentToRad = (percent: number) => {
-    return percent * Math.PI;
+export const percentToRad = (percent: number, angle: number) => {
+    return percent * (Math.PI / angle);
 };
 export const floatingNumber = (value: number, maxDigits = 2) => {
   return Math.round(value * 10 ** maxDigits) / 10 ** maxDigits;

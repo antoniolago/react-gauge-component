@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useLayoutEffect } from "react";
 import { arc, pie, select } from "d3";
-import { defaultGaugeProps, GaugeComponentProps } from "./types/GaugeComponentProps";
+import { defaultGaugeProps, GaugeComponentProps, GaugeType } from "./types/GaugeComponentProps";
 import { Gauge } from "./types/Gauge";
 import * as chartHooks from "./hooks/chart";
 import { mergeObjects } from "./hooks/utils";
@@ -85,11 +85,11 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     return () => window.removeEventListener("resize", handleResize);
   }, [props]);
 
-  const { id, style, className } = props;
+  const { id, style, className, type } = props;
   return (
     <div
       id={id}
-      className={className}
+      className={`${className} ${type == GaugeType.Semicircle ? "semicircle-gauge" : "radial-gauge"}}`}
       style={style}
       ref={(svg) => (selectedRef.current = svg)}
     />

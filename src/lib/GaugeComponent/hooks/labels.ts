@@ -3,6 +3,7 @@ import CONSTANTS from '../constants';
 import { Gauge } from '../types/Gauge';
 import { Mark } from '../types/Mark';
 import React from 'react';
+import { GaugeType } from '../types/GaugeComponentProps';
 export const setupLabels = (gauge: Gauge) => {
   setupValueLabel(gauge);
   setupMarks(gauge);
@@ -60,9 +61,7 @@ export const addMarker = (mark: Mark, gauge: Gauge) => {
   const { labels } = gauge.props;
   const { markAnchor, angle } = calculateAnchorAndAngleByValue(mark.value, gauge);
   let coords = getLabelCoordsByValue(mark.value, gauge);
-  // let charSize = mark.markerConfig?.style.fontSize || labels.markLabel.markerConfig.style.fontSize;
   let char = mark.markerConfig?.char || labels.markLabel.markerConfig.char;
-  // let charColor = mark.markerConfig?.style.color || labels.markLabel.markerConfig.style.color;
   let charStyle = mark.markerConfig?.style || labels.markLabel.markerConfig.style
   charStyle.textAnchor = markAnchor as any;
   addText(char, coords.x, coords.y, gauge, charStyle, CONSTANTS.markerClassname, angle);
@@ -115,8 +114,8 @@ export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLe
   var centerToArcLength = gauge.innerRadius.current * 0.93 - centerToArcLengthSubtract;
   if(gauge.props.labels.markLabel.type == "outer") centerToArcLength = gauge.outerRadius.current - centerToArcLengthSubtract + 2;
   let percent = utils.calculatePercentage(gauge.props.minValue, gauge.props.maxValue, value);
-  const startAngle = utils.degToRad(0);
-  const endAngle = utils.degToRad(180);
+  let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -41);
+  let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 221);
   const angle = startAngle + (percent) * (endAngle - startAngle);
   let marksRadius = 15 * (gauge.width.current / 500);
   let coord = [0, -marksRadius / 2];
@@ -133,6 +132,9 @@ export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLe
   if (isValueBetweenCenter){
     let isInner = gauge.props.labels.markLabel.type == "inner";
     y+= isInner ? 8 : -1;
+  }
+  if(gauge.props.type == GaugeType.Radial){
+    y += 3;
   }
   return { x, y }
 }
@@ -156,7 +158,7 @@ const applyTextStyles = (div: any, style: React.CSSProperties) => {
 
 //Adds text undeneath the graft to display which percentage is the current one
 export const addValueText = (gauge: Gauge) => {
-  const { labels, value, minValue, maxValue } = gauge.props;
+  const { labels, value } = gauge.props;
   var textPadding = 20;
   let text = '';
   if(labels.valueLabel.formatTextValue){
@@ -178,16 +180,27 @@ export const addValueText = (gauge: Gauge) => {
   let x = gauge.outerRadius.current;
   let y = gauge.outerRadius.current / 1.5 + textPadding;
   valueTextStyle.textAnchor = "middle";
+  if(gauge.props.type == GaugeType.Radial){
+    y = gauge.outerRadius.current * 1.45 + textPadding;
+  }
   addText(text, x, y, gauge, valueTextStyle, CONSTANTS.valueLabelClassname);
 };
 
 export const clearValueLabel = (gauge: Gauge) => gauge.g.current.selectAll(`.${CONSTANTS.valueLabelClassname}`).remove();
-export const clearMarks = (gauge: Gauge) => gauge.g.current.selectAll(`.${CONSTANTS.markerClassname} .${CONSTANTS.markValueClassname}`).remove();
+export const clearMarks = (gauge: Gauge) => {
+  gauge.g.current.selectAll(`.${CONSTANTS.markerClassname}`).remove();
+  gauge.g.current.selectAll(`.${CONSTANTS.markValueClassname}`).remove();
+}
 
 export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   const { minValue, maxValue } = gauge.props;
   let valuePercentage = utils.calculatePercentage(minValue, maxValue, value)
-  let angle = (valuePercentage * 100) * 180 / 100;
+  //let startAngle = utils.degToRad(gauge.props.type == "semicircle" ? 0 : -42);
+  //let endAngle = utils.degToRad(gauge.props.type == "semicircle" ? 180 : 222);
+  let startAngle = gauge.props.type == GaugeType.Semicircle ? 0 : -42;
+  let endAngle = gauge.props.type == GaugeType.Semicircle ? 180 : 266;
+  let angle = startAngle + (valuePercentage * 100) * endAngle / 100;
+  //let angle = startAngle + (valuePercentage) * (endAngle - startAngle) / 100;
   let centerToleranceInPercentage = 0.05;
   let halfInPercentage = utils.calculatePercentage(minValue, maxValue, (maxValue / 2));
   let halfPercentage = halfInPercentage;

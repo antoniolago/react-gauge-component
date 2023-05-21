@@ -2,6 +2,10 @@ import { Arc, defaultArc } from "./Arc";
 import { Labels, defaultLabels } from './Labels';
 import { Needle, defaultNeedle } from './Needle';
 import { Blob } from './Blob';
+export enum GaugeType {
+    Semicircle = "semicircle",
+    Radial = "radial"
+}
 export interface GaugeComponentProps {
     id: string,
     className: string,
@@ -13,7 +17,8 @@ export interface GaugeComponentProps {
     arc: Arc,
     labels: Labels,
     needle: Needle,
-    blob?: Blob
+    blob?: Blob,
+    type: GaugeType
 }
 
 export const defaultGaugeProps: GaugeComponentProps = {
@@ -26,6 +31,7 @@ export const defaultGaugeProps: GaugeComponentProps = {
     maxValue: 100,
     arc: defaultArc,
     labels: defaultLabels,
-    needle: defaultNeedle
+    needle: defaultNeedle,
+    type: GaugeType.Semicircle
 }
 

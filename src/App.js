@@ -109,54 +109,6 @@ const App = () => {
               <GaugeComponent />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">20 levels</h6>
-              <GaugeComponent
-                id="gauge-component2"
-                arc={{ nbSubArcs: 20 }}
-                labels={{
-                  valueLabel: { fontSize: 40 },
-                  markLabel: {
-                    marks: [
-                      { value: 20 },
-                      { value: 40 },
-                      { value: 60 },
-                      { value: 80 },
-                      { value: 100 }
-                    ]
-                  }
-                }}
-                value={55}
-                needle={{ elastic: true }}
-              />
-            </Col>
-            <Col xs={12} lg={3}>
-              <h6 className="mb-1">Custom colors, inner marks and needle length</h6>
-              <GaugeComponent
-                id="gauge-component3"
-                arc={{
-                  width: 0.2,
-                  nbSubArcs: 20,
-                  colorArray: ['#FF5F6D', '#FFC371']
-                }}
-                labels={{
-                  markLabel: {
-                    type: "inner",
-                    marks: [
-                      { value: 20 },
-                      { value: 40 },
-                      { value: 60 },
-                      { value: 80 },
-                      { value: 100 }
-                    ]
-                  }
-                }}
-                needle={{
-                  length: 0.9
-                }}
-                value={80}
-              />
-            </Col>
-            <Col xs={12} lg={3}>
               <h6 className="mb-1">Gradient arc</h6>
               <GaugeComponent
                 id="gauge-component4"
@@ -187,19 +139,6 @@ const App = () => {
                     { color: '#EA4228' }
                   ]
                 }}
-                value={60}
-              />
-            </Col>
-            <Col xs={12} lg={3}>
-              <h6 className="mb-1">Custom arcs width</h6>
-              <GaugeComponent
-                id="gauge-component5"
-                arc={{
-                  width: 0.4,
-                  padding: 0.03,
-                  nbSubArcs: 10
-                  // colorArray: ['#FF5F6D', '#FFC371']
-                }}
                 value={currentValue}
               />
             </Col>
@@ -226,7 +165,7 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Live updates</h6>
+              <h6 className="mb-1">Elastic Live updates</h6>
               <GaugeComponent
                 id="gauge-component7"
                 arc={{
@@ -247,10 +186,11 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Elastic</h6>
+              <h6 className="mb-1">Simple Radial Gauge</h6>
               <GaugeComponent
-                id="gauge-component7"
+                id="gauge-component-radial3"
                 value={currentValue}
+                type="radial"
                 labels={{
                   markLabel: {
                     marks: [
@@ -261,12 +201,115 @@ const App = () => {
                     ]
                   }
                 }}
+                arc={{
+                  colorArray: ['#1EFF00', '#CE1F1F'],
+                  subArcs: [
+                    {limit: 40},
+                    {limit: 50},
+                    {},
+                    {},
+                    {}
+                  ],
+                  padding: 0.02,
+                  width: 0.3
+                }}
+                needle={{
+                  animationDelay: 0
+                }}
+              />
+            </Col>
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Radial custom width</h6>
+              <GaugeComponent
+                id="gauge-component-radial2"
+                value={currentValue}
+                type="radial"
+                labels={{
+                  markLabel: {
+                    marks: [
+                      { value: 20 },
+                      { value: 50 },
+                      { value: 80 },
+                      { value: 100 }
+                    ]
+                  }
+                }}
+                arc={{
+                  colorArray: ['#00FF15', '#CE1F1F'],
+                  nbSubArcs: 30,
+                  padding: 0.02,
+                  width: 0.5
+                }}
+                needle={{
+                  animationDelay: 0
+                }}
+              />
+            </Col>
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Radial inner marks</h6>
+              <GaugeComponent
+                id="gauge-component-radial"
+                value={currentValue}
+                type="radial"
+                arc={{
+                  width: 0.2,
+                  nbSubArcs: 20,
+                  colorArray: ['#FF5F6D', '#FFC371']
+                }}
+                labels={{
+                  markLabel: {
+                    type: "inner",
+                    marks: [
+                      { value: 20 },
+                      { value: 40 },
+                      { value: 60 },
+                      { value: 80 },
+                      { value: 100 }
+                    ]
+                  }
+                }}
+                needle={{
+                  length: 0.9,
+                }}
+              />
+            </Col>
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Radial elastic</h6>
+              <GaugeComponent
+                id="gauge-component-radial4"
+                value={currentValue}
+                type="radial"
+                labels={{
+                  markLabel: {
+                    type: "inner",
+                    marks: [
+                      { value: 20 },
+                      { value: 50 },
+                      { value: 80 },
+                      { value: 100 }
+                    ]
+                  }
+                }}
+                arc={{
+                  colorArray: ['#CE1F1F', '#00FF00'],
+                  subArcs: [
+                    {limit: 10},
+                    {limit: 30},
+                    {},
+                    {},
+                    {}
+                  ],
+                  padding: 0.02,
+                  width: 0.3
+                }}
                 needle={{
                   elastic: true,
                   animationDelay: 0
                 }}
               />
             </Col>
+          </Row>
+          <Row>
             <Col xs={12} lg={6}>
               <h6 className="mb-1">Min/max values and formatted text</h6>
               <GaugeComponent

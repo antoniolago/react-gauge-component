@@ -1,6 +1,7 @@
 {
   "short_name": "React Gauge Component",
   "name": "React Gauge Component Demo",
+  "description": "React Gauge Component for visualizing data metrics, built with D3.js.",
   "icons": [
     {
       "src": "favicon.ico",

@@ -58,6 +58,42 @@ import GaugeComponent from 'react-gauge-component'
 ```
 </details>
 
+### Custom radial gauge.
+![Image of React Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/radialGauge.jpg "Radial Gauge Component")
+<details>
+  <summary>Show Custom Radial Gauge code</summary>
+
+  ### Custom Radial Gauge
+  
+```jsx
+<GaugeComponent
+  id="gauge-component-radial"
+  value={currentValue}
+  type="radial"
+  arc={{
+    width: 0.2,
+    nbSubArcs: 20,
+    colorArray: ['#FF5F6D', '#FFC371']
+  }}
+  labels={{
+    markLabel: {
+      type: "inner",
+      marks: [
+        { value: 20 },
+        { value: 40 },
+        { value: 60 },
+        { value: 80 },
+        { value: 100 }
+      ]
+    }
+  }}
+  needle={{
+    length: 0.9,
+  }}
+/>
+```
+</details>
+
 ### Custom Bandwidth Gauge.
 ![Image of React Gauge Component for bandwidth visualization](https://antoniolago.github.io/react-gauge-component/images/bandGauge.jpg "Gauge Component for bandwidth visualization")
 <details>
@@ -192,10 +228,11 @@ const kbitsToMbits = (value) => {
 
 <h2>Props:</h2>
 <ul>
-   <li><code>id: string</code>: A unique identifier for the div surrounding the chart. Default:<code>"gauge-component-id"</code>.</li>
-   <li><code>className: string</code>: Adds a <code>className</code> to the div container. Default:<code>"gauge-component-class"</code>.</li>
+   <li><code>id: string</code>: A unique identifier for the div surrounding the chart. Default: <code>"gauge-component-id"</code>.</li>
+   <li><code>className: string</code>: Adds a <code>className</code> to the div container. Default: <code>"gauge-component-class"</code>.</li>
    <li><code>style: React.CSSProperties</code>: Adds a style object to the div container. Default: <code>{width: 100}</code>.</li>
    <li><code>marginInPercent: number</code>: Sets the margin for the chart inside the containing SVG element. Default: <code>0.05</code>.</li>
+   <li><code>type: string</code>: The type of the gauge, values can be <code>"semicircle</code> and <code>"radial"</code>. Default: <code>"semicircle</code>.</li>
    <li><code>value: number</code>: The value of the gauge. Default: <code>33</code>.</li>
    <li><code>minValue: number</code>: The minimum value of the gauge. Default: <code>0</code>.</li>
    <li><code>maxValue: number</code>: The maximum value of the gauge. Default: <code>100</code>.</li>
