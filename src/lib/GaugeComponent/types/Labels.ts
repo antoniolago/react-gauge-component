@@ -15,7 +15,7 @@ export const defaultValueLabel: ValueLabel = {
     style: {
         fontSize: "35px",
         fill: '#fff',
-        textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"
+        textShadow: "black 1px 1px 0px, black 0px 0px 0.5em, black 0px 0px 0.2em"
     },
     hide: false
 }
