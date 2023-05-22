@@ -269,16 +269,20 @@ const kbitsToMbits = (value) => {
         </code>
       </li>
     </ul></li>
-    <li><code>needle: object</code>: The needle of the gauge.
+    <li><code>pointer: object</code>: The value pointer of the gauge.
         <ul>
-            <li><code>color: string</code>: The color of the needle. Default: <code>#464A4F</code></li>
-            <li><code>baseColor: string</code>: The color of the base of the needle. Default: <code>#464A4F</code></li>
-            <li><code>length: number</code>: The length of the needle 0-1, 1 being the outer radius length. Default: <code>0.70</code></li>
-            <li><code>animate: boolean</code>: Whether or not to animate the needle. Default: <code>true</code></li>
-            <li><code>elastic: boolean</code>: Whether or not to use elastic needle. Default: <code>false</code></li>
-            <li><code>animationDuration: number</code>: The duration of the needle animation. Default: <code>3000</code></li>
-            <li><code>animationDelay: number</code>: The delay of the needle animation. Default: <code>100</code></li>
-            <li><code>width: number</code>: The width of the needle. Default: <code>15</code></li>
+          <li><code>config: object</code>: the config of the pointer (needle)
+            <ul>
+              <li><code>color: string</code>: The color of the needle. Default: <code>#464A4F</code></li>
+              <li><code>baseColor: string</code>: The color of the base of the needle. Default: <code>#464A4F</code></li>
+              <li><code>length: number</code>: The length of the needle 0-1, 1 being the outer radius length. Default: <code>0.70</code></li>
+              <li><code>animate: boolean</code>: Whether or not to animate the needle. Default: <code>true</code></li>
+              <li><code>elastic: boolean</code>: Whether or not to use elastic needle. Default: <code>false</code></li>
+              <li><code>animationDuration: number</code>: The duration of the needle animation. Default: <code>3000</code></li>
+              <li><code>animationDelay: number</code>: The delay of the needle animation. Default: <code>100</code></li>
+              <li><code>width: number</code>: The width of the needle. Default: <code>15</code></li>
+            </ul>
+          </li>
         </ul>
     </li>
     <li><code>labels: object</code>: The labels of the gauge.

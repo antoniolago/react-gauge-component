@@ -9,7 +9,6 @@ export interface Gauge {
     fixedHeight: React.MutableRefObject<any>;
     doughnut: React.MutableRefObject<any>;
     pointer: React.MutableRefObject<any>;
-    selectedPointerType: React.MutableRefObject<any>;
     outerRadius: React.MutableRefObject<any>;
     innerRadius: React.MutableRefObject<any>;
     margin: React.MutableRefObject<any>;

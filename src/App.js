@@ -146,9 +146,11 @@ const App = () => {
               <h6 className="mb-1">No animation, custom needle color</h6>
               <GaugeComponent
                 id="gauge-component6"
-                needle={{
-                  animate: false,
-                  color: '#4A05EC'
+                pointer={{
+                  config: { 
+                    animate: false,
+                    color: '#4A05EC'
+                  }
                 }}
                 arc={{
                   colorArray: ['#830C7336', '#0077FF'],
@@ -181,7 +183,9 @@ const App = () => {
                       {}
                     ]
                 }}
-                needle={{ animationDelay: 0 }}
+                pointer={{
+                  config: { animationDelay: 0 },
+                }}
                 value={currentValue}
               />
             </Col>
@@ -213,8 +217,8 @@ const App = () => {
                   padding: 0.02,
                   width: 0.3
                 }}
-                needle={{
-                  animationDelay: 0
+                pointer={{
+                  config: { animationDelay: 0 },
                 }}
               />
             </Col>
@@ -240,8 +244,8 @@ const App = () => {
                   padding: 0.02,
                   width: 0.5
                 }}
-                needle={{
-                  animationDelay: 0
+                pointer={{
+                  config: { animationDelay: 0 },
                 }}
               />
             </Col>
@@ -268,8 +272,9 @@ const App = () => {
                     ]
                   }
                 }}
-                needle={{
-                  length: 0.9,
+                pointer={{
+                  //type: "arrow",
+                  config: { length: 0.2 },
                 }}
               />
             </Col>
@@ -302,9 +307,11 @@ const App = () => {
                   padding: 0.02,
                   width: 0.3
                 }}
-                needle={{
-                  elastic: true,
-                  animationDelay: 0
+                pointer={{
+                  config: { 
+                    elastic: true,
+                    animationDelay: 0
+                  }
                 }}
               />
             </Col>
@@ -402,13 +409,15 @@ const App = () => {
                     }
                   ]
                 }}
-                needle={{
-                  color: '#345243',
-                  length: 0.90,
-                  width: 15,
-                  // animate: true,
-                  // elastic: true,
-                  animDelay: 200,
+                pointer={{
+                  config: { 
+                    color: '#345243',
+                    length: 0.90,
+                    width: 15,
+                    // animate: true,
+                    // elastic: true,
+                    animDelay: 200,
+                  }
                 }}
                 labels={{
                   valueLabel: { formatTextValue: value => value + 'ºC' },

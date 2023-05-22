@@ -8,7 +8,8 @@ import { Gauge } from "../../types/Gauge";
 
 
 export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
-  const { needle, value, minValue, maxValue } = gauge.props;
+  const { pointer, value, minValue, maxValue } = gauge.props;
+  var needle = pointer.config;
   var needleRadius = getNeedleRadius(gauge) 
   var centerPoint = [0, -needleRadius / 2];
   let currentPercent = utils.calculatePercentage(minValue, maxValue, value as number);
@@ -83,8 +84,8 @@ export const calculateNeedlePath = (gauge: Gauge, percent: number, pathLength: n
 };
 
 export const getNeedleRadius = (gauge: Gauge) => {
-  const { needle } = gauge.props;
-  return needle.width * (gauge.width.current / 500);
+  const { pointer } = gauge.props;
+  return pointer.config.width * (gauge.width.current / 500);
 }
 
 export const addNeedleElement = (gauge: Gauge) => gauge.pointer.current = gauge.g.current.append("g").attr("class", "needle");

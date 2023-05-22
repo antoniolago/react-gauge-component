@@ -70,7 +70,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             .attr("height", boundHeight);
     } else {
         let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
-        let needlePropsChanged = (JSON.stringify(gauge.prevProps.current.needle) !== JSON.stringify(gauge.props.needle));
+        let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
         let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
         let marksChanged = (JSON.stringify(gauge.prevProps.current.labels.markLabel) !== JSON.stringify(gauge.props.labels.markLabel));
         if(arcsPropsChanged) {
@@ -78,7 +78,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             arcHooks.setArcData(gauge);
             arcHooks.setupArcs(gauge);
         }
-        if(needlePropsChanged || valueChanged) {
+        if(pointerPropsChanged || valueChanged) {
             pointerHooks.drawPointer(gauge);
         }
         if(arcsPropsChanged || marksChanged) {

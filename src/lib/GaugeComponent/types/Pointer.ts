@@ -1,4 +1,8 @@
-export interface Needle {
+export interface Pointer {
+    type: string;
+    config: PointerConfig;
+}
+export interface PointerConfig {
     color?: string;
     baseColor?: string;
     length: number;
@@ -8,8 +12,12 @@ export interface Needle {
     animationDelay?: number;
     width: number;
 }
-
-export const defaultNeedle: Needle = {
+export enum PointerType {
+    Needle = "needle",
+    Blob = "blob",
+    Arrow = "arrow"
+}
+export const defaultPointerConfig: PointerConfig = {
     color: "#464A4F",
     baseColor: "#464A4F",
     length: 0.70,
@@ -18,4 +26,8 @@ export const defaultNeedle: Needle = {
     elastic: false,
     animationDuration: 3000,
     animationDelay: 100,
-};
+}
+export const defaultPointer: Pointer = {
+    type: PointerType.Needle,
+    config: defaultPointerConfig
+}
