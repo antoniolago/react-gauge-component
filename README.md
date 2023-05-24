@@ -99,10 +99,10 @@ import GaugeComponent from 'react-gauge-component'
 ```
 </details>
 
-### Custom radial gauge.
+### Gradient with arrow gauge.
 ![Image of Gradient with Arrow Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/arrowGauge.jpg "Gradient with Arrow Gauge Component")
 <details>
-  <summary>Show Custom gradient with arrow code</summary>
+  <summary>Show Gradient with arrow code</summary>
 
   ### Custom gradient with arrow
   
