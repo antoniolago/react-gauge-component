@@ -4,7 +4,7 @@ export interface Tooltip {
 }
 
 export const defaultTooltipStyle = {
-    borderColor: '#3D3D3D',
+    borderColor: '#5A5A5A',
     borderStyle: 'solid',
     borderWidth: '1px',
     borderRadius: '5px',

@@ -109,11 +109,12 @@ const App = () => {
               <GaugeComponent />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Gradient arc</h6>
+              <h6 className="mb-1">Gradient arc with arrow</h6>
               <GaugeComponent
                 id="gauge-component4"
                 arc={{
                   gradient: true,
+                  width: 0.15,
                   padding: 0,
                   subArcs: [
                     {
@@ -140,6 +141,7 @@ const App = () => {
                   ]
                 }}
                 value={currentValue}
+                pointer={{type: "arrow", config: {elastic: true}}}
               />
             </Col>
             <Col xs={12} lg={3}>
@@ -195,16 +197,6 @@ const App = () => {
                 id="gauge-component-radial3"
                 value={currentValue}
                 type="radial"
-                labels={{
-                  markLabel: {
-                    marks: [
-                      { value: 20 },
-                      { value: 50 },
-                      { value: 80 },
-                      { value: 100 }
-                    ]
-                  }
-                }}
                 arc={{
                   colorArray: ['#1EFF00', '#CE1F1F'],
                   subArcs: [
@@ -273,8 +265,7 @@ const App = () => {
                   }
                 }}
                 pointer={{
-                  //type: "arrow",
-                  config: { length: 0.2 },
+                  config: { length: 0.5 },
                 }}
               />
             </Col>

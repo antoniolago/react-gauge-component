@@ -8,12 +8,13 @@ import { Gauge } from '../types/Gauge';
 import * as chartHooks from './chart';
 import CONSTANTS from '../constants';
 import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
+import { GaugeType } from '../types/GaugeComponentProps';
 
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
+  event.target.style.stroke = "#ffffff5e";
   if (d.data.tooltip != undefined) {
     let shouldChangeText = d.data.tooltip.text != gauge.tooltip.current.text();
     if(shouldChangeText){
-      event.target.style.stroke = "powderblue";
       gauge.tooltip.current.html(d.data.tooltip.text)
       .style("position", "absolute")
       .style("display", "block")
@@ -157,7 +158,6 @@ export const applyColors = (subArcsPath: any, gauge: Gauge) => {
 
 }
 export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
-  const { arc } = gauge.props;
   gauge.arcData.current.forEach((subArcData) => 
     gradEl.append("stop")
         .attr("offset", `${subArcData.limit}%`)
@@ -205,5 +205,24 @@ export const createGradientElement = (div: any, uniqueId: string) => {
     .attr("y2", "0%")
     ;
   return lg
+}
+
+export const getCoordByValue = (value: number, gauge: Gauge, innerOuter = "inner", centerToArcLengthSubtract = 0, radiusFactor = 1) => {
+  var centerToArcLength = gauge.dimensions.current.innerRadius * radiusFactor - centerToArcLengthSubtract;
+  if(innerOuter == "outer") centerToArcLength = gauge.dimensions.current.outerRadius - centerToArcLengthSubtract + 2;
+  let percent = utils.calculatePercentage(gauge.props.minValue, gauge.props.maxValue, value);
+  let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -41);
+  let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 222);
+  const angle = startAngle + (percent) * (endAngle - startAngle);
+  let coordsRadius = 15 * (gauge.dimensions.current.width / 500);
+  let coord = [0, -coordsRadius / 2];
+  let coordMinusCenter = [
+    coord[0] - centerToArcLength * Math.cos(angle),
+    coord[1] - centerToArcLength * Math.sin(angle),
+  ];
+  let centerCoords = [gauge.dimensions.current.outerRadius, gauge.dimensions.current.outerRadius];
+  let x = (centerCoords[0] + coordMinusCenter[0]);
+  let y = (centerCoords[1] + coordMinusCenter[1]);
+  return { x, y }
 }
 export const clearArcs = (gauge: Gauge) => gauge.doughnut.current.selectAll("g").remove();

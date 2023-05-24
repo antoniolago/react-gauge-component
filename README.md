@@ -8,15 +8,14 @@ Key differences:
   <li>Added arcs limits in value instead of percent</li>
   <li>Added inner/outer marks to the gauge for reference of the values</li>
   <li>More than one gauge type</li>
+  <li>More than one pointer type</li>
   <li>Added tooltips on hover for the arcs</li>
-  <li>Added further customizations of the needle like animation and width</li>
   <li>Added arc with linear gradient colors</li>
   <li>Full responsive</li>
-  <li>All render flow fixed and optimized avoiding unecessary resource usage (much better performance)</li>
+  <li>All render flow fixed and optimized avoiding unecessary resource usage (better performance)</li>
   <li>Refactored project structure to separated files</li>
   <li>Refactored to Typescript</li>
   <li>Added complex objects for better modulation and organization of the project</li>
-  <li>Added a single context to all hooks making coding easier</li>
   <li>Fixed Rerenderings making arcs to be repeated in different sizes</li>
   <li>Fixed needing to set height bug</li>
   <li>Fixed needing to set id bug</li>
@@ -37,7 +36,7 @@ import GaugeComponent from 'react-gauge-component'
 
 ## Examples
 ### Simple Gauge.
-![Image of React Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/simpleGauge.jpg "Simple Gauge Component")
+![Image of Simple Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/simpleGauge.jpg "Simple Gauge Component")
 <details>
   <summary>Show Simple Gauge code</summary>
 
@@ -63,7 +62,7 @@ import GaugeComponent from 'react-gauge-component'
 </details>
 
 ### Custom radial gauge.
-![Image of React Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/radialGauge.jpg "Radial Gauge Component")
+![Image of Radial Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/radialGauge.jpg "Radial Gauge Component")
 <details>
   <summary>Show Custom Radial Gauge code</summary>
 
@@ -100,8 +99,52 @@ import GaugeComponent from 'react-gauge-component'
 ```
 </details>
 
+### Custom radial gauge.
+![Image of Gradient with Arrow Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/arrowGauge.jpg "Gradient with Arrow Gauge Component")
+<details>
+  <summary>Show Custom gradient with arrow code</summary>
+
+  ### Custom gradient with arrow
+  
+```jsx
+<GaugeComponent
+  id="gauge-component4"
+  arc={{
+    gradient: true,
+    width: 0.15,
+    padding: 0,
+    subArcs: [
+      {
+        limit: 15,
+        color: '#EA4228',
+        showMark: true
+      },
+      {
+        limit: 37,
+        color: '#F5CD19',
+        showMark: true
+      },
+      {
+        limit: 58,
+        color: '#5BE12C',
+        showMark: true
+      },
+      {
+        limit: 75,
+        color: '#F5CD19',
+        showMark: true
+      },
+      { color: '#EA4228' }
+    ]
+  }}
+  value={50}
+  pointer={{type: "arrow", config: {elastic: true}}}
+/>
+```
+</details>
+
 ### Custom Bandwidth Gauge.
-![Image of React Gauge Component for bandwidth visualization](https://antoniolago.github.io/react-gauge-component/images/bandGauge.jpg "Gauge Component for bandwidth visualization")
+![Image of Gauge Component for bandwidth visualization](https://antoniolago.github.io/react-gauge-component/images/bandGauge.jpg "Gauge Component for bandwidth visualization")
 <details>
   <summary>Show Bandwidth Gauge code</summary>
 
@@ -273,20 +316,15 @@ const kbitsToMbits = (value) => {
       </li>
     </ul></li>
     <li><code>pointer: object</code>: The value pointer of the gauge.
-        <ul>
-          <li><code>config: object</code>: the config of the pointer (needle)
-            <ul>
-              <li><code>color: string</code>: The color of the needle. Default: <code>#464A4F</code></li>
-              <li><code>baseColor: string</code>: The color of the base of the needle. Default: <code>#464A4F</code></li>
-              <li><code>length: number</code>: The length of the needle 0-1, 1 being the outer radius length. Default: <code>0.70</code></li>
-              <li><code>animate: boolean</code>: Whether or not to animate the needle. Default: <code>true</code></li>
-              <li><code>elastic: boolean</code>: Whether or not to use elastic needle. Default: <code>false</code></li>
-              <li><code>animationDuration: number</code>: The duration of the needle animation. Default: <code>3000</code></li>
-              <li><code>animationDelay: number</code>: The delay of the needle animation. Default: <code>100</code></li>
-              <li><code>width: number</code>: The width of the needle. Default: <code>15</code></li>
-            </ul>
-          </li>
-        </ul>
+        <li><code>type: string</code> This can be "needle" or "arrow". Default: <code>"needle"</code></li>
+        <li><code>color: string</code>: The color of the needle. Default: <code>#464A4F</code></li>
+        <li><code>baseColor: string</code>: The color of the base of the needle. Default: <code>#464A4F</code></li>
+        <li><code>length: number</code>: The length of the needle 0-1, 1 being the outer radius length. Default: <code>0.70</code></li>
+        <li><code>animate: boolean</code>: Whether or not to animate the needle. Default: <code>true</code></li>
+        <li><code>elastic: boolean</code>: Whether or not to use elastic needle. Default: <code>false</code></li>
+        <li><code>animationDuration: number</code>: The duration of the needle animation. Default: <code>3000</code></li>
+        <li><code>animationDelay: number</code>: The delay of the needle animation. Default: <code>100</code></li>
+        <li><code>width: number</code>: The width of the needle. Default: <code>15</code></li>
     </li>
     <li><code>labels: object</code>: The labels of the gauge.
       <ul>

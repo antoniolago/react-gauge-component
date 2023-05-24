@@ -49,9 +49,9 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
 
   const shouldInitChart = () => {
     let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc));
-    let needlePropsChanged = (JSON.stringify(prevProps.current.needle) !== JSON.stringify(mergedProps.current.needle));
+    let pointerPropsChanged = (JSON.stringify(prevProps.current.pointer) !== JSON.stringify(mergedProps.current.pointer));
     let valueChanged = (JSON.stringify(prevProps.current.value) !== JSON.stringify(mergedProps.current.value));
-    return arcsPropsChanged || needlePropsChanged || valueChanged;
+    return arcsPropsChanged || pointerPropsChanged || valueChanged;
   }
   useLayoutEffect(() => {
     updateMergedProps();

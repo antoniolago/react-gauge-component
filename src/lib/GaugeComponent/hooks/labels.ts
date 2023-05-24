@@ -4,6 +4,8 @@ import { Gauge } from '../types/Gauge';
 import { Mark } from '../types/Mark';
 import React from 'react';
 import { GaugeType } from '../types/GaugeComponentProps';
+import { getCoordByValue } from './arc';
+import { PointerType } from '../types/Pointer';
 export const setupLabels = (gauge: Gauge) => {
   setupValueLabel(gauge);
   setupMarks(gauge);
@@ -60,7 +62,7 @@ export const mapMark = (value: number, gauge: Gauge): Mark => {
 export const addMarker = (mark: Mark, gauge: Gauge) => {
   const { labels } = gauge.props;
   const { markAnchor, angle } = calculateAnchorAndAngleByValue(mark.value, gauge);
-  let coords = getLabelCoordsByValue(mark.value, gauge);
+  let coords = getLabelCoordsByValue(mark.value, gauge, undefined);
   let char = mark.markerConfig?.char || labels.markLabel.markerConfig.char;
   let charStyle = mark.markerConfig?.style || labels.markLabel.markerConfig.style
   charStyle.textAnchor = markAnchor as any;
@@ -109,23 +111,9 @@ export const addMark = (mark: Mark, gauge: Gauge) => {
     addMarkValue(mark, gauge);
   }
 }
-
 export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLengthSubtract = 0) => {
-  var centerToArcLength = gauge.dimensions.current.innerRadius * 0.93 - centerToArcLengthSubtract;
-  if(gauge.props.labels.markLabel.type == "outer") centerToArcLength = gauge.dimensions.current.outerRadius - centerToArcLengthSubtract + 2;
+  let { x, y } = getCoordByValue(value, gauge, gauge.props.labels.markLabel.type, centerToArcLengthSubtract, 0.93);
   let percent = utils.calculatePercentage(gauge.props.minValue, gauge.props.maxValue, value);
-  let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -41);
-  let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 222);
-  const angle = startAngle + (percent) * (endAngle - startAngle);
-  let marksRadius = 15 * (gauge.dimensions.current.width / 500);
-  let coord = [0, -marksRadius / 2];
-  let labelCoordMinusCenter = [
-    coord[0] - centerToArcLength * Math.cos(angle),
-    coord[1] - centerToArcLength * Math.sin(angle),
-  ];
-  let centerCoords = [gauge.dimensions.current.outerRadius, gauge.dimensions.current.outerRadius];
-  let x = (centerCoords[0] + labelCoordMinusCenter[0]);
-  let y = (centerCoords[1] + labelCoordMinusCenter[1]);
   //This corrects labels in the cener being too close from the arc
   let isValueBetweenCenter = percent > CONSTANTS.rangeBetweenCenteredMarkValueLabel[0] && 
                                 percent < CONSTANTS.rangeBetweenCenteredMarkValueLabel[1];
@@ -172,17 +160,22 @@ export const addValueText = (gauge: Gauge) => {
   const maxLengthBeforeComputation = 3;
   const textLength = text?.length || 0;
   let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1; // Compute the font size ratio
-  fontRatio = gauge.dimensions.current.width * 0.003 * fontRatio;
   let valueFontSize = labels.valueLabel.style.fontSize as string;
   // let valueFontColor = labels.valueLabel.style.color;
   let valueTextStyle = {... labels.valueLabel.style};
-  valueTextStyle.fontSize = parseInt(valueFontSize, 10) * fontRatio + "px";
   let x = gauge.dimensions.current.outerRadius;
   let y = gauge.dimensions.current.outerRadius / 1.5 + textPadding;
   valueTextStyle.textAnchor = "middle";
   if(gauge.props.type == GaugeType.Radial){
     y = gauge.dimensions.current.outerRadius * 1.45 + textPadding;
+    fontRatio = gauge.dimensions.current.width * 0.003 * fontRatio;
   }
+  if(gauge.props.pointer.type == PointerType.Arrow){
+    y = gauge.dimensions.current.outerRadius * 0.79 + textPadding;
+    fontRatio = gauge.dimensions.current.width * 0.004 * fontRatio;
+  }
+  let fontSizeNumber = parseInt(valueFontSize, 10) * fontRatio + 5;
+  valueTextStyle.fontSize = fontSizeNumber + "px";
   addText(text, x, y, gauge, valueTextStyle, CONSTANTS.valueLabelClassname);
 };
 
