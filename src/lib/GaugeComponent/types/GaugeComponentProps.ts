@@ -22,7 +22,7 @@ export interface GaugeComponentProps {
 }
 
 export const defaultGaugeProps: GaugeComponentProps = {
-    id: "gauge-component-id",
+    id: "",
     className: "gauge-component-class",
     style: { width: "100%"},
     marginInPercent: 0.05,

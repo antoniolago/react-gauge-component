@@ -43,8 +43,8 @@ export const setupMarks = (gauge: Gauge) => {
 
 export const addArcMarks = (gauge: Gauge) => {
   const { arc } = gauge.props;
-  arc.subArcs?.map((arc) => {
-    if (arc.showMark) return arc.limit;
+  gauge.arcData.current?.map((subArc) => {
+    if (subArc.showMark) return subArc.limit;
   }).forEach((markValue) => {
     if (markValue) addMark(mapMark(markValue, gauge), gauge);
   });

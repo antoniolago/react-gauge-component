@@ -7,15 +7,19 @@ Key differences:
   <li>Added min/max values</li>
   <li>Added arcs limits in value instead of percent</li>
   <li>Added inner/outer marks to the gauge for reference of the values</li>
+  <li>More than one gauge type</li>
   <li>Added tooltips on hover for the arcs</li>
   <li>Added further customizations of the needle like animation and width</li>
   <li>Added arc with linear gradient colors</li>
+  <li>Full responsive</li>
+  <li>All render flow fixed and optimized avoiding unecessary resource usage (much better performance)</li>
   <li>Refactored project structure to separated files</li>
   <li>Refactored to Typescript</li>
   <li>Added complex objects for better modulation and organization of the project</li>
   <li>Added a single context to all hooks making coding easier</li>
   <li>Fixed Rerenderings making arcs to be repeated in different sizes</li>
-  <li>Fixed needing to set height bug (tho it may still be necessary to set it depending on your use case, top marks can be cut by margin depending on screen size)</li>
+  <li>Fixed needing to set height bug</li>
+  <li>Fixed needing to set id bug</li>
 </ul>
 
 # Demo
@@ -68,13 +72,8 @@ import GaugeComponent from 'react-gauge-component'
 ```jsx
 <GaugeComponent
   id="gauge-component-radial"
-  value={currentValue}
+  value={50}
   type="radial"
-  arc={{
-    width: 0.2,
-    nbSubArcs: 20,
-    colorArray: ['#FF5F6D', '#FFC371']
-  }}
   labels={{
     markLabel: {
       type: "inner",
@@ -87,8 +86,15 @@ import GaugeComponent from 'react-gauge-component'
       ]
     }
   }}
+  arc={{
+    colorArray: ['#5BE12C','#EA4228'],
+    subArcs: [{limit: 10}, {limit: 30}, {}, {}, {}],
+    padding: 0.02,
+    width: 0.3
+  }}
   needle={{
-    length: 0.9,
+    elastic: true,
+    animationDelay: 0
   }}
 />
 ```
@@ -223,12 +229,9 @@ const kbitsToMbits = (value) => {
 </details>
 
 # API
-
-### Warning: Do not use the same `id` for multiple charts, as it will put multiple charts in the same container
-
 <h2>Props:</h2>
 <ul>
-   <li><code>id: string</code>: A unique identifier for the div surrounding the chart. Default: <code>"gauge-component-id"</code>.</li>
+   <li><code>id: string</code>: A unique identifier for the div surrounding the chart. Default: <code>""</code>.</li>
    <li><code>className: string</code>: Adds a <code>className</code> to the div container. Default: <code>"gauge-component-class"</code>.</li>
    <li><code>style: React.CSSProperties</code>: Adds a style object to the div container. Default: <code>{width: 100}</code>.</li>
    <li><code>marginInPercent: number</code>: Sets the margin for the chart inside the containing SVG element. Default: <code>0.05</code>.</li>

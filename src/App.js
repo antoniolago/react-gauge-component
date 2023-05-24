@@ -204,11 +204,11 @@ const App = () => {
                 arc={{
                   colorArray: ['#1EFF00', '#CE1F1F'],
                   subArcs: [
-                    {limit: 40},
-                    {limit: 50},
-                    {},
-                    {},
-                    {}
+                    {limit: 40, showMark: true},
+                    {limit: 50, showMark: true},
+                    {showMark: true},
+                    {showMark: true},
+                    {showMark: true}
                   ],
                   padding: 0.02,
                   width: 0.3
@@ -284,21 +284,16 @@ const App = () => {
                     type: "inner",
                     marks: [
                       { value: 20 },
-                      { value: 50 },
+                      { value: 40 },
+                      { value: 60 },
                       { value: 80 },
                       { value: 100 }
                     ]
                   }
                 }}
                 arc={{
-                  colorArray: ['#CE1F1F', '#00FF00'],
-                  subArcs: [
-                    {limit: 10},
-                    {limit: 30},
-                    {},
-                    {},
-                    {}
-                  ],
+                  colorArray: ['#5BE12C','#EA4228'],
+                  subArcs: [{limit: 10},{limit: 30},{},{},{}],
                   padding: 0.02,
                   width: 0.3
                 }}

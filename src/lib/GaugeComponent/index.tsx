@@ -49,17 +49,11 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     innerRadius,
     margin,
     container,
-    nbArcsToDisplay,
     arcChart,
     arcData,
     pieChart,
-    selectedPointerType,
     tooltip
   };
-  const updateSelectedPointerType = () => {
-    if(props.needle) gauge.selectedPointerType.current = PointerType.Needle;
-    else if(props.blob) gauge.selectedPointerType.current = PointerType.Blob;
-  }
   //Merged properties will get the default props and overwrite by the user's defined props
   //To keep the original default props in the object
   const updateMergedProps = () => gauge.props = mergedProps.current = mergeObjects(defaultGaugeProps, props);
@@ -71,7 +65,6 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     return arcsPropsChanged || needlePropsChanged || valueChanged;
   }
   useLayoutEffect(() => {
-    updateSelectedPointerType();
     updateMergedProps();
     container.current = select(selectedRef.current);
     if(shouldInitChart()) chartHooks.initChart(gauge);
