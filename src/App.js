@@ -141,7 +141,7 @@ const App = () => {
                   ]
                 }}
                 value={currentValue}
-                pointer={{type: "arrow", config: {elastic: true}}}
+                pointer={{ type: "arrow", elastic: true }}
               />
             </Col>
             <Col xs={12} lg={3}>
@@ -149,10 +149,8 @@ const App = () => {
               <GaugeComponent
                 id="gauge-component6"
                 pointer={{
-                  config: { 
                     animate: false,
                     color: '#4A05EC'
-                  }
                 }}
                 arc={{
                   colorArray: ['#830C7336', '#0077FF'],
@@ -177,17 +175,15 @@ const App = () => {
                   subArcs:
                     [
                       { limit: 40 },
-                      { limit: 60},
-                      { limit: 70},
+                      { limit: 60 },
+                      { limit: 70 },
                       {},
                       {},
                       {},
                       {}
                     ]
                 }}
-                pointer={{
-                  config: { animationDelay: 0 },
-                }}
+                pointer={{ animationDelay: 0 }}
                 value={currentValue}
               />
             </Col>
@@ -200,18 +196,16 @@ const App = () => {
                 arc={{
                   colorArray: ['#1EFF00', '#CE1F1F'],
                   subArcs: [
-                    {limit: 40, showMark: true},
-                    {limit: 50, showMark: true},
-                    {showMark: true},
-                    {showMark: true},
-                    {showMark: true}
+                    { limit: 40, showMark: true },
+                    { limit: 50, showMark: true },
+                    { showMark: true },
+                    { showMark: true },
+                    { showMark: true }
                   ],
                   padding: 0.02,
                   width: 0.3
                 }}
-                pointer={{
-                  config: { animationDelay: 0 },
-                }}
+                pointer={{ animationDelay: 0 }}
               />
             </Col>
             <Col xs={12} lg={3}>
@@ -236,9 +230,7 @@ const App = () => {
                   padding: 0.02,
                   width: 0.5
                 }}
-                pointer={{
-                  config: { animationDelay: 0 },
-                }}
+                pointer={{ animationDelay: 0 }}
               />
             </Col>
             <Col xs={12} lg={3}>
@@ -264,9 +256,7 @@ const App = () => {
                     ]
                   }
                 }}
-                pointer={{
-                  config: { length: 0.5 },
-                }}
+                pointer={{ length: 0.5 }}
               />
             </Col>
             <Col xs={12} lg={3}>
@@ -288,16 +278,14 @@ const App = () => {
                   }
                 }}
                 arc={{
-                  colorArray: ['#5BE12C','#EA4228'],
-                  subArcs: [{limit: 10},{limit: 30},{},{},{}],
+                  colorArray: ['#5BE12C', '#EA4228'],
+                  subArcs: [{ limit: 10 }, { limit: 30 }, {}, {}, {}],
                   padding: 0.02,
                   width: 0.3
                 }}
                 pointer={{
-                  config: { 
-                    elastic: true,
-                    animationDelay: 0
-                  }
+                  elastic: true,
+                  animationDelay: 0
                 }}
               />
             </Col>
@@ -396,14 +384,12 @@ const App = () => {
                   ]
                 }}
                 pointer={{
-                  config: { 
-                    color: '#345243',
-                    length: 0.90,
-                    width: 15,
-                    // animate: true,
-                    // elastic: true,
-                    animDelay: 200,
-                  }
+                  color: '#345243',
+                  length: 0.90,
+                  width: 15,
+                  // animate: true,
+                  // elastic: true,
+                  animDelay: 200,
                 }}
                 labels={{
                   valueLabel: { formatTextValue: value => value + 'ºC' },
