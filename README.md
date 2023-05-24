@@ -278,7 +278,7 @@ const kbitsToMbits = (value) => {
    <li><code>className: string</code>: Adds a <code>className</code> to the div container. Default: <code>"gauge-component-class"</code>.</li>
    <li><code>style: React.CSSProperties</code>: Adds a style object to the div container. Default: <code>{width: 100}</code>.</li>
    <li><code>marginInPercent: number</code>: Sets the margin for the chart inside the containing SVG element. Default: <code>0.05</code>.</li>
-   <li><code>type: string</code>: The type of the gauge, values can be <code>"semicircle</code> and <code>"radial"</code>. Default: <code>"semicircle</code>.</li>
+   <li><code>type: string</code>: The type of the gauge, values can be <code>"semicircle</code> and <code>"radial"</code>. Default: <code>"semicircle"</code>.</li>
    <li><code>value: number</code>: The value of the gauge. Default: <code>33</code>.</li>
    <li><code>minValue: number</code>: The minimum value of the gauge. Default: <code>0</code>.</li>
    <li><code>maxValue: number</code>: The maximum value of the gauge. Default: <code>100</code>.</li>
@@ -316,6 +316,7 @@ const kbitsToMbits = (value) => {
       </li>
     </ul></li>
     <li><code>pointer: object</code>: The value pointer of the gauge.
+      <ul>
         <li><code>type: string</code> This can be "needle" or "arrow". Default: <code>"needle"</code></li>
         <li><code>color: string</code>: The color of the needle. Default: <code>#464A4F</code></li>
         <li><code>baseColor: string</code>: The color of the base of the needle. Default: <code>#464A4F</code></li>
@@ -325,6 +326,7 @@ const kbitsToMbits = (value) => {
         <li><code>animationDuration: number</code>: The duration of the needle animation. Default: <code>3000</code></li>
         <li><code>animationDelay: number</code>: The delay of the needle animation. Default: <code>100</code></li>
         <li><code>width: number</code>: The width of the needle. Default: <code>15</code></li>
+      </ul>
     </li>
     <li><code>labels: object</code>: The labels of the gauge.
       <ul>
