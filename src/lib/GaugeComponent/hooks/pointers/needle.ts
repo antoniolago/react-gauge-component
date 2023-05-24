@@ -13,8 +13,7 @@ export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
   var centerPoint = [0, -needleRadius / 2];
   let currentPercent = utils.calculatePercentage(minValue, maxValue, value as number);
   var prevPercent = utils.calculatePercentage(minValue, maxValue, gauge.prevProps?.current.value || minValue);
-  var pathLength = gauge.outerRadius.current * needle.length;
-  var needleRadius = getNeedleRadius(gauge);
+  var pathLength = gauge.dimensions.current.outerRadius * needle.length;
   let isFirstTime = gauge.prevProps?.current.value == undefined;
   if(isFirstTime || resize){
     var pathStr = calculateNeedlePath(gauge, prevPercent || utils.getCurrentGaugeValuePercentage(gauge.props), pathLength, needleRadius, centerPoint);
@@ -29,7 +28,7 @@ export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
     //Translate the needle starting point to the middle of the arc
     gauge.pointer.current.attr(
       "transform",
-      "translate(" + gauge.outerRadius.current + ", " + gauge.outerRadius.current + ")"
+      "translate(" + gauge.dimensions.current.outerRadius + ", " + gauge.dimensions.current.outerRadius + ")"
     );
   }
   //Rotate the needle
@@ -60,8 +59,9 @@ export const drawNeedle = (gauge: Gauge, resize: boolean = false) => {
 };
 
 export const calculateNeedlePath = (gauge: Gauge, percent: number, pathLength: number, needleRadius: number, centerPoint: any) => {
-  let startAngle = utils.degToRad(gauge.props.type == "semicircle" ? 0 : -42);
-  let endAngle = utils.degToRad(gauge.props.type == "semicircle" ? 180 : 222);
+  const { angles } = gauge.dimensions.current;
+  let startAngle = utils.degToRad(angles.startAngleDeg);
+  let endAngle = utils.degToRad(angles.endAngleDeg);
   const angle = startAngle + (percent) * (endAngle - startAngle);
   var topPoint = [
     centerPoint[0] - pathLength * Math.cos(angle),
@@ -84,7 +84,7 @@ export const calculateNeedlePath = (gauge: Gauge, percent: number, pathLength: n
 
 export const getNeedleRadius = (gauge: Gauge) => {
   const { needle } = gauge.props;
-  return needle.width * (gauge.width.current / 500);
+  return needle.width * (gauge.dimensions.current.width / 500);
 }
 
 export const addNeedleElement = (gauge: Gauge) => gauge.pointer.current = gauge.g.current.append("g").attr("class", "needle");

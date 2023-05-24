@@ -116,12 +116,12 @@ export const setupArcs = (gauge: Gauge) => {
   gauge.tooltip.current = select(`.${CONSTANTS.arcTooltipClassname}`);
   //Setup the arc
   gauge.arcChart.current
-    .outerRadius(gauge.outerRadius.current)
-    .innerRadius(gauge.innerRadius.current)
+    .outerRadius(gauge.dimensions.current.outerRadius)
+    .innerRadius(gauge.dimensions.current.innerRadius)
     .cornerRadius(arc.cornerRadius)
     .padAngle(arc.padding);
 
-  chartHooks.clearChart(gauge);
+  // chartHooks.clearChart(gauge);
   let data = {}
   //When gradient enabled, it'll have only 1 arc
   if(gauge.props.arc.gradient){

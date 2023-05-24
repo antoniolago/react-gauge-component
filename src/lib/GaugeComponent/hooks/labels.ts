@@ -111,19 +111,19 @@ export const addMark = (mark: Mark, gauge: Gauge) => {
 }
 
 export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLengthSubtract = 0) => {
-  var centerToArcLength = gauge.innerRadius.current * 0.93 - centerToArcLengthSubtract;
-  if(gauge.props.labels.markLabel.type == "outer") centerToArcLength = gauge.outerRadius.current - centerToArcLengthSubtract + 2;
+  var centerToArcLength = gauge.dimensions.current.innerRadius * 0.93 - centerToArcLengthSubtract;
+  if(gauge.props.labels.markLabel.type == "outer") centerToArcLength = gauge.dimensions.current.outerRadius - centerToArcLengthSubtract + 2;
   let percent = utils.calculatePercentage(gauge.props.minValue, gauge.props.maxValue, value);
   let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -41);
-  let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 221);
+  let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 222);
   const angle = startAngle + (percent) * (endAngle - startAngle);
-  let marksRadius = 15 * (gauge.width.current / 500);
+  let marksRadius = 15 * (gauge.dimensions.current.width / 500);
   let coord = [0, -marksRadius / 2];
   let labelCoordMinusCenter = [
     coord[0] - centerToArcLength * Math.cos(angle),
     coord[1] - centerToArcLength * Math.sin(angle),
   ];
-  let centerCoords = [gauge.outerRadius.current, gauge.outerRadius.current];
+  let centerCoords = [gauge.dimensions.current.outerRadius, gauge.dimensions.current.outerRadius];
   let x = (centerCoords[0] + labelCoordMinusCenter[0]);
   let y = (centerCoords[1] + labelCoordMinusCenter[1]);
   //This corrects labels in the cener being too close from the arc
@@ -172,16 +172,16 @@ export const addValueText = (gauge: Gauge) => {
   const maxLengthBeforeComputation = 3;
   const textLength = text?.length || 0;
   let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1; // Compute the font size ratio
-  fontRatio = gauge.width.current * 0.003 * fontRatio;
+  fontRatio = gauge.dimensions.current.width * 0.003 * fontRatio;
   let valueFontSize = labels.valueLabel.style.fontSize as string;
   // let valueFontColor = labels.valueLabel.style.color;
   let valueTextStyle = {... labels.valueLabel.style};
   valueTextStyle.fontSize = parseInt(valueFontSize, 10) * fontRatio + "px";
-  let x = gauge.outerRadius.current;
-  let y = gauge.outerRadius.current / 1.5 + textPadding;
+  let x = gauge.dimensions.current.outerRadius;
+  let y = gauge.dimensions.current.outerRadius / 1.5 + textPadding;
   valueTextStyle.textAnchor = "middle";
   if(gauge.props.type == GaugeType.Radial){
-    y = gauge.outerRadius.current * 1.45 + textPadding;
+    y = gauge.dimensions.current.outerRadius * 1.45 + textPadding;
   }
   addText(text, x, y, gauge, valueTextStyle, CONSTANTS.valueLabelClassname);
 };
@@ -195,13 +195,9 @@ export const clearMarks = (gauge: Gauge) => {
 export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   const { minValue, maxValue } = gauge.props;
   let valuePercentage = utils.calculatePercentage(minValue, maxValue, value)
-  //let startAngle = utils.degToRad(gauge.props.type == "semicircle" ? 0 : -42);
-  //let endAngle = utils.degToRad(gauge.props.type == "semicircle" ? 180 : 222);
   let startAngle = gauge.props.type == GaugeType.Semicircle ? 0 : -42;
   let endAngle = gauge.props.type == GaugeType.Semicircle ? 180 : 266;
   let angle = startAngle + (valuePercentage * 100) * endAngle / 100;
-  //let angle = startAngle + (valuePercentage) * (endAngle - startAngle) / 100;
-  let centerToleranceInPercentage = 0.05;
   let halfInPercentage = utils.calculatePercentage(minValue, maxValue, (maxValue / 2));
   let halfPercentage = halfInPercentage;
   let isValueLessThanHalf = valuePercentage < halfPercentage;

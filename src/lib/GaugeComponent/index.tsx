@@ -3,8 +3,8 @@ import { arc, pie, select } from "d3";
 import { defaultGaugeProps, GaugeComponentProps, GaugeType } from "./types/GaugeComponentProps";
 import { Gauge } from "./types/Gauge";
 import * as chartHooks from "./hooks/chart";
-import { mergeObjects } from "./hooks/utils";
-import { PointerType } from "./types/PointerType";
+import { isEmptyObject, mergeObjects } from "./hooks/utils";
+import { Dimensions, defaultDimensions } from "./types/Dimensions";
 /*
 GaugeComponent creates a gauge chart using D3
 The chart is responsive and will have the same width as the "container"
@@ -17,20 +17,13 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const svg = useRef<any>({});
   const tooltip = useRef<any>({});
   const g = useRef<any>({});
-  const width = useRef<any>({});
-  const height = useRef<any>({});
-  const fixedHeight = useRef<any>(0);
   const doughnut = useRef<any>({});
   const pointer = useRef<any>({});
-  const selectedPointerType = useRef<any>({});
-  const outerRadius = useRef<any>({});
-  const innerRadius = useRef<any>({});
-  const margin = useRef<any>({}); // = {top: 20, right: 50, bottom: 50, left: 50},
   const container = useRef<any>({});
-  const nbArcsToDisplay = useRef<any>(0);
   const arcChart = useRef<any>(arc());
   const arcData = useRef<any>([]);
   const pieChart = useRef<any>(pie());
+  const dimensions = useRef<Dimensions>({ ...defaultDimensions});
   const mergedProps = useRef<GaugeComponentProps>(props as GaugeComponentProps);
   const prevProps = useRef<any>({});
   let selectedRef = useRef<any>(null);
@@ -40,20 +33,16 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     prevProps,
     svg,
     g,
-    width,
-    fixedHeight,
-    height,
+    dimensions,
     doughnut,
     pointer,
-    outerRadius,
-    innerRadius,
-    margin,
     container,
     arcChart,
     arcData,
     pieChart,
     tooltip
   };
+
   //Merged properties will get the default props and overwrite by the user's defined props
   //To keep the original default props in the object
   const updateMergedProps = () => gauge.props = mergedProps.current = mergeObjects(defaultGaugeProps, props);
@@ -66,7 +55,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   }
   useLayoutEffect(() => {
     updateMergedProps();
-    container.current = select(selectedRef.current);
+    if(isEmptyObject(container.current)) container.current = select(selectedRef.current);
     if(shouldInitChart()) chartHooks.initChart(gauge);
     gauge.prevProps.current = mergeObjects(defaultGaugeProps, props);
   }, [props]);
