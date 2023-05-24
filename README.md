@@ -56,7 +56,7 @@ import GaugeComponent from 'react-gauge-component'
       ]
     }
   }}
-  needle={{ elastic: true }}
+  pointer={{ elastic: true }}
 />
 ```
 </details>
@@ -91,7 +91,7 @@ import GaugeComponent from 'react-gauge-component'
     padding: 0.02,
     width: 0.3
   }}
-  needle={{
+  pointer={{
     elastic: true,
     animationDelay: 0
   }}
@@ -138,7 +138,7 @@ import GaugeComponent from 'react-gauge-component'
     ]
   }}
   value={50}
-  pointer={{type: "arrow", config: {elastic: true}}}
+  pointer={{type: "arrow", elastic: true}}
 />
 ```
 </details>
@@ -247,7 +247,7 @@ const kbitsToMbits = (value) => {
       }
     ]
   }}
-  needle={{
+  pointer={{
     color: '#345243',
     length: 0.90,
     width: 15,
