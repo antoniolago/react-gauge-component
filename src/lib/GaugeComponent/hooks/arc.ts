@@ -41,16 +41,18 @@ const onArcMouseClick = (event: any, d: any) => {
   if(d.data.onMouseClick != undefined) d.data.onMouseClick(event);
 }
 
+export const getRemainingArcLengthLimit = (gauge: Gauge) => {
+}
+
 export const setArcData = (gauge: Gauge) => {
   const { arc, minValue, maxValue } = gauge.props;
   // Determine number of arcs to display
-  gauge.nbArcsToDisplay.current = arc.nbSubArcs || arc.subArcs?.length;
+  let nbArcsToDisplay = arc.nbSubArcs || arc.subArcs?.length;
 
-  let colorArray = getColors(gauge);
+  let colorArray = getColors(nbArcsToDisplay, gauge);
   if (arc.subArcs && !arc.nbSubArcs) {
     let lastSubArcLimit = 0;
     let lastSubArcLimitPercentageAcc = 0;
-    let remainingPercentageEquallyDivided: number | undefined = undefined;
     let subArcsLength: Array<number> = [];
     let subArcsLimits: Array<number> = [];
     let subArcsTooltip: Array<Tooltip> = [];
@@ -61,13 +63,14 @@ export const setArcData = (gauge: Gauge) => {
       let limit = subArc.limit as number;
       if (subArc.limit == undefined) {
         subArcRange = lastSubArcLimit;
+        let remainingPercentageEquallyDivided: number | undefined = undefined;
         let remainingSubArcs = arc.subArcs.slice(i);
         let remainingPercentage = (1 - utils.calculatePercentage(minValue, maxValue, lastSubArcLimit)) * 100;
         if (!remainingPercentageEquallyDivided) {
           remainingPercentageEquallyDivided = (remainingPercentage / Math.max(remainingSubArcs.length, 1)) / 100;
         }
-        subArcLength = remainingPercentageEquallyDivided;
         limit = lastSubArcLimit + (remainingPercentageEquallyDivided * 100);
+        subArcLength = remainingPercentageEquallyDivided;
       } else {
         subArcRange = limit - lastSubArcLimit;
         // Calculate arc length based on previous arc percentage
@@ -86,17 +89,18 @@ export const setArcData = (gauge: Gauge) => {
     });
     gauge.arcData.current = subArcsLength.map((length, i) => ({
       value: length,
-      limitValue: subArcsLimits[i],
+      limit: subArcsLimits[i],
       color: colorArray[i],
-      tooltip: subArcsTooltip[i],
+      showMark: arc.subArcs[i].showMark,
+      tooltip: arc.subArcs[i].tooltip || undefined,
       onMouseMove: arc.subArcs[i].onMouseMove,
       onMouseLeave: arc.subArcs[i].onMouseLeave,
       onMouseClick: arc.subArcs[i].onClick
     }));
   } else {
-    const arcValue = maxValue / gauge.nbArcsToDisplay.current;
+    const arcValue = maxValue / nbArcsToDisplay;
 
-    gauge.arcData.current = Array.from({ length: gauge.nbArcsToDisplay.current }, (_, i) => ({
+    gauge.arcData.current = Array.from({ length: nbArcsToDisplay }, (_, i) => ({
       value: arcValue,
       color: colorArray[i],
       tooltip: undefined,
@@ -112,12 +116,12 @@ export const setupArcs = (gauge: Gauge) => {
   gauge.tooltip.current = select(`.${CONSTANTS.arcTooltipClassname}`);
   //Setup the arc
   gauge.arcChart.current
-    .outerRadius(gauge.outerRadius.current)
-    .innerRadius(gauge.innerRadius.current)
+    .outerRadius(gauge.dimensions.current.outerRadius)
+    .innerRadius(gauge.dimensions.current.innerRadius)
     .cornerRadius(arc.cornerRadius)
     .padAngle(arc.padding);
 
-  chartHooks.clearChart(gauge);
+  // chartHooks.clearChart(gauge);
   let data = {}
   //When gradient enabled, it'll have only 1 arc
   if(gauge.props.arc.gradient){
@@ -156,7 +160,7 @@ export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
   const { arc } = gauge.props;
   gauge.arcData.current.forEach((subArcData) => 
     gradEl.append("stop")
-        .attr("offset", `${subArcData.limitValue}%`)
+        .attr("offset", `${subArcData.limit}%`)
         .style("stop-color", subArcData.color)//end in red
         .style("stop-opacity", 1)
   )
@@ -164,7 +168,7 @@ export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
 
 //Depending on the number of levels in the chart
 //This function returns the same number of colors
-export const getColors = (gauge: Gauge) => {
+export const getColors = (nbArcsToDisplay: number, gauge: Gauge) => {
   const { arc } = gauge.props;
   let colorsValue: string[] = [];
   if (!arc.colorArray) {
@@ -177,16 +181,16 @@ export const getColors = (gauge: Gauge) => {
   if(!colorsValue) colorsValue = ["#fff"];
   //Check if the number of colors equals the number of levels
   //Otherwise make an interpolation
-  let arcsEqualsColorsLength = gauge.nbArcsToDisplay.current === colorsValue?.length;
+  let arcsEqualsColorsLength = nbArcsToDisplay === colorsValue?.length;
   if (arcsEqualsColorsLength) return colorsValue;
   var colorScale = scaleLinear()
-    .domain([1, gauge.nbArcsToDisplay.current])
+    .domain([1, nbArcsToDisplay])
     //@ts-ignore
     .range([colorsValue[0], colorsValue[colorsValue.length - 1]]) //Use the first and the last color as range
     //@ts-ignore
     .interpolate(interpolateHsl);
   var colorArray = [];
-  for (var i = 1; i <= gauge.nbArcsToDisplay.current; i++) {
+  for (var i = 1; i <= nbArcsToDisplay; i++) {
     colorArray.push(colorScale(i));
   }
   return colorArray;
@@ -198,7 +202,7 @@ export const createGradientElement = (div: any, uniqueId: string) => {
     .attr("x1", "0%")
     .attr("x2", "100%")
     .attr("y1", "0%")
-    .attr("y2", "0%")//since its a vertical linear gradient 
+    .attr("y2", "0%")
     ;
   return lg
 }

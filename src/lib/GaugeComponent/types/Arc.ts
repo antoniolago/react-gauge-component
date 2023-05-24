@@ -8,9 +8,9 @@ export interface Arc {
     colorArray?: Array<string>, //The colors of the arcs, this overrides "subArcs" colors
     subArcs: Array<SubArc>
 }
-interface SubArc {
+export interface SubArc {
     limit?: number, //The limit of the subArc, in accord to the gauge value
-    color?: string, //The color of the subArc
+    color?: string | number, //The color of the subArc
     // needleColorWhenWithinLimit?: string, //The color of the needle when it is within the subArc
     showMark?: boolean, //Whether or not to show the mark
     tooltip?: Tooltip,
