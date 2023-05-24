@@ -75,7 +75,7 @@ const setPointerPosition = (pointerRadius: number, value: number, gauge: Gauge) 
 const isProgressValid = (currentPercent: number, prevPercent: number, gauge: Gauge) => {
     const { minValue, maxValue } = gauge.props;
     //Avoid unnecessary re-rendering (when progress is too small) but allow the pointer to reach the final value
-    let overFlow = currentPercent * 100 > maxValue || currentPercent * 100 < minValue;
+    let overFlow = currentPercent > 1 || currentPercent < 0;
     let tooSmallValue = Math.abs(currentPercent - prevPercent) < 0.0001;
     let sameValueAsBefore = currentPercent == prevPercent;
     return !tooSmallValue && !sameValueAsBefore && !overFlow;
