@@ -71,7 +71,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   return (
     <div
       id={id}
-      className={`${className} ${type == GaugeType.Semicircle ? "semicircle-gauge" : "radial-gauge"}}`}
+      className={`${className} ${type == GaugeType.Semicircle ? "semicircle-gauge" : "radial-gauge"}`}
       style={style}
       ref={(svg) => (selectedRef.current = svg)}
     />
