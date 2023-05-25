@@ -9,6 +9,7 @@ import * as chartHooks from './chart';
 import CONSTANTS from '../constants';
 import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 import { GaugeType } from '../types/GaugeComponentProps';
+import { throttle } from 'lodash';
 
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
   event.target.style.stroke = "#ffffff5e";
@@ -40,9 +41,6 @@ const onArcMouseOut = (event: any, d: any) => {
 }
 const onArcMouseClick = (event: any, d: any) => { 
   if(d.data.onMouseClick != undefined) d.data.onMouseClick(event);
-}
-
-export const getRemainingArcLengthLimit = (gauge: Gauge) => {
 }
 
 export const setArcData = (gauge: Gauge) => {
@@ -142,7 +140,7 @@ export const setupArcs = (gauge: Gauge) => {
 
   arcPaths
     .on("mouseout", (event: any, d: any) => onArcMouseOut(event, d))
-    .on("mousemove", (event: any, d: any) => onArcMouseMove(event, d, gauge))
+    .on("mousemove", throttle((event: any, d: any) => onArcMouseMove(event, d, gauge), 20))
     .on("click", (event: any, d: any) => onArcMouseClick(event, d))
 };
 
