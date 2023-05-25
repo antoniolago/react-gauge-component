@@ -299,7 +299,7 @@ const App = () => {
                   nbSubArcs: 150,
                   colorArray: ['#5BE12C', '#F5CD19', '#EA4228'],
                   width: 0.3,
-                  padding: 0.01
+                  padding: 0.003
                 }}
                 labels={{
                   valueLabel: {

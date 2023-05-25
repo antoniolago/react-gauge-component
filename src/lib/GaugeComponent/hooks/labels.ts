@@ -168,13 +168,13 @@ export const addValueText = (gauge: Gauge) => {
   valueTextStyle.textAnchor = "middle";
   if(gauge.props.type == GaugeType.Radial){
     y = gauge.dimensions.current.outerRadius * 1.45 + textPadding;
-    fontRatio = gauge.dimensions.current.width * 0.003 * fontRatio;
   }
   if(gauge.props.pointer.type == PointerType.Arrow){
     y = gauge.dimensions.current.outerRadius * 0.79 + textPadding;
-    fontRatio = gauge.dimensions.current.width * 0.004 * fontRatio;
   }
-  let fontSizeNumber = parseInt(valueFontSize, 10) * fontRatio + 5;
+  let widthFactor = gauge.props.type == GaugeType.Radial ? 0.003 : 0.003;
+  fontRatio = gauge.dimensions.current.width * widthFactor * fontRatio;
+  let fontSizeNumber = parseInt(valueFontSize, 10) * fontRatio;
   valueTextStyle.fontSize = fontSizeNumber + "px";
   addText(text, x, y, gauge, valueTextStyle, CONSTANTS.valueLabelClassname);
 };
