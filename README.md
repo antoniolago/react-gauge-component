@@ -99,12 +99,12 @@ import GaugeComponent from 'react-gauge-component'
 ```
 </details>
 
-### Gradient with arrow gauge.
-![Image of Gradient with Blob Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/blobGauge.jpg "Gradient with Blob Gauge Component")
+### Gauge with arrow gauge.
+![Image of Blob Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/blobGauge.jpg "Blob Gauge Component")
 <details>
-  <summary>Show Gradient with blob code</summary>
+  <summary>Show Gauge with blob code</summary>
 
-  ### Custom gradient with blob
+  ### Custom gauge with blob
   
 ```jsx
 <GaugeComponent
