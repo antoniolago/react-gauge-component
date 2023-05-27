@@ -98,6 +98,27 @@ import GaugeComponent from 'react-gauge-component'
 />
 ```
 </details>
+### Gradient with arrow gauge.
+![Image of Gradient with Blob Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/blobGauge.jpg "Gradient with Blob Gauge Component")
+<details>
+  <summary>Show Gradient with blob code</summary>
+
+  ### Custom gradient with blob
+  
+```jsx
+<GaugeComponent
+  id="gauge-component-blob"
+  arc={{
+    colorArray: ['#00FF15', '#FF2121'],
+    nbSubArcs: 50,
+    padding: 0.01,
+  }}
+  pointer={{type: "blob", animationDelay: 0, elastic: true }}
+  value={90.69}
+/>
+```
+</details>
+
 
 ### Gradient with arrow gauge.
 ![Image of Gradient with Arrow Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/arrowGauge.jpg "Gradient with Arrow Gauge Component")
