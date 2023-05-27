@@ -99,7 +99,7 @@ import GaugeComponent from 'react-gauge-component'
 ```
 </details>
 
-### Gauge with arrow gauge.
+### Gauge with blob gauge.
 ![Image of Blob Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/blobGauge.jpg "Blob Gauge Component")
 <details>
   <summary>Show Gauge with blob code</summary>
