@@ -1,3 +1,4 @@
+import { Gauge } from '../types/Gauge';
 import { GaugeComponentProps } from '../types/GaugeComponentProps';
 export const calculatePercentage = (minValue: number, maxValue: number, value: number) => {
   if (value < minValue) {
@@ -40,5 +41,10 @@ export const floatingNumber = (value: number, maxDigits = 2) => {
 export const degToRad = (degrees: number) => {
   return degrees * (Math.PI / 180);
 }
-export const getCurrentGaugeValuePercentage = (gauge: GaugeComponentProps) => calculatePercentage(gauge.minValue, gauge.maxValue, gauge.value as number);
+export const getCurrentGaugePercentageByValue = (value: number, gauge: GaugeComponentProps) => calculatePercentage(gauge.minValue, gauge.maxValue, value);
+export const getCurrentGaugeValueByPercentage = (percentage: number, gauge: Gauge) => {
+  const { minValue, maxValue } = gauge.props;
+  let value = minValue + (percentage) * (maxValue - minValue);
+  return value;
+}
 export const camelCaseToKebabCase = (str: string): string => str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);

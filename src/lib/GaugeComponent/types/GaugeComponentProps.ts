@@ -1,6 +1,6 @@
 import { Arc, defaultArc } from "./Arc";
 import { Labels, defaultLabels } from './Labels';
-import { Pointer, defaultPointer } from "./Pointer";
+import { PointerProps, defaultPointer } from "./Pointer";
 export enum GaugeType {
     Semicircle = "semicircle",
     Radial = "radial"
@@ -15,7 +15,7 @@ export interface GaugeComponentProps {
     maxValue: number,
     arc: Arc,
     labels: Labels,
-    pointer: Pointer,
+    pointer: PointerProps,
     type: GaugeType
 }
 

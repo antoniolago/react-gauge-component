@@ -161,7 +161,6 @@ export const addValueText = (gauge: Gauge) => {
   const textLength = text?.length || 0;
   let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1; // Compute the font size ratio
   let valueFontSize = labels.valueLabel.style.fontSize as string;
-  // let valueFontColor = labels.valueLabel.style.color;
   let valueTextStyle = {... labels.valueLabel.style};
   let x = gauge.dimensions.current.outerRadius;
   let y = gauge.dimensions.current.outerRadius / 1.5 + textPadding;
@@ -169,9 +168,9 @@ export const addValueText = (gauge: Gauge) => {
   if(gauge.props.type == GaugeType.Radial){
     y = gauge.dimensions.current.outerRadius * 1.45 + textPadding;
   }
-  if(gauge.props.pointer.type == PointerType.Arrow){
-    y = gauge.dimensions.current.outerRadius * 0.79 + textPadding;
-  }
+  //if(gauge.props.pointer.type == PointerType.Arrow){
+  //  y = gauge.dimensions.current.outerRadius * 0.79 + textPadding;
+  //}
   let widthFactor = gauge.props.type == GaugeType.Radial ? 0.003 : 0.003;
   fontRatio = gauge.dimensions.current.width * widthFactor * fontRatio;
   let fontSizeNumber = parseInt(valueFontSize, 10) * fontRatio;

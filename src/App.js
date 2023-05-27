@@ -188,6 +188,67 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
+              <h6 className="mb-1">Simple Blob gauge</h6>
+              <GaugeComponent
+                id="gauge-component7"
+                arc={{
+                  colorArray: ['#00FF15', '#FF2121'],
+                  subArcs:
+                    [
+                      { limit: 10 },
+                      { limit: 30 },
+                      { limit: 40 },
+                      {},
+                      {},
+                      {},
+                      {}
+                    ]
+                }}
+                pointer={{type: "blob", animationDelay: 0 }}
+                value={currentValue}
+              />
+            </Col>
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Blob gauge without animation</h6>
+              <GaugeComponent
+                id="gauge-component7"
+                arc={{
+                  colorArray: ['#FFDDDD', '#D15F78'],
+                  nbSubArcs: 10,
+                  padding: 0.01,
+                }}
+                pointer={{type: "blob", animate: false}}
+                value={currentValue}
+              />
+            </Col>
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Blob gauge with thicker arc</h6>
+              <GaugeComponent
+                id="gauge-component7"
+                arc={{
+                  colorArray: ['#969696', '#0B58FF'],
+                  width: 0.2,
+                  nbSubArcs: 20,
+                  padding: 0.01,
+                }}
+                pointer={{type: "blob", animationDelay: 0, width: 20 }}
+                value={currentValue}
+              />
+            </Col>
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Blob gauge elastic</h6>
+              <GaugeComponent
+                id="gauge-component7"
+                arc={{
+                  colorArray: ['#00FF15', '#FF2121'],
+                  nbSubArcs: 50,
+                  padding: 0.01,
+                }}
+                pointer={{type: "blob", animationDelay: 0, elastic: true }}
+                value={currentValue}
+              />
+            </Col>
+            <Col xs={12} lg={3}>
               <h6 className="mb-1">Simple Radial Gauge</h6>
               <GaugeComponent
                 id="gauge-component-radial3"

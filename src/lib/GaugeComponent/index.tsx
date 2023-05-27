@@ -5,6 +5,7 @@ import { Gauge } from "./types/Gauge";
 import * as chartHooks from "./hooks/chart";
 import { isEmptyObject, mergeObjects } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
+import { PointerContext, PointerRef, defaultPointerRef } from "./types/Pointer";
 /*
 GaugeComponent creates a gauge chart using D3
 The chart is responsive and will have the same width as the "container"
@@ -18,7 +19,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const tooltip = useRef<any>({});
   const g = useRef<any>({});
   const doughnut = useRef<any>({});
-  const pointer = useRef<any>({});
+  const pointer = useRef<PointerRef>({ ...defaultPointerRef});
   const container = useRef<any>({});
   const arcChart = useRef<any>(arc());
   const arcData = useRef<any>([]);

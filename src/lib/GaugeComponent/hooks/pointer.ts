@@ -3,42 +3,21 @@ import {
     easeExpOut,
     interpolateNumber,
 } from "d3";
-import { PointerType } from "../types/Pointer";
-import { getCoordByValue } from "./arc";
+import { PointerContext, PointerType } from "../types/Pointer";
+import { getArcColorByPercentage, getCoordByValue } from "./arc";
 import { Gauge } from "../types/Gauge";
 import * as utils from "./utils";
 import { GaugeType } from "../types/GaugeComponentProps";
 
 export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
-    const { pointer, value, minValue, maxValue } = gauge.props;
-    var pointerRadius = getPointerRadius(gauge)
-    var centerPoint = [0, -pointerRadius / 2];
-    let currentPercent = utils.calculatePercentage(minValue, maxValue, value as number);
-    var prevPercent = utils.calculatePercentage(minValue, maxValue, gauge.prevProps?.current.value || minValue);
-    let length = pointer.type == PointerType.Needle ? pointer.length : 0.2;
-    var pathLength = gauge.dimensions.current.outerRadius * length;
+    gauge.pointer.current.context = setupContext(gauge);
+    const { prevPercent, currentPercent, prevProgress } = gauge.pointer.current.context;
+    const { pointer } = gauge.props;
     let isFirstTime = gauge.prevProps?.current.value == undefined;
-    if (isFirstTime || resize) {
-        var pathStr = calculatePointerPath(gauge, prevPercent || utils.getCurrentGaugeValuePercentage(gauge.props), pathLength, pointerRadius, centerPoint);
-        gauge.pointer.current.append("path").attr("d", pathStr).attr("fill", pointer.color);
-        //Add a circle at the bottom of pointer
-        if (pointer.type == PointerType.Needle) {
-            gauge.pointer.current
-                .append("circle")
-                .attr("cx", centerPoint[0])
-                .attr("cy", centerPoint[1])
-                .attr("r", pointerRadius)
-                .attr("fill", pointer.color);
-        }
-        //Translate the pointer starting point of the arc
-        setPointerPosition(pointerRadius, value, gauge);
-    }
-    //Rotate the pointer
-    let pointerPath = gauge.container.current.select(`.pointer path`);
-    let prevProgress = 0;
+    if (isFirstTime || resize) initPointer(gauge);
     let shouldAnimate = (!resize || isFirstTime) && pointer.animate
     if (shouldAnimate) {
-        gauge.pointer.current
+        gauge.pointer.current.element
             .transition()
             .delay(pointer.animationDelay)
             .ease(pointer.elastic ? easeElastic : easeExpOut)
@@ -48,28 +27,97 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                 return function (percentOfPercent: number) {
                     const progress = currentInterpolatedPercent(percentOfPercent);
                     if (isProgressValid(progress, prevProgress, gauge)) {
-                        setPointerPosition(pointerRadius, progress * 100, gauge);
-                        pointerPath.attr("d", calculatePointerPath(gauge, progress, pathLength, pointerRadius, centerPoint));
+                        updatePointer(progress, gauge);
                     }
-                    prevProgress = progress;
+                    gauge.pointer.current.context.prevProgress = progress;
                 };
             });
     } else {
-        pointerPath.attr("d", calculatePointerPath(gauge, utils.getCurrentGaugeValuePercentage(gauge.props), pathLength, pointerRadius, centerPoint));
+        updatePointer(currentPercent, gauge);
     }
 };
-const setPointerPosition = (pointerRadius: number, value: number, gauge: Gauge) => {
+const setupContext = (gauge: Gauge): PointerContext => {
+    const { pointer, value, minValue, maxValue } = gauge.props;
+    const { pointerPath } = gauge.pointer.current.context;
+    var pointerRadius = getPointerRadius(gauge)
+    let length = pointer.type == PointerType.Needle ? pointer.length : 0.2;
+    let typesWithPath = [PointerType.Needle, PointerType.Arrow];
+    let pointerContext: PointerContext = {
+        centerPoint: [0, -pointerRadius / 2],
+        pointerRadius: getPointerRadius(gauge),
+        pathLength: gauge.dimensions.current.outerRadius * length,
+        currentPercent: utils.calculatePercentage(minValue, maxValue, value as number),
+        prevPercent: utils.calculatePercentage(minValue, maxValue, gauge.prevProps?.current.value || minValue),
+        prevProgress: 0,
+        pathStr: "",
+        shouldDrawPath: typesWithPath.includes(pointer.type as PointerType),
+        prevColor: ""
+    }
+    return pointerContext;
+}
+const initPointer = (gauge: Gauge) => {
+    const { pointer, value } = gauge.props;
+    const { shouldDrawPath, centerPoint, pointerRadius, pathStr, currentPercent, prevPercent } = gauge.pointer.current.context;
+    if(shouldDrawPath){
+        gauge.pointer.current.context.pathStr = calculatePointerPath(gauge, prevPercent || currentPercent);
+        gauge.pointer.current.path = gauge.pointer.current.element.append("path").attr("d", gauge.pointer.current.context.pathStr).attr("fill", pointer.color);
+    }
+    //Add a circle at the bottom of pointer
+    if (pointer.type == PointerType.Needle) {
+        gauge.pointer.current.element
+            .append("circle")
+            .attr("cx", centerPoint[0])
+            .attr("cy", centerPoint[1])
+            .attr("r", pointerRadius)
+            .attr("fill", pointer.color);
+    } else if (pointer.type == PointerType.Blob) {
+        gauge.pointer.current.element
+            .append("circle")
+            .attr("cx", centerPoint[0])
+            .attr("cy", centerPoint[1])
+            .attr("r", pointerRadius)
+            .attr("fill", pointer.baseColor)
+            .attr("stroke", pointer.color)
+            .attr("stroke-width", 8*pointerRadius/10);
+    }
+    //Translate the pointer starting point of the arc
+    setPointerPosition(pointerRadius, value, gauge);
+}
+const updatePointer = (percentage: number, gauge: Gauge) => {
+    const { pointerRadius, shouldDrawPath, prevColor } = gauge.pointer.current.context;
+    setPointerPosition(pointerRadius, percentage, gauge);
+    if(shouldDrawPath) 
+        gauge.pointer.current.path.attr("d", calculatePointerPath(gauge, percentage));
+    if(gauge.props.pointer.type == PointerType.Blob) {
+        let currentColor = getArcColorByPercentage(percentage, gauge);
+        let shouldChangeColor = currentColor != prevColor;
+        if(shouldChangeColor) gauge.pointer.current.element.select("circle").attr("stroke", currentColor)
+        gauge.pointer.current.context.prevColor = currentColor;
+    }
+}
+const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gauge) => {
     const { pointer } = gauge.props;
     const { dimensions } = gauge;
-    if (pointer.type == PointerType.Needle) {
-        //Set needle position to center
-        gauge.pointer.current.attr("transform", "translate(" + dimensions.current.outerRadius + ", " + dimensions.current.outerRadius + ")");
-        return
-    }
-    let { x, y } = getCoordByValue(value, gauge, "inner", 0, 0.75);
-    x -= 1;
-    y += pointerRadius;
-    gauge.pointer.current.attr("transform", "translate(" + x + ", " + y + ")");
+    let value = utils.getCurrentGaugeValueByPercentage(progress, gauge);
+    let pointers: { [key: string]: () => void } = {
+        [PointerType.Needle]: () => {
+            // Set needle position to center
+            translatePointer(dimensions.current.outerRadius,dimensions.current.outerRadius, gauge);
+        },
+        [PointerType.Arrow]: () => {
+            let { x, y } = getCoordByValue(value, gauge, "inner", 0, 0.75);
+            x -= 1;
+            y += pointerRadius;
+            translatePointer(x, y, gauge);
+        },
+        [PointerType.Blob]: () => {
+            let { x, y } = getCoordByValue(value, gauge, "between", 0, 0.75);
+            x -= 1;
+            y += pointerRadius;
+            translatePointer(x, y, gauge);
+        },
+    };
+    return pointers[pointer.type]();
 }
 
 const isProgressValid = (currentPercent: number, prevPercent: number, gauge: Gauge) => {
@@ -81,7 +129,8 @@ const isProgressValid = (currentPercent: number, prevPercent: number, gauge: Gau
     return !tooSmallValue && !sameValueAsBefore && !overFlow;
 }
 
-const calculatePointerPath = (gauge: Gauge, percent: number, pathLength: number, pointerRadius: number, centerPoint: any) => {
+const calculatePointerPath = (gauge: Gauge, percent: number) => {
+    const { centerPoint, pointerRadius, pathLength } = gauge.pointer.current.context;
     let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -41);
     let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 222);
     const angle = startAngle + (percent) * (endAngle - startAngle);
@@ -109,5 +158,6 @@ const getPointerRadius = (gauge: Gauge) => {
     return pointer.width * (gauge.dimensions.current.width / 500);
 }
 
-export const addPointerElement = (gauge: Gauge) => gauge.pointer.current = gauge.g.current.append("g").attr("class", "pointer");
-export const clearPointerElement = (gauge: Gauge) => gauge.pointer.current.selectAll("*").remove();
+export const translatePointer = (x: number, y: number, gauge: Gauge) => gauge.pointer.current.element.attr("transform", "translate(" + x + ", " + y + ")");
+export const addPointerElement = (gauge: Gauge) => gauge.pointer.current.element = gauge.g.current.append("g").attr("class", "pointer");
+export const clearPointerElement = (gauge: Gauge) => gauge.pointer.current.element.selectAll("*").remove();

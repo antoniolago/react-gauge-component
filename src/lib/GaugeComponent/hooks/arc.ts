@@ -10,22 +10,23 @@ import CONSTANTS from '../constants';
 import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 import { GaugeType } from '../types/GaugeComponentProps';
 import { throttle } from 'lodash';
+import { SubArc } from '../types/Arc';
 
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
   event.target.style.stroke = "#ffffff5e";
   if (d.data.tooltip != undefined) {
     let shouldChangeText = d.data.tooltip.text != gauge.tooltip.current.text();
-    if(shouldChangeText){
+    if (shouldChangeText) {
       gauge.tooltip.current.html(d.data.tooltip.text)
-      .style("position", "absolute")
-      .style("display", "block")
-      .style("opacity", 1);
+        .style("position", "absolute")
+        .style("display", "block")
+        .style("opacity", 1);
       applyTooltipStyles(d.data.tooltip, d.data.color, gauge);
     }
     gauge.tooltip.current.style("left", (event.pageX + 15) + "px")
       .style("top", (event.pageY - 10) + "px");
   }
-  if(d.data.onMouseMove != undefined) d.data.onMouseMove(event);
+  if (d.data.onMouseMove != undefined) d.data.onMouseMove(event);
 }
 const applyTooltipStyles = (tooltip: Tooltip, arcColor: string, gauge: Gauge) => {
   //Apply default styles
@@ -34,13 +35,13 @@ const applyTooltipStyles = (tooltip: Tooltip, arcColor: string, gauge: Gauge) =>
   //Apply custom styles
   if (tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => gauge.tooltip.current.style(utils.camelCaseToKebabCase(key), value))
 }
-const onArcMouseOut = (event: any, d: any) => { 
-  select(`.${CONSTANTS.arcTooltipClassname}`).html(" ").style("display", "none"); 
+const onArcMouseOut = (event: any, d: any) => {
+  select(`.${CONSTANTS.arcTooltipClassname}`).html(" ").style("display", "none");
   event.target.style.stroke = "none";
-  if(d.data.onMouseLeave != undefined) d.data.onMouseLeave(event);
+  if (d.data.onMouseLeave != undefined) d.data.onMouseLeave(event);
 }
-const onArcMouseClick = (event: any, d: any) => { 
-  if(d.data.onMouseClick != undefined) d.data.onMouseClick(event);
+const onArcMouseClick = (event: any, d: any) => {
+  if (d.data.onMouseClick != undefined) d.data.onMouseClick(event);
 }
 
 export const setArcData = (gauge: Gauge) => {
@@ -101,6 +102,7 @@ export const setArcData = (gauge: Gauge) => {
 
     gauge.arcData.current = Array.from({ length: nbArcsToDisplay }, (_, i) => ({
       value: arcValue,
+      limit: (i + 1) * arcValue,
       color: colorArray[i],
       tooltip: undefined,
     }));
@@ -123,8 +125,8 @@ export const setupArcs = (gauge: Gauge) => {
   // chartHooks.clearChart(gauge);
   let data = {}
   //When gradient enabled, it'll have only 1 arc
-  if(gauge.props.arc.gradient){
-    data = [{value: 1}];
+  if (gauge.props.arc.gradient) {
+    data = [{ value: 1 }];
   } else {
     data = gauge.arcData.current
   }
@@ -145,22 +147,29 @@ export const setupArcs = (gauge: Gauge) => {
 };
 
 export const applyColors = (subArcsPath: any, gauge: Gauge) => {
-  if(gauge.props.arc.gradient){
+  if (gauge.props.arc.gradient) {
     let uniqueId = `subArc-linear-gradient-${Math.random()}`
     let gradEl = createGradientElement(gauge.doughnut.current, uniqueId);
     applyGradientColors(gradEl, gauge)
     subArcsPath.style("fill", (d: any) => `url(#${uniqueId})`);
-  }else{
+  } else {
     subArcsPath.style("fill", (d: any) => d.data.color);
   }
-
 }
+export const getArcColorByPercentage = (percentage: number, gauge: Gauge): string => {
+  let value = utils.getCurrentGaugeValueByPercentage(percentage, gauge);
+  //console.log(value, percentage)
+  return getArcDataByValue(value, gauge).color as string;
+};
+export const getArcDataByValue = (value: number, gauge: Gauge): SubArc =>
+  gauge.arcData.current.find(subArcData => value <= (subArcData.limit as number)) as SubArc;
+
 export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
-  gauge.arcData.current.forEach((subArcData) => 
+  gauge.arcData.current.forEach((subArcData) =>
     gradEl.append("stop")
-        .attr("offset", `${subArcData.limit}%`)
-        .style("stop-color", subArcData.color)//end in red
-        .style("stop-opacity", 1)
+      .attr("offset", `${subArcData.limit}%`)
+      .style("stop-color", subArcData.color)//end in red
+      .style("stop-opacity", 1)
   )
 }
 
@@ -176,7 +185,7 @@ export const getColors = (nbArcsToDisplay: number, gauge: Gauge) => {
     colorsValue = arc.colorArray;
   }
   //defaults colorsValue to white in order to avoid compilation error
-  if(!colorsValue) colorsValue = ["#fff"];
+  if (!colorsValue) colorsValue = ["#fff"];
   //Check if the number of colors equals the number of levels
   //Otherwise make an interpolation
   let arcsEqualsColorsLength = nbArcsToDisplay === colorsValue?.length;
@@ -205,13 +214,23 @@ export const createGradientElement = (div: any, uniqueId: string) => {
   return lg
 }
 
-export const getCoordByValue = (value: number, gauge: Gauge, innerOuter = "inner", centerToArcLengthSubtract = 0, radiusFactor = 1) => {
-  var centerToArcLength = gauge.dimensions.current.innerRadius * radiusFactor - centerToArcLengthSubtract;
-  if(innerOuter == "outer") centerToArcLength = gauge.dimensions.current.outerRadius - centerToArcLengthSubtract + 2;
+export const getCoordByValue = (value: number, gauge: Gauge, position = "inner", centerToArcLengthSubtract = 0, radiusFactor = 1) => {
+  let positionCenterToArcLength: { [key: string]: () => number } = {
+    "outer": () => gauge.dimensions.current.outerRadius - centerToArcLengthSubtract + 2,
+    "inner": () => gauge.dimensions.current.innerRadius * radiusFactor - centerToArcLengthSubtract,
+    "between": () => {
+      let lengthBetweenOuterAndInner = (gauge.dimensions.current.outerRadius - gauge.dimensions.current.innerRadius);
+      let middlePosition = gauge.dimensions.current.innerRadius + lengthBetweenOuterAndInner / 2;
+      return middlePosition;
+    }
+  };
+  let centerToArcLength = positionCenterToArcLength[position]();
+
   let percent = utils.calculatePercentage(gauge.props.minValue, gauge.props.maxValue, value);
   let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -41);
   let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 222);
   const angle = startAngle + (percent) * (endAngle - startAngle);
+
   let coordsRadius = 15 * (gauge.dimensions.current.width / 500);
   let coord = [0, -coordsRadius / 2];
   let coordMinusCenter = [
