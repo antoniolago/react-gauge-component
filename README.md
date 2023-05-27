@@ -98,6 +98,7 @@ import GaugeComponent from 'react-gauge-component'
 />
 ```
 </details>
+
 ### Gradient with arrow gauge.
 ![Image of Gradient with Blob Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/blobGauge.jpg "Gradient with Blob Gauge Component")
 <details>
