@@ -9,7 +9,8 @@ export interface Gauge {
     doughnut: React.MutableRefObject<any>;
     pointer: React.MutableRefObject<any>;
     container: React.MutableRefObject<any>;
-    arcChart: React.MutableRefObject<any>;
+    isFirstRun: React.MutableRefObject<boolean>;
+    currentProgress: React.MutableRefObject<number>;
     dimensions: React.MutableRefObject<Dimensions>;
     //This holds the computed data for the arcs, computed only once and then reused without changing original props to avoid render problems
     arcData: React.MutableRefObject<SubArc[]>;

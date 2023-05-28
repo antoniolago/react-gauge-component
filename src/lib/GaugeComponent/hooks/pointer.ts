@@ -7,6 +7,7 @@ import { PointerContext, PointerType } from "../types/Pointer";
 import { getArcColorByPercentage, getCoordByValue } from "./arc";
 import { Gauge } from "../types/Gauge";
 import * as utils from "./utils";
+import * as arcHooks from "./arc";
 import { GaugeType } from "../types/GaugeComponentProps";
 
 export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
@@ -14,10 +15,12 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     const { prevPercent, currentPercent, prevProgress } = gauge.pointer.current.context;
     const { pointer } = gauge.props;
     let isFirstTime = gauge.prevProps?.current.value == undefined;
-    if (isFirstTime || resize) initPointer(gauge);
+    if ((isFirstTime || resize) && gauge.props.type != GaugeType.Grafana) 
+        initPointer(gauge);
     let shouldAnimate = (!resize || isFirstTime) && pointer.animate
+    console.log(shouldAnimate)
     if (shouldAnimate) {
-        gauge.pointer.current.element
+        gauge.doughnut.current
             .transition()
             .delay(pointer.animationDelay)
             .ease(pointer.elastic ? easeElastic : easeExpOut)
@@ -27,7 +30,13 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                 return function (percentOfPercent: number) {
                     const progress = currentInterpolatedPercent(percentOfPercent);
                     if (isProgressValid(progress, prevProgress, gauge)) {
-                        updatePointer(progress, gauge);
+                        if(gauge.props.type == GaugeType.Grafana){
+                            arcHooks.clearArcs(gauge);
+                            arcHooks.drawArc(gauge, progress);
+                            //arcHooks.setupArcs(gauge);
+                        } else {
+                            updatePointer(progress, gauge);
+                        }
                     }
                     gauge.pointer.current.context.prevProgress = progress;
                 };
@@ -86,7 +95,7 @@ const initPointer = (gauge: Gauge) => {
 const updatePointer = (percentage: number, gauge: Gauge) => {
     const { pointerRadius, shouldDrawPath, prevColor } = gauge.pointer.current.context;
     setPointerPosition(pointerRadius, percentage, gauge);
-    if(shouldDrawPath) 
+    if(shouldDrawPath && gauge.props.type != GaugeType.Grafana) 
         gauge.pointer.current.path.attr("d", calculatePointerPath(gauge, percentage));
     if(gauge.props.pointer.type == PointerType.Blob) {
         let currentColor = getArcColorByPercentage(percentage, gauge);

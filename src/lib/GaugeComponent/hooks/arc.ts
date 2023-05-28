@@ -3,13 +3,14 @@ import {
   select,
   scaleLinear,
   interpolateHsl,
+  arc,
 } from "d3";
 import { Gauge } from '../types/Gauge';
 import * as chartHooks from './chart';
 import CONSTANTS from '../constants';
 import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 import { GaugeType } from '../types/GaugeComponentProps';
-import { throttle } from 'lodash';
+import { get, throttle } from 'lodash';
 import { SubArc } from '../types/Arc';
 
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
@@ -109,19 +110,45 @@ export const setArcData = (gauge: Gauge) => {
   }
 };
 
-export const setupArcs = (gauge: Gauge) => {
-  const { arc } = gauge.props;
-  //Add tooltip
-  let isTooltipInTheDom = document.getElementsByClassName(CONSTANTS.arcTooltipClassname).length != 0;
-  if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
-  gauge.tooltip.current = select(`.${CONSTANTS.arcTooltipClassname}`);
-  //Setup the arc
-  gauge.arcChart.current
-    .outerRadius(gauge.dimensions.current.outerRadius)
-    .innerRadius(gauge.dimensions.current.innerRadius)
-    .cornerRadius(arc.cornerRadius)
-    .padAngle(arc.padding);
-
+const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undefined) => {
+  let currentPercentage = percent ? percent : utils.calculatePercentage(gauge.props.minValue, 
+                                                    gauge.props.maxValue, 
+                                                    gauge.props.value);
+  let firstSubArc = {
+    value: currentPercentage,
+    color: getArcColorByPercentage(currentPercentage, gauge)
+  }  
+  let secondSubArc = {
+    value: 1-currentPercentage,
+    color: "#5C5C5C"
+  }
+  return [firstSubArc, secondSubArc];
+}
+const drawGrafanaOuterArc = (gauge: Gauge) => {
+  const { outerRadius } = gauge.dimensions.current;
+  //Grafana's outer arc will be populates as the standard arc data would
+  if (gauge.props.type == GaugeType.Grafana && gauge.isFirstRun.current) {
+    let outerArc = arc()
+                  .outerRadius(outerRadius+7)
+                  .innerRadius(outerRadius+2)
+                  .cornerRadius(0)
+                  .padAngle(0);
+    var arcPaths = gauge.doughnut.current
+      .selectAll("anyString")
+      .data(gauge.pieChart.current(gauge.arcData.current))
+      .enter()
+      .append("g")
+      .attr("class", "outerSubArc");
+    let outerArcSubarcs = arcPaths
+    .append("path")
+    .attr("d", outerArc);
+    applyColors(outerArcSubarcs, gauge);
+    //Then we treat the grafana main arc data
+  }
+}
+export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) => {
+  const { padding, cornerRadius } = gauge.props.arc;
+  const { innerRadius, outerRadius } = gauge.dimensions.current;
   // chartHooks.clearChart(gauge);
   let data = {}
   //When gradient enabled, it'll have only 1 arc
@@ -130,20 +157,41 @@ export const setupArcs = (gauge: Gauge) => {
   } else {
     data = gauge.arcData.current
   }
+  if(gauge.props.type == GaugeType.Grafana) {
+    data = getGrafanaMainArcData(gauge, percent);
+  }
+  let arcPadding = gauge.props.type == GaugeType.Grafana ? 0 : padding;
+  let arcCornerRadius = gauge.props.type == GaugeType.Grafana ? 0 : cornerRadius;
+  let arcObj = arc()
+            .outerRadius(outerRadius)
+            .innerRadius(innerRadius)
+            .cornerRadius(arcCornerRadius as number)
+            .padAngle(arcPadding);
   var arcPaths = gauge.doughnut.current
-    .selectAll(".arc")
+    .selectAll("anyString")
     .data(gauge.pieChart.current(data))
     .enter()
-    .append("g");
+    .append("g")
+    .attr("class", "subArc");
   let subArcs = arcPaths
     .append("path")
-    .attr("d", gauge.arcChart.current)
+    .attr("d", arcObj);
   applyColors(subArcs, gauge);
-
   arcPaths
     .on("mouseout", (event: any, d: any) => onArcMouseOut(event, d))
     .on("mousemove", throttle((event: any, d: any) => onArcMouseMove(event, d, gauge), 20))
     .on("click", (event: any, d: any) => onArcMouseClick(event, d))
+
+}
+export const setupArcs = (gauge: Gauge) => {
+  //Add tooltip
+  let isTooltipInTheDom = document.getElementsByClassName(CONSTANTS.arcTooltipClassname).length != 0;
+  if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
+  gauge.tooltip.current = select(`.${CONSTANTS.arcTooltipClassname}`);
+  //Setup the arc
+  drawGrafanaOuterArc(gauge);
+  drawArc(gauge);
+
 };
 
 export const applyColors = (subArcsPath: any, gauge: Gauge) => {
@@ -225,10 +273,26 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
     }
   };
   let centerToArcLength = positionCenterToArcLength[position]();
-
+  if(gauge.props.type === GaugeType.Grafana){
+    centerToArcLength+=10;
+  }
   let percent = utils.calculatePercentage(gauge.props.minValue, gauge.props.maxValue, value);
-  let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -41);
-  let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 222);
+  let gaugeTypesAngles: Record<GaugeType, { startAngle: number; endAngle: number; }> = {
+    [GaugeType.Grafana]: {
+      startAngle: utils.degToRad(-24),
+      endAngle: utils.degToRad(203.5)
+    },
+    [GaugeType.Semicircle]: {
+      startAngle: utils.degToRad(0),
+      endAngle: utils.degToRad(180)
+    },
+    [GaugeType.Radial]: {
+      startAngle: utils.degToRad(-41),
+      endAngle: utils.degToRad(222)
+    },
+  };
+  
+  let { startAngle, endAngle } = gaugeTypesAngles[gauge.props.type as GaugeType];
   const angle = startAngle + (percent) * (endAngle - startAngle);
 
   let coordsRadius = 15 * (gauge.dimensions.current.width / 500);
@@ -242,4 +306,9 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
   let y = (centerCoords[1] + coordMinusCenter[1]);
   return { x, y }
 }
-export const clearArcs = (gauge: Gauge) => gauge.doughnut.current.selectAll("g").remove();
+export const redrawArcs = (gauge: Gauge) => {
+  clearArcs(gauge);
+  setArcData(gauge);
+  setupArcs(gauge);
+}
+export const clearArcs = (gauge: Gauge) => gauge.doughnut.current.selectAll(".subArc").remove();

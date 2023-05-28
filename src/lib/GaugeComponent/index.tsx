@@ -19,9 +19,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const tooltip = useRef<any>({});
   const g = useRef<any>({});
   const doughnut = useRef<any>({});
+  const isFirstRun = useRef<boolean>(true);
+  const currentProgress = useRef<number>(0);
   const pointer = useRef<PointerRef>({ ...defaultPointerRef});
   const container = useRef<any>({});
-  const arcChart = useRef<any>(arc());
   const arcData = useRef<any>([]);
   const pieChart = useRef<any>(pie());
   const dimensions = useRef<Dimensions>({ ...defaultDimensions});
@@ -36,9 +37,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     g,
     dimensions,
     doughnut,
+    isFirstRun,
+    currentProgress,
     pointer,
     container,
-    arcChart,
     arcData,
     pieChart,
     tooltip
@@ -56,7 +58,8 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   }
   useLayoutEffect(() => {
     updateMergedProps();
-    if(isEmptyObject(container.current)) container.current = select(selectedRef.current);
+    isFirstRun.current = isEmptyObject(container.current)
+    if(isFirstRun.current) container.current = select(selectedRef.current);
     if(shouldInitChart()) chartHooks.initChart(gauge);
     gauge.prevProps.current = mergeObjects(defaultGaugeProps, props);
   }, [props]);

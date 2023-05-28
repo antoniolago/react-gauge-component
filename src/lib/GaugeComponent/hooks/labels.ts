@@ -163,10 +163,14 @@ export const addValueText = (gauge: Gauge) => {
   let valueFontSize = labels.valueLabel.style.fontSize as string;
   let valueTextStyle = {... labels.valueLabel.style};
   let x = gauge.dimensions.current.outerRadius;
-  let y = gauge.dimensions.current.outerRadius / 1.5 + textPadding;
+  let y = 0;
   valueTextStyle.textAnchor = "middle";
-  if(gauge.props.type == GaugeType.Radial){
+  if (gauge.props.type == GaugeType.Semicircle){
+    y = gauge.dimensions.current.outerRadius / 1.5 + textPadding;
+  } else if(gauge.props.type == GaugeType.Radial){
     y = gauge.dimensions.current.outerRadius * 1.45 + textPadding;
+  } else if(gauge.props.type == GaugeType.Grafana){
+    y = gauge.dimensions.current.outerRadius * 1.0 + textPadding;
   }
   //if(gauge.props.pointer.type == PointerType.Arrow){
   //  y = gauge.dimensions.current.outerRadius * 0.79 + textPadding;
@@ -187,8 +191,22 @@ export const clearMarks = (gauge: Gauge) => {
 export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   const { minValue, maxValue } = gauge.props;
   let valuePercentage = utils.calculatePercentage(minValue, maxValue, value)
-  let startAngle = gauge.props.type == GaugeType.Semicircle ? 0 : -42;
-  let endAngle = gauge.props.type == GaugeType.Semicircle ? 180 : 266;
+  let gaugeTypesAngles: Record<GaugeType, { startAngle: number; endAngle: number; }> = {
+    [GaugeType.Grafana]: {
+      startAngle: -20,
+      endAngle: 220
+    },
+    [GaugeType.Semicircle]: {
+      startAngle: 0,
+      endAngle: 180
+    },
+    [GaugeType.Radial]: {
+      startAngle: -42,
+      endAngle: 266
+    },
+  };
+  let { startAngle, endAngle } = gaugeTypesAngles[gauge.props.type];
+  
   let angle = startAngle + (valuePercentage * 100) * endAngle / 100;
   let halfInPercentage = utils.calculatePercentage(minValue, maxValue, (maxValue / 2));
   let halfPercentage = halfInPercentage;

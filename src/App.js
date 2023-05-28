@@ -105,13 +105,112 @@ const App = () => {
           </Row>
           <Row>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Default props</h6>
+              <h6 className="mb-1">Default Gauge</h6>
               <GaugeComponent />
+            </Col>
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Simple Grafana Gauge</h6>
+              
+              <GaugeComponent
+                id="gauge-component4"
+                arc={{
+                  gradient: true,
+                  width: 0.15,
+                  padding: 0,
+                  subArcs: [
+                    {
+                      limit: 15,
+                      color: '#EA4228',
+                      showMark: true
+                    },
+                    {
+                      limit: 37,
+                      color: '#F5CD19',
+                      showMark: true
+                    },
+                    {
+                      limit: 58,
+                      color: '#5BE12C',
+                      showMark: true
+                    },
+                    {
+                      limit: 75,
+                      color: '#F5CD19',
+                      showMark: true
+                    },
+                    { color: '#EA4228' }
+                  ]
+                }}
+                value={currentValue}
+              />
+            </Col>
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Simple Grafana Gauge</h6>
+              <GaugeComponent
+                id="gauge-component-radial3"
+                value={currentValue}
+                type="grafana"
+                arc={{
+                  colorArray: ['#1EFF00', '#CE1F1F'],
+                  nbSubArcs: 80,
+                  padding: 0.02,
+                  width: 0.3
+                }}
+                pointer={{ animationDelay: 0 }}
+              />
+            </Col>
+            
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Min/max values and formatted text</h6>
+              <GaugeComponent
+                id="gauge-component8"
+                arc={{
+                  nbSubArcs: 150,
+                  colorArray: ['#5BE12C', '#F5CD19', '#EA4228'],
+                  width: 0.3,
+                  padding: 0.003
+                }}
+                labels={{
+                  valueLabel: {
+                    fontSize: 40,
+                    formatTextValue: kbitsToMbits
+                  },
+                  markLabel: {
+                    type: "outer",
+                    marks: [
+                      { value: 100 },
+                      { value: 200 },
+                      { value: 300 },
+                      { value: 400 },
+                      { value: 500 },
+                      { value: 600 },
+                      { value: 700 },
+                      { value: 800 },
+                      { value: 900 },
+                      { value: 1000 },
+                      { value: 1500 },
+                      { value: 2000 },
+                      { value: 2500 },
+                      { value: 3000 },
+                    ],
+                    valueConfig: {
+                      formatTextValue: kbitsToMbits
+                    }
+                  }
+                }}
+                value={900}
+                maxValue={3000}
+              />
+            </Col>
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Default semicircle props</h6>
+              <GaugeComponent type="semicircle" />
             </Col>
             <Col xs={12} lg={3}>
               <h6 className="mb-1">Gradient arc with arrow</h6>
               <GaugeComponent
                 id="gauge-component4"
+                type="semicircle"
                 arc={{
                   gradient: true,
                   width: 0.15,
@@ -148,6 +247,7 @@ const App = () => {
               <h6 className="mb-1">No animation, custom needle color</h6>
               <GaugeComponent
                 id="gauge-component6"
+                type="semicircle"
                 pointer={{
                     animate: false,
                     color: '#4A05EC'
@@ -170,6 +270,7 @@ const App = () => {
               <h6 className="mb-1">Elastic Live updates</h6>
               <GaugeComponent
                 id="gauge-component7"
+                type="semicircle"
                 arc={{
                   colorArray: ['#00FF15', '#FF2121'],
                   subArcs:
@@ -191,6 +292,7 @@ const App = () => {
               <h6 className="mb-1">Simple Blob gauge</h6>
               <GaugeComponent
                 id="gauge-component7"
+                type="semicircle"
                 arc={{
                   colorArray: ['#00FF15', '#FF2121'],
                   subArcs:
@@ -212,6 +314,7 @@ const App = () => {
               <h6 className="mb-1">Blob gauge without animation</h6>
               <GaugeComponent
                 id="gauge-component7"
+                type="semicircle"
                 arc={{
                   colorArray: ['#FFDDDD', '#D15F78'],
                   nbSubArcs: 10,
@@ -225,6 +328,7 @@ const App = () => {
               <h6 className="mb-1">Blob gauge with thicker arc</h6>
               <GaugeComponent
                 id="gauge-component7"
+                type="semicircle"
                 arc={{
                   colorArray: ['#969696', '#0B58FF'],
                   width: 0.2,
@@ -239,6 +343,7 @@ const App = () => {
               <h6 className="mb-1">Blob gauge elastic</h6>
               <GaugeComponent
                 id="gauge-component7"
+                type="semicircle"
                 arc={{
                   colorArray: ['#00FF15', '#FF2121'],
                   nbSubArcs: 50,
@@ -352,48 +457,6 @@ const App = () => {
             </Col>
           </Row>
           <Row>
-            <Col xs={12} lg={6}>
-              <h6 className="mb-1">Min/max values and formatted text</h6>
-              <GaugeComponent
-                id="gauge-component8"
-                arc={{
-                  nbSubArcs: 150,
-                  colorArray: ['#5BE12C', '#F5CD19', '#EA4228'],
-                  width: 0.3,
-                  padding: 0.003
-                }}
-                labels={{
-                  valueLabel: {
-                    fontSize: 40,
-                    formatTextValue: kbitsToMbits
-                  },
-                  markLabel: {
-                    type: "outer",
-                    marks: [
-                      { value: 100 },
-                      { value: 200 },
-                      { value: 300 },
-                      { value: 400 },
-                      { value: 500 },
-                      { value: 600 },
-                      { value: 700 },
-                      { value: 800 },
-                      { value: 900 },
-                      { value: 1000 },
-                      { value: 1500 },
-                      { value: 2000 },
-                      { value: 2500 },
-                      { value: 3000 },
-                    ],
-                    valueConfig: {
-                      formatTextValue: kbitsToMbits
-                    }
-                  }
-                }}
-                value={900}
-                maxValue={3000}
-              />
-            </Col>
 
             <Col xs={12} lg={6}>
               <h6 className="mb-1">Custom Temperature Gauge with tooltips on hover</h6>

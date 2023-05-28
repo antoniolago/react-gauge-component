@@ -26,7 +26,7 @@ export const defaultSubArcs: SubArc[] = [
 
 export const defaultArc: Arc = {
     padding: 0.05,
-    width: 0.15,
+    width: 0.25,
     cornerRadius: 7,
     nbSubArcs: undefined,
     colorArray: undefined,

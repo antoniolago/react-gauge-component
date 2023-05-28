@@ -17,10 +17,11 @@ export const initChart = (gauge: Gauge) => {
     gauge.svg.current = gauge.container.current.append("svg");
     gauge.g.current = gauge.svg.current.append("g"); //Used for margins
     gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
+    //gauge.outerDougnut.current = gauge.g.current.append("g").attr("class", "doughnut");
     calculateAngles(gauge);
     gauge.pieChart.current
         .value((d: any) => d.value)
-        //.padAngle(arcPadding)
+        //.padAngle(15)
         .startAngle(angles.startAngle)
         .endAngle(angles.endAngle)
         .sort(null);
@@ -33,13 +34,12 @@ export const calculateAngles = (gauge: Gauge) => {
     if(gauge.props.type == GaugeType.Semicircle){
         angles.startAngle = -Math.PI / 2 + 0.02;
         angles.endAngle = Math.PI / 2 - 0.02;
-        angles.startAngleDeg = 0;
-        angles.endAngleDeg = 180;
     } else if(gauge.props.type == GaugeType.Radial) {
-        angles.startAngle = -Math.PI / 1.37; //Negative x-axis
-        angles.endAngle = Math.PI / 1.37; //Positive x-axis
-        angles.startAngleDeg = -42;
-        angles.endAngleDeg = 224;
+        angles.startAngle = -Math.PI / 1.37;
+        angles.endAngle = Math.PI / 1.37;
+    } else if(gauge.props.type == GaugeType.Grafana) {
+        angles.startAngle = -Math.PI / 1.6;
+        angles.endAngle = Math.PI / 1.6;
     }
 }
 //Renders the chart, should be called every time the window is resized
@@ -67,7 +67,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         arcHooks.setupArcs(gauge);
         labelsHooks.setupLabels(gauge);
         pointerHooks.drawPointer(gauge, resize);
-        let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height + 50;
+        let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height + 70;
         let boundWidth = gauge.container.current.node().getBoundingClientRect().width;
         gauge.svg.current
             .attr("width", boundWidth)
@@ -77,12 +77,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
         let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
         let marksChanged = (JSON.stringify(gauge.prevProps.current.labels.markLabel) !== JSON.stringify(gauge.props.labels.markLabel));
-        if(arcsPropsChanged) {
+        let shouldRedrawArcs = arcsPropsChanged
+        if(shouldRedrawArcs) {
             arcHooks.clearArcs(gauge);
             arcHooks.setArcData(gauge);
             arcHooks.setupArcs(gauge);
         }
-        if(pointerPropsChanged || valueChanged) {
+        if((pointerPropsChanged || valueChanged)) {
             pointerHooks.drawPointer(gauge);
         }
         if(arcsPropsChanged || marksChanged) {
@@ -126,7 +127,7 @@ export const calculateRadius = (gauge: Gauge) => {
         dimensions.current.outerRadius = (dimensions.current.width - dimensions.current.margin.left - dimensions.current.margin.right) / 2;
     } else {
         dimensions.current.outerRadius =
-        dimensions.current.height - dimensions.current.margin.top - dimensions.current.margin.bottom + 15;
+        dimensions.current.height - dimensions.current.margin.top - dimensions.current.margin.bottom + 35;
     }
     centerGraph(gauge);
 };
@@ -138,7 +139,7 @@ export const centerGraph = (gauge: Gauge) => {
         dimensions.current.width / 2 - dimensions.current.outerRadius + dimensions.current.margin.right;
     gauge.g.current.attr(
         "transform",
-        "translate(" + dimensions.current.margin.left + ", " + (dimensions.current.margin.top+15) + ")"
+        "translate(" + dimensions.current.margin.left + ", " + (dimensions.current.margin.top+35) + ")"
     );
 };
 

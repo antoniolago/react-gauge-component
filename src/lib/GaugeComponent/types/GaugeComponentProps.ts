@@ -3,7 +3,8 @@ import { Labels, defaultLabels } from './Labels';
 import { PointerProps, defaultPointer } from "./Pointer";
 export enum GaugeType {
     Semicircle = "semicircle",
-    Radial = "radial"
+    Radial = "radial",
+    Grafana = "grafana"
 }
 export interface GaugeComponentProps {
     id: string,
@@ -30,6 +31,6 @@ export const defaultGaugeProps: GaugeComponentProps = {
     arc: defaultArc,
     labels: defaultLabels,
     pointer: defaultPointer,
-    type: GaugeType.Semicircle
+    type: GaugeType.Grafana
 }
 
