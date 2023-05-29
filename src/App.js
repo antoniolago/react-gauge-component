@@ -114,22 +114,18 @@ const App = () => {
                 arc={{
                   subArcs: [
                     {
-                      limit: 20,
                       color: '#EA4228',
                       showMark: true
                     },
                     {
-                      limit: 40,
                       color: '#F58B19',
                       showMark: true
                     },
                     {
-                      limit: 60,
                       color: '#F5CD19',
                       showMark: true
                     },
                     {
-                      limit: 100,
                       color: '#5BE12C',
                       showMark: true
                     },

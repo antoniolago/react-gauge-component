@@ -324,3 +324,46 @@ export const clearArcs = (gauge: Gauge) => {
 export const clearOuterArcs = (gauge: Gauge) => {
   gauge.doughnut.current.selectAll(".outerSubArc").remove();
 }
+
+export const validateArcs = (gauge: Gauge) => {
+  verifySubArcsLimits(gauge);
+}
+/**
+ * Reorders the subArcs within the gauge's arc property based on the limit property.
+ * SubArcs with undefined limits are sorted last.
+*/
+const reOrderSubArcs = (gauge: Gauge): void => {
+  gauge.props.arc.subArcs.sort((a, b) => {
+    if (typeof a.limit === 'undefined' && typeof b.limit === 'undefined') {
+      return 0;
+    }
+    if (typeof a.limit === 'undefined') {
+      return 1;
+    }
+    if (typeof b.limit === 'undefined') {
+      return -1;
+    }
+    return a.limit - b.limit;
+  });
+  console.log(gauge.props.arc.subArcs)
+}
+const verifySubArcsLimits = (gauge: Gauge) => {
+  reOrderSubArcs(gauge);
+
+  let prevLimit: number | undefined = undefined;
+  for (const subArc of gauge.props.arc.subArcs) {
+    const limit = subArc.limit;
+    if (typeof limit !== 'undefined') {
+      // Check if the limit is within the valid range
+      if (limit < gauge.props.minValue || limit > gauge.props.maxValue)
+        throw new Error(`The limit of a subArc must be between the minValue and maxValue. The limit of the subArc is ${limit}`);
+
+      prevLimit = limit;
+    }
+  }
+  // If the user has defined subArcs, make sure the last subArc has a limit equal to the maxValue
+  if (gauge.props.arc.subArcs?.length > 0) {
+    let lastSubArc = gauge.props.arc.subArcs[gauge.props.arc.subArcs.length - 1];
+    if (lastSubArc.limit as number < gauge.props.maxValue) lastSubArc.limit = gauge.props.maxValue;
+  }
+}

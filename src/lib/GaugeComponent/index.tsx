@@ -3,6 +3,7 @@ import { arc, pie, select } from "d3";
 import { defaultGaugeProps, GaugeComponentProps, GaugeType, getGaugeMarginByType } from "./types/GaugeComponentProps";
 import { Gauge } from "./types/Gauge";
 import * as chartHooks from "./hooks/chart";
+import * as arcHooks from "./hooks/arc";
 import { isEmptyObject, mergeObjects } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
 import { PointerContext, PointerRef, defaultPointerRef } from "./types/Pointer";
@@ -54,37 +55,9 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     gauge.props = mergedProps.current = mergeObjects(defaultValues, props);
     if (gauge.props.arc.width == defaultGaugeProps.arc.width) mergedProps.current.arc.width = getArcWidthByType(gauge.props.type as GaugeType);
     if (gauge.props.marginInPercent == defaultGaugeProps.marginInPercent) mergedProps.current.marginInPercent = getGaugeMarginByType(gauge.props.type as GaugeType);
-    validateArcs(gauge);
+    arcHooks.validateArcs(gauge);
   }
 
-  const validateArcs = (gauge: Gauge) => {
-    //If the user has defined subArcs, make sure the last subArc has a limit equal to the maxValue
-    if (gauge.props.arc.subArcs?.length > 0) {
-      let lastSubArc = gauge.props.arc.subArcs[gauge.props.arc.subArcs.length - 1];
-      if (lastSubArc.limit as number < gauge.props.maxValue) lastSubArc.limit = gauge.props.maxValue;
-    }
-    verifySubArcsLimits(gauge);
-
-  }
-
-  const verifySubArcsLimits = (gauge: Gauge) => {
-    let prevLimit: number | undefined = undefined;
-    for (const subArc of gauge.props.arc.subArcs) {
-      const limit = subArc.limit;
-      if (typeof limit !== 'undefined') {
-        // Check if the limit is within the valid range
-        if(limit < gauge.props.minValue || limit > gauge.props.maxValue) 
-          throw new Error(`The limit of a subArc must be between the minValue and maxValue. The limit of the subArc is ${limit}`);
-
-        // Check if the limit is greater than the previous limit
-        if (typeof prevLimit !== 'undefined') {
-          if(limit <= prevLimit) 
-            throw new Error(`The limit of a subArc must be greater than the limit of the previous subArc. The limit of the subArc is ${limit}`);
-        }
-        prevLimit = limit;
-      }
-    }
-  }
 
   const shouldInitChart = () => {
     let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc));

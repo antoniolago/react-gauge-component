@@ -36,7 +36,7 @@ import GaugeComponent from 'react-gauge-component'
 
 ## Examples
 ### Simple Gauge.
-![Image of Simple Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/simpleGauge.jpg "Simple Gauge Component")
+![Image of Simple Grafana Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/simpleGauge.jpg "Simple Grafana Gauge Component")
 <details>
   <summary>Show Simple Gauge code</summary>
 
@@ -218,7 +218,7 @@ const kbitsToMbits = (value) => {
 ```
 </details>
 
-### Gauge with blob gauge.
+### Gauge with blob.
 ![Image of Blob Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/blobGauge.jpg "Blob Gauge Component")
 <details>
   <summary>Show Gauge with blob code</summary>
@@ -364,7 +364,7 @@ const kbitsToMbits = (value) => {
       <li><code>gradient: boolean</code>: This will draw a single arc with all colors provided in subArcs, using limits as references to draw the linear-gradient result. (limits may not be accurate in this mode) Default: <code>false</code>.</li>
       <li><code>subArcs: Array&lt;object&gt;</code>: The subArcs of the gauge.
         <ul>
-          <li><code>limit: number</code>: The subArc limit value. When no limits are defined in the next subArcs in the list, it's optional and will auto-calculate remaining arcs limits. Example: <code>[{limit: 70}, {}, {}, {}]</code>. In a default <code>minValue/maxValue</code>, the values will be equal to <code>[{limit: 70}, {limit: 80}, {limit: 90}, {limit: 100}]</code>. But <code>[{},{limit: 100}]</code> will not work properly as the not defined subArc limit has a subArc with limit defined ahead in the array.</li>
+          <li><code>limit: number</code>: The subArc limit value. When no limits are defined  will auto-calculate remaining arcs limits. Attention: limits are reordered in ascending order.</li>
               <li><code>color: string</code>: The subArc color. When not provided, it will use default subArc's colors and interpolate first and last colors when subArcs number is greater than <code>colorArray</code>.</li>
               <li><code>showMark: boolean</code>: Whether or not to show the mark. Default: <code>false</code>.</li>
               <li><code>tooltip: object</code>: Tooltip object.
