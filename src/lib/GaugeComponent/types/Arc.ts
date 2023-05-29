@@ -1,3 +1,5 @@
+import { get } from 'lodash';
+import { GaugeType, defaultGaugeProps } from './GaugeComponentProps';
 import { Tooltip } from './Tooltip';
 export interface Arc {
     cornerRadius?: number, //The corner radius of the arc
@@ -19,11 +21,20 @@ export interface SubArc {
     onMouseLeave?: () => void
 }
 export const defaultSubArcs: SubArc[] = [
-    { limit: 33, color: "#5BE12C"}, // needleColorWhenWithinLimit: "#AA4128"},
-    { limit: 66, color: "#F5CD19"},
-    { color: "#EA4228"},
+    { limit: 33, color: "#5BE12C" }, // needleColorWhenWithinLimit: "#AA4128"},
+    { limit: 66, color: "#F5CD19" },
+    { color: "#EA4228" },
 ];
 
+export const getArcWidthByType = (type: GaugeType): number => {
+    let gaugeTypesWidth: Record<GaugeType, number> = {
+        [GaugeType.Grafana]: 0.25,
+        [GaugeType.Semicircle]: 0.15,
+        [GaugeType.Radial]: 0.2,
+    };
+    if(!type) type = defaultGaugeProps.type
+    return gaugeTypesWidth[type as GaugeType];
+}
 export const defaultArc: Arc = {
     padding: 0.05,
     width: 0.25,

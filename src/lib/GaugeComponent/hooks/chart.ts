@@ -1,6 +1,6 @@
 import CONSTANTS from "../constants";
 import { Gauge } from "../types/Gauge";
-import { GaugeType } from "../types/GaugeComponentProps";
+import { GaugeType, GaugeInnerMarginInPercent } from "../types/GaugeComponentProps";
 import * as arcHooks from "./arc";
 import * as labelsHooks from "./labels";
 import * as pointerHooks from "./pointer";
@@ -64,14 +64,19 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         dimensions.current.innerRadius = dimensions.current.outerRadius * (1 - gauge.props.arc.width);
         clearChart(gauge);
         arcHooks.setArcData(gauge);
-        arcHooks.setupArcs(gauge);
+        arcHooks.setupArcs(gauge, resize);
         labelsHooks.setupLabels(gauge);
         pointerHooks.drawPointer(gauge, resize);
-        let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height + 70;
+        let gaugeTypeHeightCorrection: Record<GaugeType, number> = {
+            [GaugeType.Semicircle]: 50,
+            [GaugeType.Radial]: 50,
+            [GaugeType.Grafana]: 50
+        }
+        let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height; 
         let boundWidth = gauge.container.current.node().getBoundingClientRect().width;
         gauge.svg.current
             .attr("width", boundWidth)
-            .attr("height", boundHeight);
+            .attr("height", boundHeight+gaugeTypeHeightCorrection[gauge.props.type]);
     } else {
         let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
         let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
@@ -81,7 +86,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         if(shouldRedrawArcs) {
             arcHooks.clearArcs(gauge);
             arcHooks.setArcData(gauge);
-            arcHooks.setupArcs(gauge);
+            arcHooks.setupArcs(gauge, resize);
         }
         if((pointerPropsChanged || valueChanged)) {
             pointerHooks.drawPointer(gauge);
@@ -104,12 +109,17 @@ export const updateDimensions = (gauge: Gauge) => {
         divHeight = divDimensions.height;
     if(dimensions.current.fixedHeight == 0) dimensions.current.fixedHeight = divHeight + 200;
     //Set the new width and horizontal margins
-    dimensions.current.margin.left = divWidth * marginInPercent;
-    dimensions.current.margin.right = divWidth * marginInPercent;
+    let isMarginBox = typeof marginInPercent == 'number';
+    let marginLeft: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).left;
+    let marginRight: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).right;
+    let marginTop: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).top;
+    let marginBottom: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).bottom;
+    dimensions.current.margin.left = divWidth * marginLeft;
+    dimensions.current.margin.right = divWidth * marginRight;
     dimensions.current.width = divWidth - dimensions.current.margin.left - dimensions.current.margin.right;
 
-    dimensions.current.margin.top = dimensions.current.fixedHeight * marginInPercent;
-    dimensions.current.margin.bottom = dimensions.current.fixedHeight * marginInPercent;
+    dimensions.current.margin.top = dimensions.current.fixedHeight * marginTop;
+    dimensions.current.margin.bottom = dimensions.current.fixedHeight * marginBottom;
     dimensions.current.height = dimensions.current.width / 2 - dimensions.current.margin.top - dimensions.current.margin.bottom;
     //gauge.height.current = divHeight - dimensions.current.margin.top - dimensions.current.margin.bottom;
 };
@@ -139,7 +149,7 @@ export const centerGraph = (gauge: Gauge) => {
         dimensions.current.width / 2 - dimensions.current.outerRadius + dimensions.current.margin.right;
     gauge.g.current.attr(
         "transform",
-        "translate(" + dimensions.current.margin.left + ", " + (dimensions.current.margin.top+35) + ")"
+        "translate(" + dimensions.current.margin.left + ", " + (dimensions.current.margin.top) + ")"
     );
 };
 

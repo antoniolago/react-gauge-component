@@ -4,7 +4,7 @@ import { Gauge } from '../types/Gauge';
 import { Mark } from '../types/Mark';
 import React from 'react';
 import { GaugeType } from '../types/GaugeComponentProps';
-import { getCoordByValue } from './arc';
+import { getArcColorByPercentage, getArcColorByValue, getCoordByValue } from './arc';
 import { PointerType } from '../types/Pointer';
 export const setupLabels = (gauge: Gauge) => {
   setupValueLabel(gauge);
@@ -157,7 +157,7 @@ export const addValueText = (gauge: Gauge) => {
   } else {
     text = utils.floatingNumber(value).toString();
   }
-  const maxLengthBeforeComputation = 3;
+  const maxLengthBeforeComputation = 4;
   const textLength = text?.length || 0;
   let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1; // Compute the font size ratio
   let valueFontSize = labels.valueLabel.style.fontSize as string;
@@ -179,6 +179,7 @@ export const addValueText = (gauge: Gauge) => {
   fontRatio = gauge.dimensions.current.width * widthFactor * fontRatio;
   let fontSizeNumber = parseInt(valueFontSize, 10) * fontRatio;
   valueTextStyle.fontSize = fontSizeNumber + "px";
+  if(labels.valueLabel.matchColorWithArc) valueTextStyle.fill = getArcColorByValue(value, gauge)
   addText(text, x, y, gauge, valueTextStyle, CONSTANTS.valueLabelClassname);
 };
 

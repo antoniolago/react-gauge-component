@@ -44,33 +44,189 @@ import GaugeComponent from 'react-gauge-component'
   
 ```jsx
 <GaugeComponent
-  id="simple-gauge"
-  value={24.72}
-  labels={{
-    markLabel: {
-      marks: [
-        { value: 20 },
-        { value: 50 },
-        { value: 80 },
-        { value: 100 }
-      ]
-    }
+  arc={{
+    subArcs: [
+      {
+        limit: 20,
+        color: '#EA4228',
+        showMark: true
+      },
+      {
+        limit: 40,
+        color: '#F58B19',
+        showMark: true
+      },
+      {
+        limit: 60,
+        color: '#F5CD19',
+        showMark: true
+      },
+      {
+        limit: 100,
+        color: '#5BE12C',
+        showMark: true
+      },
+    ]
   }}
-  pointer={{ elastic: true }}
+  value={currentValue}
 />
 ```
 </details>
 
-### Custom radial gauge.
-![Image of Radial Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/radialGauge.jpg "Radial Gauge Component")
+### Custom Bandwidth Gauge.
+![Image of Gauge Component for bandwidth visualization](https://antoniolago.github.io/react-gauge-component/images/bandGauge.jpg "Gauge Component for bandwidth visualization")
 <details>
-  <summary>Show Custom Radial Gauge code</summary>
+  <summary>Show Bandwidth Gauge code</summary>
 
-  ### Custom Radial Gauge
+  ### Bandwidth Gauge
+  
+```jsx
+const kbitsToMbits = (value) => {
+  if (value >= 1000) {
+    value = value / 1000;
+    if (Number.isInteger(value)) {
+      return value.toFixed(0) + ' mbit/s';
+    } else {
+      return value.toFixed(1) + ' mbit/s';
+    }
+  } else {
+    return value.toFixed(0) + ' kbit/s';
+  }
+}
+<GaugeComponent
+  arc={{
+    nbSubArcs: 150,
+    colorArray: ['#5BE12C', '#F5CD19', '#EA4228'],
+    width: 0.3,
+    padding: 0.003
+  }}
+  labels={{
+    valueLabel: {
+      fontSize: 40,
+      formatTextValue: kbitsToMbits
+    },
+    markLabel: {
+      type: "outer",
+      marks: [
+        { value: 100 },
+        { value: 200 },
+        { value: 300 },
+        { value: 400 },
+        { value: 500 },
+        { value: 600 },
+        { value: 700 },
+        { value: 800 },
+        { value: 900 },
+        { value: 1000 },
+        { value: 1500 },
+        { value: 2000 },
+        { value: 2500 },
+        { value: 3000 },
+      ],
+      valueConfig: {
+        formatTextValue: kbitsToMbits
+      }
+    }
+  }}
+  value={900}
+  maxValue={3000}
+/>
+```
+</details>
+
+### Custom Temperature Gauge
+![Image of React Gauge Component for temperature visualization](https://antoniolago.github.io/react-gauge-component/images/tempGauge.jpg "Gauge Component for temperature visualization")
+<details>
+  <summary>Show Temperature Gauge code</summary>
+
+  ### Temperature Gauge
   
 ```jsx
 <GaugeComponent
-  id="gauge-component-radial"
+  type="semicircle"
+  arc={{
+    width: 0.2,
+    padding: 0.005,
+    cornerRadius: 1,
+    // gradient: true,
+    subArcs: [
+      {
+        limit: 15,
+        color: '#EA4228',
+        showMark: true,
+        tooltip: {
+          text: 'Too low temperature!'
+        },
+        onClick: () => console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+        onMouseMove: () => console.log("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
+        onMouseLeave: () => console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
+      },
+      {
+        limit: 17,
+        color: '#F5CD19',
+        showMark: true,
+        tooltip: {
+          text: 'Low temperature!'
+        }
+      },
+      {
+        limit: 28,
+        color: '#5BE12C',
+        showMark: true,
+        tooltip: {
+          text: 'OK temperature!'
+        }
+      },
+      {
+        limit: 30, color: '#F5CD19', showMark: true,
+        tooltip: {
+          text: 'High temperature!'
+        }
+      },
+      {
+        color: '#EA4228',
+        tooltip: {
+          text: 'Too high temperature!'
+        }
+      }
+    ]
+  }}
+  pointer={{
+    color: '#345243',
+    length: 0.80,
+    width: 15,
+    // animate: true,
+    // elastic: true,
+    animDelay: 200,
+  }}
+  labels={{
+    valueLabel: { formatTextValue: value => value + 'ºC' },
+    markLabel: {
+      type: 'outer',
+      valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 10 },
+      marks: [
+        { value: 13 },
+        { value: 22.5 },
+        { value: 32 }
+      ],
+    }
+  }}
+  value={22.5}
+  minValue={10}
+  maxValue={35}
+/>
+```
+</details>
+
+### Gauge with blob gauge.
+![Image of Blob Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/blobGauge.jpg "Blob Gauge Component")
+<details>
+  <summary>Show Gauge with blob code</summary>
+
+  ### Custom gauge with blob
+  
+```jsx
+<GaugeComponent
   value={50}
   type="radial"
   labels={{
@@ -86,8 +242,8 @@ import GaugeComponent from 'react-gauge-component'
     }
   }}
   arc={{
-    colorArray: ['#5BE12C','#EA4228'],
-    subArcs: [{limit: 10}, {limit: 30}, {}, {}, {}],
+    colorArray: ['#5BE12C', '#EA4228'],
+    subArcs: [{ limit: 10 }, { limit: 30 }, {}, {}, {}],
     padding: 0.02,
     width: 0.3
   }}
@@ -95,27 +251,6 @@ import GaugeComponent from 'react-gauge-component'
     elastic: true,
     animationDelay: 0
   }}
-/>
-```
-</details>
-
-### Gauge with blob gauge.
-![Image of Blob Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/blobGauge.jpg "Blob Gauge Component")
-<details>
-  <summary>Show Gauge with blob code</summary>
-
-  ### Custom gauge with blob
-  
-```jsx
-<GaugeComponent
-  id="gauge-component-blob"
-  arc={{
-    colorArray: ['#00FF15', '#FF2121'],
-    nbSubArcs: 50,
-    padding: 0.01,
-  }}
-  pointer={{type: "blob", animationDelay: 0, elastic: true }}
-  value={90.69}
 />
 ```
 </details>
@@ -165,130 +300,39 @@ import GaugeComponent from 'react-gauge-component'
 ```
 </details>
 
-### Custom Bandwidth Gauge.
-![Image of Gauge Component for bandwidth visualization](https://antoniolago.github.io/react-gauge-component/images/bandGauge.jpg "Gauge Component for bandwidth visualization")
+### Custom radial gauge.
+![Image of Radial Gauge Component for a simple data visualization](https://antoniolago.github.io/react-gauge-component/images/radialGauge.jpg "Radial Gauge Component")
 <details>
-  <summary>Show Bandwidth Gauge code</summary>
+  <summary>Show Custom Radial Gauge code</summary>
 
-  ### Bandwidth Gauge
+  ### Custom Radial Gauge
   
 ```jsx
-const kbitsToMbits = (value) => {
-  if (value >= 1000) {
-    value = value / 1000;
-    if (Number.isInteger(value)) {
-      return value.toFixed(0) + ' mbit/s';
-    } else {
-      return value.toFixed(1) + ' mbit/s';
-    }
-  } else {
-    return value.toFixed(0) + ' kbit/s';
-  }
-}
 <GaugeComponent
-  id="bandwidth-gauge"
-  arc={{
-    nbSubArcs: 30,
-    colorArray: ['#5BE12C', '#F5CD19', '#EA4228'],
-    width: 0.3,
-  }}
+  value={50}
+  type="radial"
   labels={{
-    valueLabel: {
-      fontSize: 40,
-      formatTextValue: kbitsToMbits 
-    },
     markLabel: {
+      type: "inner",
       marks: [
-        { value: 100 },
-        { value: 200 },
-        { value: 300 },
-        { value: 400 },
-        { value: 500 },
-        { value: 600 },
-        { value: 700 },
-        { value: 800 },
-        { value: 900 },
-        { value: 1000 },
-        { value: 1500 },
-        { value: 2000 },
-        { value: 2500 },
-        { value: 3000 },
-      ],
-      valueConfig: {
-        formatTextValue: kbitsToMbits
-      }
+        { value: 20 },
+        { value: 40 },
+        { value: 60 },
+        { value: 80 },
+        { value: 100 }
+      ]
     }
   }}
-  value={900}
-  maxValue={3000}
-/>
-```
-</details>
-
-### Custom Temperature Gauge
-![Image of React Gauge Component for temperature visualization](https://antoniolago.github.io/react-gauge-component/images/tempGauge.jpg "Gauge Component for temperature visualization")
-<details>
-  <summary>Show Temperature Gauge code</summary>
-
-  ### Temperature Gauge
-  
-```jsx
-<GaugeComponent
-  id="temperature-gauge"
   arc={{
-    width: 0.2,
-    padding: 0.01,
-    subArcs: [
-      { 
-        limit: 15, 
-        color: '#EA4228', 
-        showMark: true ,
-        tooltip: { text: 'Too low temperature!' }
-      },
-      { 
-        limit: 17, 
-        color: '#F5CD19', 
-        showMark: true,
-        tooltip: { text: 'Low temperature!' }
-      },
-      { 
-        limit: 28, 
-        color: '#5BE12C', 
-        showMark: true,
-        tooltip: { text: 'OK temperature!' } 
-      },
-      { 
-        limit: 30, 
-        color: '#F5CD19', 
-        showMark: true,
-        tooltip: { text: 'High temperature!' }
-      },
-      { 
-        color: '#EA4228',
-        tooltip: { text: 'Too high temperature!' }
-      }
-    ]
+    colorArray: ['#5BE12C','#EA4228'],
+    subArcs: [{limit: 10}, {limit: 30}, {}, {}, {}],
+    padding: 0.02,
+    width: 0.3
   }}
   pointer={{
-    color: '#345243',
-    length: 0.90,
-    width: 15,
-    animDelay: 200,
+    elastic: true,
+    animationDelay: 0
   }}
-  labels={{
-    valueLabel: { formatTextValue: value => value + 'ºC' },
-    markLabel: {
-      valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 10 },
-      marks: [
-        { value: 13 },
-        { value: 22.5 },
-        { value: 32 }
-      ],
-    }
-  }}
-  value={22.5}
-  minValue={10}
-  maxValue={35}
 />
 ```
 </details>
@@ -299,8 +343,11 @@ const kbitsToMbits = (value) => {
    <li><code>id: string</code>: A unique identifier for the div surrounding the chart. Default: <code>""</code>.</li>
    <li><code>className: string</code>: Adds a <code>className</code> to the div container. Default: <code>"gauge-component-class"</code>.</li>
    <li><code>style: React.CSSProperties</code>: Adds a style object to the div container. Default: <code>{width: 100}</code>.</li>
-   <li><code>marginInPercent: number</code>: Sets the margin for the chart inside the containing SVG element. Default: <code>0.05</code>.</li>
-   <li><code>type: string</code>: The type of the gauge, values can be <code>"semicircle</code> and <code>"radial"</code>. Default: <code>"semicircle"</code>.</li>
+   <li><code>marginInPercent: number | {left: number, right: number, top: number, bottom: number}</code>: Sets the margin for the chart inside the containing SVG element. Default:
+   GaugeType.Grafana: <code>{ top: 0.12, bottom: 0.00, left: 0.07, right: 0.07 }</code>.
+   GaugeType.Semicircle: <code>{ top: 0.08, bottom: 0.00, left: 0.07, right: 0.07 }</code>
+   GaugeType.Radial: <code>{ top: 0.07, bottom: 0.00, left: 0.07, right: 0.07 }</code></li>
+   <li><code>type: string</code>: The type of the gauge, values can be <code>"grafana"</code> <code>"semicircle</code> and <code>"radial"</code>. Default: <code>"grafana"</code>.</li>
    <li><code>value: number</code>: The value of the gauge. Default: <code>33</code>.</li>
    <li><code>minValue: number</code>: The minimum value of the gauge. Default: <code>0</code>.</li>
    <li><code>maxValue: number</code>: The maximum value of the gauge. Default: <code>100</code>.</li>
@@ -308,7 +355,10 @@ const kbitsToMbits = (value) => {
     <ul>
       <li><code>cornerRadius: number</code>: The corner radius of the arc. Default: <code>7</code>.</li>
       <li><code>padding: number</code>: The padding between subArcs, in rad. Default: <code>0.05</code>.</li>
-      <li><code>width: number</code>: The width of the arc given in percent of the radius. Default: <code>0.15</code>.</li>
+      <li><code>width: number</code>: The width of the arc given in percent of the radius. Default: 
+      GaugeType.Grafana: <code>0.25</code>.
+      GaugeType.Semicircle: <code>0.15</code>
+      GaugeType.Radial: <code>0.2</code>.</li>
       <li><code>nbSubArcs: number</code>: The number of subArcs. This overrides <code>subArcs</code>. Default: <code>undefined</code></li>
       <li><code>colorArray: Array&lt;string&gt;</code>: The colors of the arcs. This overrides <code>subArcs</code> colors. Default: <code>undefined</code></li>
       <li><code>gradient: boolean</code>: This will draw a single arc with all colors provided in subArcs, using limits as references to draw the linear-gradient result. (limits may not be accurate in this mode) Default: <code>false</code>.</li>
@@ -337,7 +387,7 @@ const kbitsToMbits = (value) => {
         </code>
       </li>
     </ul></li>
-    <li><code>pointer: object</code>: The value pointer of the gauge.
+    <li><code>pointer: object</code>: The value pointer of the gauge. Grafana gauge have it's own pointer logic, but animation properties will be applied.
       <ul>
         <li><code>type: string</code> This can be "needle", "blob" or "arrow". Default: <code>"needle"</code></li>
         <li><code>color: string</code>: The color of the pointer. Default: <code>#464A4F</code></li>
@@ -347,13 +397,14 @@ const kbitsToMbits = (value) => {
         <li><code>elastic: boolean</code>: Whether or not to use elastic pointer. Default: <code>false</code></li>
         <li><code>animationDuration: number</code>: The duration of the pointer animation. Default: <code>3000</code></li>
         <li><code>animationDelay: number</code>: The delay of the pointer animation. Default: <code>100</code></li>
-        <li><code>width: number</code>: The width of the pointer. Default: <code>15</code></li>
+        <li><code>width: number</code>: The width of the pointer. Default: <code>20</code></li>
       </ul>
     </li>
     <li><code>labels: object</code>: The labels of the gauge.
       <ul>
          <li><code>valueLabel: object</code>: The center value label of the gauge.
             <ul>
+               <li><code>matchColorWithArc: boolean</code>: when enabled valueLabel color will match current arc color</li>
                <li><code>formatTextValue: (value: any) => string</code>: The format of the value label. Default: <code>undefined</code>.</li>
                <li><code>style: React.CSSProperties</code>: Overrides valueLabel styles. Default: <code>{fontSize: "35px", fill: "#fff", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
                <li><code>hide: boolean</code>: Whether or not to hide the value label. Default: <code>false</code>.</li>

@@ -111,7 +111,7 @@ export const setArcData = (gauge: Gauge) => {
 };
 
 const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undefined) => {
-  let currentPercentage = percent ? percent : utils.calculatePercentage(gauge.props.minValue, 
+  let currentPercentage = percent != undefined ? percent : utils.calculatePercentage(gauge.props.minValue, 
                                                     gauge.props.maxValue, 
                                                     gauge.props.value);
   let firstSubArc = {
@@ -124,10 +124,11 @@ const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undef
   }
   return [firstSubArc, secondSubArc];
 }
-const drawGrafanaOuterArc = (gauge: Gauge) => {
+const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
   const { outerRadius } = gauge.dimensions.current;
   //Grafana's outer arc will be populates as the standard arc data would
-  if (gauge.props.type == GaugeType.Grafana && gauge.isFirstRun.current) {
+  if (gauge.props.type == GaugeType.Grafana && resize) {
+    gauge.doughnut.current.selectAll(".outerSubArc").remove();
     let outerArc = arc()
                   .outerRadius(outerRadius+7)
                   .innerRadius(outerRadius+2)
@@ -183,13 +184,13 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
     .on("click", (event: any, d: any) => onArcMouseClick(event, d))
 
 }
-export const setupArcs = (gauge: Gauge) => {
+export const setupArcs = (gauge: Gauge, resize: boolean = false) => {
   //Add tooltip
   let isTooltipInTheDom = document.getElementsByClassName(CONSTANTS.arcTooltipClassname).length != 0;
   if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
   gauge.tooltip.current = select(`.${CONSTANTS.arcTooltipClassname}`);
   //Setup the arc
-  drawGrafanaOuterArc(gauge);
+  drawGrafanaOuterArc(gauge, resize);
   drawArc(gauge);
 
 };
@@ -206,8 +207,14 @@ export const applyColors = (subArcsPath: any, gauge: Gauge) => {
 }
 export const getArcColorByPercentage = (percentage: number, gauge: Gauge): string => {
   let value = utils.getCurrentGaugeValueByPercentage(percentage, gauge);
-  //console.log(value, percentage)
-  return getArcDataByValue(value, gauge).color as string;
+  return getArcColorByValue(value, gauge) as string;
+};
+export const getArcColorByValue = (value: number, gauge: Gauge): string => {
+
+  let arcData = getArcDataByValue(value, gauge);
+  if(arcData == undefined) console.log(gauge.arcData.current);
+  let arcColor: string = arcData?.color as string || "white"
+  return arcColor;
 };
 export const getArcDataByValue = (value: number, gauge: Gauge): SubArc =>
   gauge.arcData.current.find(subArcData => value <= (subArcData.limit as number)) as SubArc;
@@ -288,7 +295,7 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
     },
     [GaugeType.Radial]: {
       startAngle: utils.degToRad(-41),
-      endAngle: utils.degToRad(222)
+      endAngle: utils.degToRad(221)
     },
   };
   
@@ -311,4 +318,9 @@ export const redrawArcs = (gauge: Gauge) => {
   setArcData(gauge);
   setupArcs(gauge);
 }
-export const clearArcs = (gauge: Gauge) => gauge.doughnut.current.selectAll(".subArc").remove();
+export const clearArcs = (gauge: Gauge) => {
+  gauge.doughnut.current.selectAll(".subArc").remove();
+}
+export const clearOuterArcs = (gauge: Gauge) => {
+  gauge.doughnut.current.selectAll(".outerSubArc").remove();
+}

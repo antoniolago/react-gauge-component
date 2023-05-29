@@ -51,7 +51,7 @@ export const defaultPointer: PointerProps = {
     color: "#5A5A5A",
     baseColor: "white",
     length: 0.70,
-    width: 15, // this is a factor to multiply by the width of the gauge
+    width: 20, // this is a factor to multiply by the width of the gauge
     animate: true,
     elastic: false,
     animationDuration: 3000,

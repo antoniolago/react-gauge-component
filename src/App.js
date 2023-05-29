@@ -109,43 +109,37 @@ const App = () => {
               <GaugeComponent />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Simple Grafana Gauge</h6>
-              
+              <h6 className="mb-1">Simple Gauge</h6>
               <GaugeComponent
-                id="gauge-component4"
                 arc={{
-                  gradient: true,
-                  width: 0.15,
-                  padding: 0,
                   subArcs: [
                     {
-                      limit: 15,
+                      limit: 20,
                       color: '#EA4228',
                       showMark: true
                     },
                     {
-                      limit: 37,
+                      limit: 40,
+                      color: '#F58B19',
+                      showMark: true
+                    },
+                    {
+                      limit: 60,
                       color: '#F5CD19',
                       showMark: true
                     },
                     {
-                      limit: 58,
+                      limit: 100,
                       color: '#5BE12C',
                       showMark: true
                     },
-                    {
-                      limit: 75,
-                      color: '#F5CD19',
-                      showMark: true
-                    },
-                    { color: '#EA4228' }
                   ]
                 }}
                 value={currentValue}
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Simple Grafana Gauge</h6>
+              <h6 className="mb-1">Simple interpolated Gauge</h6>
               <GaugeComponent
                 id="gauge-component-radial3"
                 value={currentValue}
@@ -156,10 +150,13 @@ const App = () => {
                   padding: 0.02,
                   width: 0.3
                 }}
+                labels={{
+                  valueLabel: {matchColorWithArc: true},
+                }}
                 pointer={{ animationDelay: 0 }}
               />
             </Col>
-            
+
             <Col xs={12} lg={3}>
               <h6 className="mb-1">Min/max values and formatted text</h6>
               <GaugeComponent
@@ -203,7 +200,7 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Default semicircle props</h6>
+              <h6 className="mb-1">Default semicircle Gauge</h6>
               <GaugeComponent type="semicircle" />
             </Col>
             <Col xs={12} lg={3}>
@@ -217,62 +214,47 @@ const App = () => {
                   padding: 0,
                   subArcs: [
                     {
-                      limit: 15,
-                      color: '#EA4228',
-                      showMark: true
+                      limit: 5,
+                      color: '#EA4228'
                     },
                     {
-                      limit: 37,
-                      color: '#F5CD19',
-                      showMark: true
+                      limit: 20,
+                      color: '#F5CD19'
                     },
                     {
                       limit: 58,
-                      color: '#5BE12C',
-                      showMark: true
+                      color: '#5BE12C'
                     },
                     {
                       limit: 75,
-                      color: '#F5CD19',
-                      showMark: true
+                      color: '#F5CD19'
                     },
                     { color: '#EA4228' }
                   ]
                 }}
-                value={currentValue}
-                pointer={{ type: "arrow", elastic: true }}
-              />
-            </Col>
-            <Col xs={12} lg={3}>
-              <h6 className="mb-1">No animation, custom needle color</h6>
-              <GaugeComponent
-                id="gauge-component6"
-                type="semicircle"
-                pointer={{
-                    animate: false,
-                    color: '#4A05EC'
-                }}
-                arc={{
-                  colorArray: ['#830C7336', '#0077FF'],
-                  subArcs:
-                    [
-                      { limit: 20 },
-                      { limit: 40 },
-                      { limit: 60 },
-                      {},
-                      {}
+                labels={{
+                  markLabel: {
+                    marks: [
+                      { value: 0 },
+                      { value: 20 },
+                      { value: 40 },
+                      { value: 60 },
+                      { value: 80 },
                     ]
+                  }
                 }}
                 value={currentValue}
+                pointer={{ type: "arrow" }}
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Elastic Live updates</h6>
+              <h6 className="mb-1">Elastic blob pointer Live updates</h6>
               <GaugeComponent
                 id="gauge-component7"
                 type="semicircle"
                 arc={{
                   colorArray: ['#00FF15', '#FF2121'],
+                  padding: 0.02,
                   subArcs:
                     [
                       { limit: 40 },
@@ -284,95 +266,89 @@ const App = () => {
                       {}
                     ]
                 }}
-                pointer={{ animationDelay: 0 }}
-                value={currentValue}
-              />
-            </Col>
-            <Col xs={12} lg={3}>
-              <h6 className="mb-1">Simple Blob gauge</h6>
-              <GaugeComponent
-                id="gauge-component7"
-                type="semicircle"
-                arc={{
-                  colorArray: ['#00FF15', '#FF2121'],
-                  subArcs:
-                    [
-                      { limit: 10 },
-                      { limit: 30 },
-                      { limit: 40 },
-                      {},
-                      {},
-                      {},
-                      {}
-                    ]
-                }}
-                pointer={{type: "blob", animationDelay: 0 }}
-                value={currentValue}
-              />
-            </Col>
-            <Col xs={12} lg={3}>
-              <h6 className="mb-1">Blob gauge without animation</h6>
-              <GaugeComponent
-                id="gauge-component7"
-                type="semicircle"
-                arc={{
-                  colorArray: ['#FFDDDD', '#D15F78'],
-                  nbSubArcs: 10,
-                  padding: 0.01,
-                }}
-                pointer={{type: "blob", animate: false}}
-                value={currentValue}
-              />
-            </Col>
-            <Col xs={12} lg={3}>
-              <h6 className="mb-1">Blob gauge with thicker arc</h6>
-              <GaugeComponent
-                id="gauge-component7"
-                type="semicircle"
-                arc={{
-                  colorArray: ['#969696', '#0B58FF'],
-                  width: 0.2,
-                  nbSubArcs: 20,
-                  padding: 0.01,
-                }}
-                pointer={{type: "blob", animationDelay: 0, width: 20 }}
-                value={currentValue}
-              />
-            </Col>
-            <Col xs={12} lg={3}>
-              <h6 className="mb-1">Blob gauge elastic</h6>
-              <GaugeComponent
-                id="gauge-component7"
-                type="semicircle"
-                arc={{
-                  colorArray: ['#00FF15', '#FF2121'],
-                  nbSubArcs: 50,
-                  padding: 0.01,
-                }}
                 pointer={{type: "blob", animationDelay: 0, elastic: true }}
                 value={currentValue}
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Simple Radial Gauge</h6>
+              <h6 className="mb-1">Temperature Gauge with tooltips on hover</h6>
               <GaugeComponent
-                id="gauge-component-radial3"
-                value={currentValue}
-                type="radial"
+              type="semicircle"
                 arc={{
-                  colorArray: ['#1EFF00', '#CE1F1F'],
+                  width: 0.2,
+                  padding: 0.005,
+                  cornerRadius: 1,
+                  // gradient: true,
                   subArcs: [
-                    { limit: 40, showMark: true },
-                    { limit: 50, showMark: true },
-                    { showMark: true },
-                    { showMark: true },
-                    { showMark: true }
-                  ],
-                  padding: 0.02,
-                  width: 0.3
+                    {
+                      limit: 15,
+                      color: '#EA4228',
+                      showMark: true,
+                      tooltip: {
+                        text: 'Too low temperature!'
+                      },
+                      onClick: () => console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+                      onMouseMove: () => console.log("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
+                      onMouseLeave: () => console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
+                    },
+                    {
+                      limit: 17,
+                      color: '#F5CD19',
+                      showMark: true,
+                      tooltip: {
+                        text: 'Low temperature!'
+                      }
+                    },
+                    {
+                      limit: 28,
+                      color: '#5BE12C',
+                      showMark: true,
+                      tooltip: {
+                        text: 'OK temperature!'
+                      }
+                    },
+                    {
+                      limit: 30, color: '#F5CD19', showMark: true,
+                      tooltip: {
+                        text: 'High temperature!'
+                      }
+                    },
+                    {
+                      color: '#EA4228',
+                      tooltip: {
+                        text: 'Too high temperature!'
+                      }
+                    }
+                  ]
                 }}
-                pointer={{ animationDelay: 0 }}
+                pointer={{
+                  color: '#345243',
+                  length: 0.80,
+                  width: 15,
+                  // animate: true,
+                  // elastic: true,
+                  animDelay: 200,
+                }}
+                labels={{
+                  valueLabel: { formatTextValue: value => value + 'ºC' },
+                  markLabel: {
+                    type: 'outer',
+                    valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 10 },
+                    marks: [
+                      { value: 13 },
+                      { value: 22.5 },
+                      { value: 32 }
+                    ],
+                  }
+                }}
+                value={22.5}
+                minValue={10}
+                maxValue={35}
               />
+            </Col>
+            <Col xs={12} lg={3}>
+              <h6 className="mb-1">Default Radial Gauge</h6>
+              <GaugeComponent type="radial" value={33}/>
             </Col>
             <Col xs={12} lg={3}>
               <h6 className="mb-1">Radial custom width</h6>
@@ -392,9 +368,9 @@ const App = () => {
                 }}
                 arc={{
                   colorArray: ['#00FF15', '#CE1F1F'],
-                  nbSubArcs: 30,
-                  padding: 0.02,
-                  width: 0.5
+                  nbSubArcs: 90,
+                  padding: 0.01,
+                  width: 0.4
                 }}
                 pointer={{ animationDelay: 0 }}
               />
@@ -453,83 +429,6 @@ const App = () => {
                   elastic: true,
                   animationDelay: 0
                 }}
-              />
-            </Col>
-          </Row>
-          <Row>
-
-            <Col xs={12} lg={6}>
-              <h6 className="mb-1">Custom Temperature Gauge with tooltips on hover</h6>
-              <GaugeComponent
-                arc={{
-                  width: 0.2,
-                  padding: 0.01,
-                  // gradient: true,
-                  subArcs: [
-                    {
-                      limit: 15,
-                      color: '#EA4228',
-                      showMark: true,
-                      tooltip: {
-                        text: 'Too low temperature!'
-                      },
-                      onClick: () => console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-                      onMouseMove: () => console.log("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
-                      onMouseLeave: () => console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-                    },
-                    {
-                      limit: 17,
-                      color: '#F5CD19',
-                      showMark: true,
-                      tooltip: {
-                        text: 'Low temperature!'
-                      }
-                    },
-                    {
-                      limit: 28,
-                      color: '#5BE12C',
-                      showMark: true,
-                      tooltip: {
-                        text: 'OK temperature!'
-                      }
-                    },
-                    {
-                      limit: 30, color: '#F5CD19', showMark: true,
-                      tooltip: {
-                        text: 'High temperature!'
-                      }
-                    },
-                    {
-                      color: '#EA4228',
-                      tooltip: {
-                        text: 'Too high temperature!'
-                      }
-                    }
-                  ]
-                }}
-                pointer={{
-                  color: '#345243',
-                  length: 0.90,
-                  width: 15,
-                  // animate: true,
-                  // elastic: true,
-                  animDelay: 200,
-                }}
-                labels={{
-                  valueLabel: { formatTextValue: value => value + 'ºC' },
-                  markLabel: {
-                    type: 'outer',
-                    valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 10 },
-                    marks: [
-                      { value: 13 },
-                      { value: 22.5 },
-                      { value: 32 }
-                    ],
-                  }
-                }}
-                value={22.5}
-                minValue={10}
-                maxValue={35}
               />
             </Col>
           </Row>

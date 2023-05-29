@@ -6,12 +6,14 @@ export interface Labels {
 
 interface ValueLabel {
     formatTextValue?: (value: any) => string;
+    matchColorWithArc: boolean;
     style: React.CSSProperties;
     hide: boolean;
 }
 
 export const defaultValueLabel: ValueLabel = {
     formatTextValue: undefined,
+    matchColorWithArc: false,
     style: {
         fontSize: "35px",
         fill: '#fff',

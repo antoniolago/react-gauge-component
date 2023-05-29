@@ -17,8 +17,7 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     let isFirstTime = gauge.prevProps?.current.value == undefined;
     if ((isFirstTime || resize) && gauge.props.type != GaugeType.Grafana) 
         initPointer(gauge);
-    let shouldAnimate = (!resize || isFirstTime) && pointer.animate
-    console.log(shouldAnimate)
+    let shouldAnimate = (!resize || isFirstTime) && pointer.animate;
     if (shouldAnimate) {
         gauge.doughnut.current
             .transition()
@@ -140,7 +139,7 @@ const isProgressValid = (currentPercent: number, prevPercent: number, gauge: Gau
 
 const calculatePointerPath = (gauge: Gauge, percent: number) => {
     const { centerPoint, pointerRadius, pathLength } = gauge.pointer.current.context;
-    let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -41);
+    let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -42);
     let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 222);
     const angle = startAngle + (percent) * (endAngle - startAngle);
     var topPoint = [
