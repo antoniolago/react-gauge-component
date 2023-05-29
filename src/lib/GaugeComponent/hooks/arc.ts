@@ -345,7 +345,6 @@ const reOrderSubArcs = (gauge: Gauge): void => {
     }
     return a.limit - b.limit;
   });
-  console.log(gauge.props.arc.subArcs)
 }
 const verifySubArcsLimits = (gauge: Gauge) => {
   reOrderSubArcs(gauge);
