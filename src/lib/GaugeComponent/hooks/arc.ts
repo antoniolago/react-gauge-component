@@ -6,7 +6,7 @@ import {
   arc,
 } from "d3";
 import { Gauge } from '../types/Gauge';
-import * as chartHooks from './chart';
+import * as arcHooks from './arc';
 import CONSTANTS from '../constants';
 import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 import { GaugeType } from '../types/GaugeComponentProps';
@@ -216,6 +216,9 @@ export const setupTooltip = (gauge: Gauge) => {
   let isTooltipInTheDom = document.getElementsByClassName(CONSTANTS.arcTooltipClassname).length != 0;
   if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
   gauge.tooltip.current = select(`.${CONSTANTS.arcTooltipClassname}`);
+  gauge.tooltip.current
+                      .on("mouseleave", () => arcHooks.hideTooltip(gauge))
+                      .on("mouseout", () => arcHooks.hideTooltip(gauge))
 }
 
 export const applyColors = (subArcsPath: any, gauge: Gauge) => {
