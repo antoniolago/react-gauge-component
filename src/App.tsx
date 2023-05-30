@@ -261,7 +261,7 @@ const App = () => {
                       {}
                     ]
                 }}
-                pointer={{type: "blob", animationDelay: 0 }}
+                pointer={{type: "blob", animationDelay: 0, elastic: true}}
                 value={currentValue}
               />
             </Col>

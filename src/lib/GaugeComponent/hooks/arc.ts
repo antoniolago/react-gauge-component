@@ -14,7 +14,7 @@ import { get, throttle } from 'lodash';
 import { Arc, SubArc } from '../types/Arc';
 
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
-  event.target.style.stroke = "#ffffff5e";
+  //event.target.style.stroke = "#ffffff5e";
   if (d.data.tooltip != undefined) {
     let shouldChangeText = d.data.tooltip.text != gauge.tooltip.current.text();
     if (shouldChangeText) {
