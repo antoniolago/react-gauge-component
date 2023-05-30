@@ -68,7 +68,7 @@ import GaugeComponent from 'react-gauge-component'
       },
     ]
   }}
-  value={currentValue}
+  value={50}
 />
 ```
 </details>
@@ -227,30 +227,23 @@ const kbitsToMbits = (value) => {
   
 ```jsx
 <GaugeComponent
-  value={50}
-  type="radial"
-  labels={{
-    markLabel: {
-      type: "inner",
-      marks: [
-        { value: 20 },
-        { value: 40 },
-        { value: 60 },
-        { value: 80 },
-        { value: 100 }
-      ]
-    }
-  }}
+  type="semicircle"
   arc={{
-    colorArray: ['#5BE12C', '#EA4228'],
-    subArcs: [{ limit: 10 }, { limit: 30 }, {}, {}, {}],
+    colorArray: ['#00FF15', '#FF2121'],
     padding: 0.02,
-    width: 0.3
+    subArcs:
+      [
+        { limit: 40 },
+        { limit: 60 },
+        { limit: 70 },
+        {},
+        {},
+        {},
+        {}
+      ]
   }}
-  pointer={{
-    elastic: true,
-    animationDelay: 0
-  }}
+  pointer={{type: "blob", animationDelay: 0 }}
+  value={50}
 />
 ```
 </details>
@@ -340,14 +333,14 @@ const kbitsToMbits = (value) => {
 # API
 <h2>Props:</h2>
 <ul>
+   <li><code>type: string</code>: The type of the gauge, values can be <code>"grafana"</code>, <code>"semicircle</code> and <code>"radial"</code>. Default: <code>"grafana"</code>.</li>
    <li><code>id: string</code>: A unique identifier for the div surrounding the chart. Default: <code>""</code>.</li>
    <li><code>className: string</code>: Adds a <code>className</code> to the div container. Default: <code>"gauge-component-class"</code>.</li>
    <li><code>style: React.CSSProperties</code>: Adds a style object to the div container. Default: <code>{width: 100}</code>.</li>
    <li><code>marginInPercent: number | {left: number, right: number, top: number, bottom: number}</code>: Sets the margin for the chart inside the containing SVG element. Default:
-   GaugeType.Grafana: <code>{ top: 0.12, bottom: 0.00, left: 0.07, right: 0.07 }</code>.
-   GaugeType.Semicircle: <code>{ top: 0.08, bottom: 0.00, left: 0.07, right: 0.07 }</code>
-   GaugeType.Radial: <code>{ top: 0.07, bottom: 0.00, left: 0.07, right: 0.07 }</code></li>
-   <li><code>type: string</code>: The type of the gauge, values can be <code>"grafana"</code> <code>"semicircle</code> and <code>"radial"</code>. Default: <code>"grafana"</code>.</li>
+   "grafana": <code>{ top: 0.12, bottom: 0.00, left: 0.07, right: 0.07 }</code>.
+   "semicircle": <code>{ top: 0.08, bottom: 0.00, left: 0.07, right: 0.07 }</code>
+   "radial": <code>{ top: 0.07, bottom: 0.00, left: 0.07, right: 0.07 }</code></li>
    <li><code>value: number</code>: The value of the gauge. Default: <code>33</code>.</li>
    <li><code>minValue: number</code>: The minimum value of the gauge. Default: <code>0</code>.</li>
    <li><code>maxValue: number</code>: The maximum value of the gauge. Default: <code>100</code>.</li>
@@ -356,9 +349,9 @@ const kbitsToMbits = (value) => {
       <li><code>cornerRadius: number</code>: The corner radius of the arc. Default: <code>7</code>.</li>
       <li><code>padding: number</code>: The padding between subArcs, in rad. Default: <code>0.05</code>.</li>
       <li><code>width: number</code>: The width of the arc given in percent of the radius. Default: 
-      GaugeType.Grafana: <code>0.25</code>.
-      GaugeType.Semicircle: <code>0.15</code>
-      GaugeType.Radial: <code>0.2</code>.</li>
+      "grafana": <code>0.25</code>.
+      "semicircle": <code>0.15</code>
+      "radial": <code>0.2</code>.</li>
       <li><code>nbSubArcs: number</code>: The number of subArcs. This overrides <code>subArcs</code>. Default: <code>undefined</code></li>
       <li><code>colorArray: Array&lt;string&gt;</code>: The colors of the arcs. This overrides <code>subArcs</code> colors. Default: <code>undefined</code></li>
       <li><code>gradient: boolean</code>: This will draw a single arc with all colors provided in subArcs, using limits as references to draw the linear-gradient result. (limits may not be accurate in this mode) Default: <code>false</code>.</li>
