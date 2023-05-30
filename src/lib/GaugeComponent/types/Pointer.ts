@@ -1,13 +1,13 @@
 export interface PointerProps {
-    type: string;
-    color: string,
-    baseColor: string,
-    length: number,
-    width: number, // this is a factor to multiply by the width of the gauge
-    animate: true,
-    elastic: false,
-    animationDuration: number,
-    animationDelay: number,
+    type?: string;
+    color?: string,
+    baseColor?: string,
+    length?: number,
+    width?: number, // this is a factor to multiply by the width of the gauge
+    animate?: boolean,
+    elastic?: boolean,
+    animationDuration?: number,
+    animationDelay?: number,
 }
 export interface PointerRef {
     element: any,

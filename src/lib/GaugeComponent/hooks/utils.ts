@@ -41,9 +41,10 @@ export const floatingNumber = (value: number, maxDigits = 2) => {
 export const degToRad = (degrees: number) => {
   return degrees * (Math.PI / 180);
 }
-export const getCurrentGaugePercentageByValue = (value: number, gauge: GaugeComponentProps) => calculatePercentage(gauge.minValue, gauge.maxValue, value);
+export const getCurrentGaugePercentageByValue = (value: number, gauge: GaugeComponentProps) => calculatePercentage(gauge.minValue as number, gauge.maxValue as number, value);
 export const getCurrentGaugeValueByPercentage = (percentage: number, gauge: Gauge) => {
-  const { minValue, maxValue } = gauge.props;
+  let minValue = gauge.props.minValue as number;
+  let maxValue = gauge.props.maxValue as number;
   let value = minValue + (percentage) * (maxValue - minValue);
   return value;
 }

@@ -1,6 +1,6 @@
 export interface Tooltip {
-    style: React.CSSProperties,
-    text: string
+    style?: React.CSSProperties,
+    text?: string
 }
 
 export const defaultTooltipStyle = {

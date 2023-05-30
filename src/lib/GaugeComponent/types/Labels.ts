@@ -1,14 +1,14 @@
 import { defaultMarkLabel, MarkLabel } from './Mark';
 export interface Labels {
-    valueLabel: ValueLabel,
-    markLabel: MarkLabel
+    valueLabel?: ValueLabel,
+    markLabel?: MarkLabel
 }
 
-interface ValueLabel {
+export interface ValueLabel {
     formatTextValue?: (value: any) => string;
-    matchColorWithArc: boolean;
-    style: React.CSSProperties;
-    hide: boolean;
+    matchColorWithArc?: boolean;
+    style?: React.CSSProperties;
+    hide?: boolean;
 }
 
 export const defaultValueLabel: ValueLabel = {

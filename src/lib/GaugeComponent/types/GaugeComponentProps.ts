@@ -13,17 +13,17 @@ export interface GaugeInnerMarginInPercent {
     right: number
 }
 export interface GaugeComponentProps {
-    id: string,
-    className: string,
-    style: React.CSSProperties,
-    marginInPercent: GaugeInnerMarginInPercent | number,
-    value: number,
-    minValue: number,
-    maxValue: number,
-    arc: Arc,
-    labels: Labels,
-    pointer: PointerProps,
-    type: GaugeType
+    id?: string,
+    className?: string,
+    style?: React.CSSProperties,
+    marginInPercent?: GaugeInnerMarginInPercent | number,
+    value?: number,
+    minValue?: number,
+    maxValue?: number,
+    arc?: Arc,
+    labels?: Labels,
+    pointer?: PointerProps,
+    type?: string
 }
 
 export const defaultGaugeProps: GaugeComponentProps = {
@@ -39,11 +39,11 @@ export const defaultGaugeProps: GaugeComponentProps = {
     pointer: defaultPointer,
     type: GaugeType.Grafana
 }
-export const getGaugeMarginByType = (type: GaugeType): GaugeInnerMarginInPercent | number => {
-    let gaugeTypesMargin: Record<GaugeType, GaugeInnerMarginInPercent | number> = {
+export const getGaugeMarginByType = (type: string): GaugeInnerMarginInPercent | number => {
+    let gaugeTypesMargin: Record<string, GaugeInnerMarginInPercent | number> = {
         [GaugeType.Grafana]: { top: 0.12, bottom: 0.00, left: 0.07, right: 0.07 },
         [GaugeType.Semicircle]: { top: 0.08, bottom: 0.00, left: 0.07, right: 0.07 },
         [GaugeType.Radial]: { top: 0.07, bottom: 0.00, left: 0.07, right: 0.07 },
     };
-    return gaugeTypesMargin[type as GaugeType];
+    return gaugeTypesMargin[type as string];
 }

@@ -1,24 +1,24 @@
 export interface MarkLabel {
-    hideMinMax: boolean;
-    type: string;
-    marks: Array<Mark>;
-    valueConfig: MarkValueConfig;
-    markerConfig: MarkerConfig;
+    hideMinMax?: boolean;
+    type?: string;
+    marks?: Array<Mark>;
+    valueConfig?: MarkValueConfig;
+    markerConfig?: MarkerConfig;
 }
 export interface Mark {
-    value: number;
+    value?: number;
     valueConfig?: MarkValueConfig;
     markerConfig?: MarkerConfig;
 }
 export interface MarkValueConfig {
     formatTextValue?: (value: any) => string;
-    style: React.CSSProperties;
-    hide: boolean;
+    style?: React.CSSProperties;
+    hide?: boolean;
 }
 export interface MarkerConfig {
-    char: string;
-    style: React.CSSProperties;
-    hide: boolean;
+    char?: string;
+    style?: React.CSSProperties;
+    hide?: boolean;
 }
 
 const defaultMarkerConfig: MarkerConfig = {

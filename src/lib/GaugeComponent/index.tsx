@@ -7,7 +7,7 @@ import * as arcHooks from "./hooks/arc";
 import { isEmptyObject, mergeObjects } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
 import { PointerContext, PointerRef, defaultPointerRef } from "./types/Pointer";
-import { getArcWidthByType } from "./types/Arc";
+import { Arc, getArcWidthByType } from "./types/Arc";
 /*
 GaugeComponent creates a gauge chart using D3
 The chart is responsive and will have the same width as the "container"
@@ -53,7 +53,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const updateMergedProps = () => {
     let defaultValues = { ...defaultGaugeProps };
     gauge.props = mergedProps.current = mergeObjects(defaultValues, props);
-    if (gauge.props.arc.width == defaultGaugeProps.arc.width) mergedProps.current.arc.width = getArcWidthByType(gauge.props.type as GaugeType);
+    if (gauge.props.arc?.width == defaultGaugeProps.arc?.width) {
+      let mergedArc = mergedProps.current.arc as Arc;
+      mergedArc.width = getArcWidthByType(gauge.props.type as GaugeType);
+    }
     if (gauge.props.marginInPercent == defaultGaugeProps.marginInPercent) mergedProps.current.marginInPercent = getGaugeMarginByType(gauge.props.type as GaugeType);
     arcHooks.validateArcs(gauge);
   }

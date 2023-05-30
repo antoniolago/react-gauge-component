@@ -1,6 +1,8 @@
 import CONSTANTS from "../constants";
+import { Arc } from "../types/Arc";
 import { Gauge } from "../types/Gauge";
 import { GaugeType, GaugeInnerMarginInPercent } from "../types/GaugeComponentProps";
+import { Labels } from "../types/Labels";
 import * as arcHooks from "./arc";
 import * as labelsHooks from "./labels";
 import * as pointerHooks from "./pointer";
@@ -45,6 +47,8 @@ export const calculateAngles = (gauge: Gauge) => {
 //Renders the chart, should be called every time the window is resized
 export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     const { dimensions } = gauge;
+    let arc = gauge.props.arc as Arc;
+    let labels = gauge.props.labels as Labels;
     //if resize recalculate dimensions, clear chart and redraw
     //if not resize, treat each prop separately
     if(resize){
@@ -61,27 +65,29 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             "transform",
             "translate(" + dimensions.current.outerRadius + ", " + dimensions.current.outerRadius + ")"
         );
-        dimensions.current.innerRadius = dimensions.current.outerRadius * (1 - gauge.props.arc.width);
+        let arcWidth = arc.width as number;
+        dimensions.current.innerRadius = dimensions.current.outerRadius * (1 - arcWidth);
         clearChart(gauge);
         arcHooks.setArcData(gauge);
         arcHooks.setupArcs(gauge, resize);
         labelsHooks.setupLabels(gauge);
         pointerHooks.drawPointer(gauge, resize);
-        let gaugeTypeHeightCorrection: Record<GaugeType, number> = {
+        let gaugeTypeHeightCorrection: Record<string, number> = {
             [GaugeType.Semicircle]: 50,
             [GaugeType.Radial]: 50,
             [GaugeType.Grafana]: 50
         }
         let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height; 
         let boundWidth = gauge.container.current.node().getBoundingClientRect().width;
+        let gaugeType = gauge.props.type as string;
         gauge.svg.current
             .attr("width", boundWidth)
-            .attr("height", boundHeight+gaugeTypeHeightCorrection[gauge.props.type]);
+            .attr("height", boundHeight+gaugeTypeHeightCorrection[gaugeType]);
     } else {
         let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
         let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
         let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
-        let marksChanged = (JSON.stringify(gauge.prevProps.current.labels.markLabel) !== JSON.stringify(gauge.props.labels.markLabel));
+        let marksChanged = (JSON.stringify(gauge.prevProps.current.labels?.markLabel) !== JSON.stringify(labels.markLabel));
         let shouldRedrawArcs = arcsPropsChanged
         if(shouldRedrawArcs) {
             arcHooks.clearArcs(gauge);

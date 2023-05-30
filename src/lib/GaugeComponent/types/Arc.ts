@@ -3,12 +3,12 @@ import { GaugeType, defaultGaugeProps } from './GaugeComponentProps';
 import { Tooltip } from './Tooltip';
 export interface Arc {
     cornerRadius?: number, //The corner radius of the arc
-    padding: number, //The padding between subArcs, in rad
-    width: number, //The width of the arc given in percent of the radius
+    padding?: number, //The padding between subArcs, in rad
+    width?: number, //The width of the arc given in percent of the radius
     nbSubArcs?: number, //The number of subArcs, this overrides "subArcs" limits
-    gradient: boolean,
+    gradient?: boolean,
     colorArray?: Array<string>, //The colors of the arcs, this overrides "subArcs" colors
-    subArcs: Array<SubArc>
+    subArcs?: Array<SubArc>
 }
 export interface SubArc {
     limit?: number, //The limit of the subArc, in accord to the gauge value
@@ -26,14 +26,14 @@ export const defaultSubArcs: SubArc[] = [
     { color: "#EA4228" },
 ];
 
-export const getArcWidthByType = (type: GaugeType): number => {
-    let gaugeTypesWidth: Record<GaugeType, number> = {
+export const getArcWidthByType = (type: string): number => {
+    let gaugeTypesWidth: Record<string, number> = {
         [GaugeType.Grafana]: 0.25,
         [GaugeType.Semicircle]: 0.15,
         [GaugeType.Radial]: 0.2,
     };
-    if(!type) type = defaultGaugeProps.type
-    return gaugeTypesWidth[type as GaugeType];
+    if(!type) type = defaultGaugeProps.type as string;
+    return gaugeTypesWidth[type as string];
 }
 export const defaultArc: Arc = {
     padding: 0.05,

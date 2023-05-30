@@ -11,7 +11,7 @@ import CONSTANTS from '../constants';
 import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 import { GaugeType } from '../types/GaugeComponentProps';
 import { get, throttle } from 'lodash';
-import { SubArc } from '../types/Arc';
+import { Arc, SubArc } from '../types/Arc';
 
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
   event.target.style.stroke = "#ffffff5e";
@@ -46,18 +46,20 @@ const onArcMouseClick = (event: any, d: any) => {
 }
 
 export const setArcData = (gauge: Gauge) => {
-  const { arc, minValue, maxValue } = gauge.props;
+  let arc = gauge.props.arc as Arc;
+  let minValue = gauge.props.minValue as number;
+  let maxValue = gauge.props.maxValue as number;
   // Determine number of arcs to display
-  let nbArcsToDisplay = arc.nbSubArcs || arc.subArcs?.length;
+  let nbArcsToDisplay: number = arc?.nbSubArcs || (arc?.subArcs?.length || 1);
 
   let colorArray = getColors(nbArcsToDisplay, gauge);
-  if (arc.subArcs && !arc.nbSubArcs) {
+  if (arc?.subArcs && !arc?.nbSubArcs) {
     let lastSubArcLimit = 0;
     let lastSubArcLimitPercentageAcc = 0;
     let subArcsLength: Array<number> = [];
     let subArcsLimits: Array<number> = [];
     let subArcsTooltip: Array<Tooltip> = [];
-    arc.subArcs?.forEach((subArc, i) => {
+    arc?.subArcs?.forEach((subArc, i) => {
       let subArcLength = 0;
       //map limit for non defined subArcs limits
       let subArcRange = 0;
@@ -65,10 +67,10 @@ export const setArcData = (gauge: Gauge) => {
       if (subArc.limit == undefined) {
         subArcRange = lastSubArcLimit;
         let remainingPercentageEquallyDivided: number | undefined = undefined;
-        let remainingSubArcs = arc.subArcs.slice(i);
+        let remainingSubArcs = arc?.subArcs?.slice(i);
         let remainingPercentage = (1 - utils.calculatePercentage(minValue, maxValue, lastSubArcLimit)) * 100;
         if (!remainingPercentageEquallyDivided) {
-          remainingPercentageEquallyDivided = (remainingPercentage / Math.max(remainingSubArcs.length, 1)) / 100;
+          remainingPercentageEquallyDivided = (remainingPercentage / Math.max(remainingSubArcs?.length || 1, 1)) / 100;
         }
         limit = lastSubArcLimit + (remainingPercentageEquallyDivided * 100);
         subArcLength = remainingPercentageEquallyDivided;
@@ -88,15 +90,16 @@ export const setArcData = (gauge: Gauge) => {
       //subArc.limit = limit;
       if (subArc.tooltip != undefined) subArcsTooltip.push(subArc.tooltip);
     });
+    let subArcs = arc.subArcs as SubArc[];
     gauge.arcData.current = subArcsLength.map((length, i) => ({
       value: length,
       limit: subArcsLimits[i],
       color: colorArray[i],
-      showMark: arc.subArcs[i].showMark,
-      tooltip: arc.subArcs[i].tooltip || undefined,
-      onMouseMove: arc.subArcs[i].onMouseMove,
-      onMouseLeave: arc.subArcs[i].onMouseLeave,
-      onMouseClick: arc.subArcs[i].onClick
+      showMark: subArcs[i].showMark || false,
+      tooltip: subArcs[i].tooltip || undefined,
+      onMouseMove: subArcs[i].onMouseMove,
+      onMouseLeave: subArcs[i].onMouseLeave,
+      onMouseClick: subArcs[i].onClick
     }));
   } else {
     const arcValue = maxValue / nbArcsToDisplay;
@@ -111,9 +114,9 @@ export const setArcData = (gauge: Gauge) => {
 };
 
 const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undefined) => {
-  let currentPercentage = percent != undefined ? percent : utils.calculatePercentage(gauge.props.minValue, 
-                                                    gauge.props.maxValue, 
-                                                    gauge.props.value);
+  let currentPercentage = percent != undefined ? percent : utils.calculatePercentage(gauge.props.minValue as number, 
+                                                    gauge.props.maxValue as number, 
+                                                    gauge.props.value as number);
   let firstSubArc = {
     value: currentPercentage,
     color: getArcColorByPercentage(currentPercentage, gauge)
@@ -148,12 +151,12 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
   }
 }
 export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) => {
-  const { padding, cornerRadius } = gauge.props.arc;
+  const { padding, cornerRadius } = gauge.props.arc as Arc;
   const { innerRadius, outerRadius } = gauge.dimensions.current;
   // chartHooks.clearChart(gauge);
   let data = {}
   //When gradient enabled, it'll have only 1 arc
-  if (gauge.props.arc.gradient) {
+  if (gauge.props?.arc?.gradient) {
     data = [{ value: 1 }];
   } else {
     data = gauge.arcData.current
@@ -196,7 +199,7 @@ export const setupArcs = (gauge: Gauge, resize: boolean = false) => {
 };
 
 export const applyColors = (subArcsPath: any, gauge: Gauge) => {
-  if (gauge.props.arc.gradient) {
+  if (gauge.props?.arc?.gradient) {
     let uniqueId = `subArc-linear-gradient-${Math.random()}`
     let gradEl = createGradientElement(gauge.doughnut.current, uniqueId);
     applyGradientColors(gradEl, gauge)
@@ -231,7 +234,7 @@ export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
 //Depending on the number of levels in the chart
 //This function returns the same number of colors
 export const getColors = (nbArcsToDisplay: number, gauge: Gauge) => {
-  const { arc } = gauge.props;
+  let arc = gauge.props.arc as Arc;
   let colorsValue: string[] = [];
   if (!arc.colorArray) {
     let subArcColors = arc.subArcs?.map((subArc) => subArc.color);
@@ -283,7 +286,7 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
   if(gauge.props.type === GaugeType.Grafana){
     centerToArcLength+=10;
   }
-  let percent = utils.calculatePercentage(gauge.props.minValue, gauge.props.maxValue, value);
+  let percent = utils.calculatePercentage(gauge.props.minValue as number, gauge.props.maxValue as number, value);
   let gaugeTypesAngles: Record<GaugeType, { startAngle: number; endAngle: number; }> = {
     [GaugeType.Grafana]: {
       startAngle: utils.degToRad(-24),
@@ -333,7 +336,8 @@ export const validateArcs = (gauge: Gauge) => {
  * SubArcs with undefined limits are sorted last.
 */
 const reOrderSubArcs = (gauge: Gauge): void => {
-  gauge.props.arc.subArcs.sort((a, b) => {
+  let subArcs = gauge.props.arc?.subArcs as SubArc[];
+  subArcs.sort((a, b) => {
     if (typeof a.limit === 'undefined' && typeof b.limit === 'undefined') {
       return 0;
     }
@@ -348,21 +352,24 @@ const reOrderSubArcs = (gauge: Gauge): void => {
 }
 const verifySubArcsLimits = (gauge: Gauge) => {
   reOrderSubArcs(gauge);
-
+  let minValue = gauge.props.minValue as number;
+  let maxValue = gauge.props.maxValue as number;
+  let arc = gauge.props.arc as Arc;
   let prevLimit: number | undefined = undefined;
-  for (const subArc of gauge.props.arc.subArcs) {
+  for (const subArc of gauge.props.arc?.subArcs || []) {
     const limit = subArc.limit;
     if (typeof limit !== 'undefined') {
       // Check if the limit is within the valid range
-      if (limit < gauge.props.minValue || limit > gauge.props.maxValue)
+      if (limit < minValue || limit > maxValue)
         throw new Error(`The limit of a subArc must be between the minValue and maxValue. The limit of the subArc is ${limit}`);
 
       prevLimit = limit;
     }
   }
   // If the user has defined subArcs, make sure the last subArc has a limit equal to the maxValue
-  if (gauge.props.arc.subArcs?.length > 0) {
-    let lastSubArc = gauge.props.arc.subArcs[gauge.props.arc.subArcs.length - 1];
-    if (lastSubArc.limit as number < gauge.props.maxValue) lastSubArc.limit = gauge.props.maxValue;
+  let subArcs = gauge.props.arc?.subArcs as SubArc[];
+  if (subArcs.length > 0) {
+    let lastSubArc = subArcs[subArcs.length - 1];
+    if (lastSubArc.limit as number < maxValue) lastSubArc.limit = maxValue;
   }
 }

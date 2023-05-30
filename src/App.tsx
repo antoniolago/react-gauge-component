@@ -18,7 +18,7 @@ const App = () => {
       clearTimeout(timer);
     };
   });
-  const kbitsToMbits = (value) => {
+  const kbitsToMbits = (value: number) => {
     if (value >= 1000) {
       value = value / 1000;
       if (Number.isInteger(value)) {
@@ -36,25 +36,17 @@ const App = () => {
       // nbSubArcs: 100,
       // colorArray: ['#EA4228', '#EFFF']
       subArcs: [
-        { limit: 15, color: '#EA4228', needleColorWhenWithinLimit: '#AA4128', showMark: true },
+        { limit: 15, color: '#EA4228', showMark: true },
         { limit: 17, color: '#F5CD19', showMark: true },
         { limit: 28, color: '#5BE12C', showMark: true },
         { limit: 30, color: '#F5CD19', showMark: true },
         { color: '#EA4228' }
       ]
     }}
-    needle={{
-      color: '#345243',
-      length: 0.90,
-      width: 15,
-      // animate: true,
-      // elastic: true,
-      animDelay: 200,
-    }}
     labels={{
       valueLabel: { formatTextValue: value => value + 'ºC' },
       markLabel: {
-        valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 12 },
+        valueConfig: { formatTextValue: value => value + 'ºC'},
         marks: [
           { value: 22.5 }
         ]
@@ -114,18 +106,22 @@ const App = () => {
                 arc={{
                   subArcs: [
                     {
+                      limit: 20,
                       color: '#EA4228',
                       showMark: true
                     },
                     {
+                      limit: 40,
                       color: '#F58B19',
                       showMark: true
                     },
                     {
+                      limit: 60,
                       color: '#F5CD19',
                       showMark: true
                     },
                     {
+                      limit: 80,
                       color: '#5BE12C',
                       showMark: true
                     },
@@ -165,7 +161,6 @@ const App = () => {
                 }}
                 labels={{
                   valueLabel: {
-                    fontSize: 40,
                     formatTextValue: kbitsToMbits
                   },
                   markLabel: {
@@ -262,7 +257,7 @@ const App = () => {
                       {}
                     ]
                 }}
-                pointer={{type: "blob", animationDelay: 0, elastic: true }}
+                pointer={{type: "blob", animationDelay: 0 }}
                 value={currentValue}
               />
             </Col>
@@ -323,13 +318,13 @@ const App = () => {
                   width: 15,
                   // animate: true,
                   // elastic: true,
-                  animDelay: 200,
+                  animationDelay: 200,
                 }}
                 labels={{
                   valueLabel: { formatTextValue: value => value + 'ºC' },
                   markLabel: {
                     type: 'outer',
-                    valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 10 },
+                    valueConfig: { formatTextValue: value => value + 'ºC'},
                     marks: [
                       { value: 13 },
                       { value: 22.5 },

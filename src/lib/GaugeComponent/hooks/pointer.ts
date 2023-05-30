@@ -3,7 +3,7 @@ import {
     easeExpOut,
     interpolateNumber,
 } from "d3";
-import { PointerContext, PointerType } from "../types/Pointer";
+import { PointerContext, PointerProps, PointerType } from "../types/Pointer";
 import { getArcColorByPercentage, getCoordByValue } from "./arc";
 import { Gauge } from "../types/Gauge";
 import * as utils from "./utils";
@@ -13,7 +13,7 @@ import { GaugeType } from "../types/GaugeComponentProps";
 export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     gauge.pointer.current.context = setupContext(gauge);
     const { prevPercent, currentPercent, prevProgress } = gauge.pointer.current.context;
-    const { pointer } = gauge.props;
+    let pointer = gauge.props.pointer as PointerProps;
     let isFirstTime = gauge.prevProps?.current.value == undefined;
     if ((isFirstTime || resize) && gauge.props.type != GaugeType.Grafana) 
         initPointer(gauge);
@@ -45,10 +45,14 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     }
 };
 const setupContext = (gauge: Gauge): PointerContext => {
-    const { pointer, value, minValue, maxValue } = gauge.props;
+    const { value } = gauge.props;
+    let pointer = gauge.props.pointer as PointerProps;
+    let pointerLength = pointer.length as number;
+    let minValue = gauge.props.minValue as number;
+    let maxValue = gauge.props.maxValue as number;
     const { pointerPath } = gauge.pointer.current.context;
     var pointerRadius = getPointerRadius(gauge)
-    let length = pointer.type == PointerType.Needle ? pointer.length : 0.2;
+    let length = pointer.type == PointerType.Needle ? pointerLength : 0.2;
     let typesWithPath = [PointerType.Needle, PointerType.Arrow];
     let pointerContext: PointerContext = {
         centerPoint: [0, -pointerRadius / 2],
@@ -64,7 +68,8 @@ const setupContext = (gauge: Gauge): PointerContext => {
     return pointerContext;
 }
 const initPointer = (gauge: Gauge) => {
-    const { pointer, value } = gauge.props;
+    let value = gauge.props.value as number;
+    let pointer = gauge.props.pointer as PointerProps;
     const { shouldDrawPath, centerPoint, pointerRadius, pathStr, currentPercent, prevPercent } = gauge.pointer.current.context;
     if(shouldDrawPath){
         gauge.pointer.current.context.pathStr = calculatePointerPath(gauge, prevPercent || currentPercent);
@@ -92,11 +97,12 @@ const initPointer = (gauge: Gauge) => {
     setPointerPosition(pointerRadius, value, gauge);
 }
 const updatePointer = (percentage: number, gauge: Gauge) => {
+    let pointer = gauge.props.pointer as PointerProps;
     const { pointerRadius, shouldDrawPath, prevColor } = gauge.pointer.current.context;
     setPointerPosition(pointerRadius, percentage, gauge);
     if(shouldDrawPath && gauge.props.type != GaugeType.Grafana) 
         gauge.pointer.current.path.attr("d", calculatePointerPath(gauge, percentage));
-    if(gauge.props.pointer.type == PointerType.Blob) {
+    if(pointer.type == PointerType.Blob) {
         let currentColor = getArcColorByPercentage(percentage, gauge);
         let shouldChangeColor = currentColor != prevColor;
         if(shouldChangeColor) gauge.pointer.current.element.select("circle").attr("stroke", currentColor)
@@ -104,7 +110,8 @@ const updatePointer = (percentage: number, gauge: Gauge) => {
     }
 }
 const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gauge) => {
-    const { pointer } = gauge.props;
+    let pointer = gauge.props.pointer as PointerProps;
+    let pointerType = pointer.type as string;
     const { dimensions } = gauge;
     let value = utils.getCurrentGaugeValueByPercentage(progress, gauge);
     let pointers: { [key: string]: () => void } = {
@@ -125,7 +132,7 @@ const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gaug
             translatePointer(x, y, gauge);
         },
     };
-    return pointers[pointer.type]();
+    return pointers[pointerType]();
 }
 
 const isProgressValid = (currentPercent: number, prevPercent: number, gauge: Gauge) => {
@@ -162,8 +169,9 @@ const calculatePointerPath = (gauge: Gauge, percent: number) => {
 };
 
 const getPointerRadius = (gauge: Gauge) => {
-    const { pointer } = gauge.props;
-    return pointer.width * (gauge.dimensions.current.width / 500);
+    let pointer = gauge.props.pointer as PointerProps;
+    let pointerWidth = pointer.width as number;
+    return pointerWidth * (gauge.dimensions.current.width / 500);
 }
 
 export const translatePointer = (x: number, y: number, gauge: Gauge) => gauge.pointer.current.element.attr("transform", "translate(" + x + ", " + y + ")");
