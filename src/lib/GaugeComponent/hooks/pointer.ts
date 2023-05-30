@@ -103,7 +103,7 @@ const updatePointer = (percentage: number, gauge: Gauge) => {
     if(shouldDrawPath && gauge.props.type != GaugeType.Grafana) 
         gauge.pointer.current.path.attr("d", calculatePointerPath(gauge, percentage));
     if(pointer.type == PointerType.Blob) {
-        let currentColor = arcHooks.getArcDataByValue(percentage, gauge)?.color as string;
+        let currentColor = arcHooks.getArcDataByPercentage(percentage, gauge)?.color as string;
         let shouldChangeColor = currentColor != prevColor;
         if(shouldChangeColor) gauge.pointer.current.element.select("circle").attr("stroke", currentColor)
         gauge.pointer.current.context.prevColor = currentColor;

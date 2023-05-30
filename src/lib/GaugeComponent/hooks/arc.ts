@@ -37,8 +37,11 @@ const applyTooltipStyles = (tooltip: Tooltip, arcColor: string, gauge: Gauge) =>
   if (tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => gauge.tooltip.current.style(utils.camelCaseToKebabCase(key), value))
 }
 const onArcMouseLeave = (event: any, d: any, gauge: Gauge) => {
-  gauge.tooltip.current.html(" ").style("display", "none");
+  hideTooltip(gauge);
   if (d.data.onMouseLeave != undefined) d.data.onMouseLeave(event);
+}
+export const hideTooltip = (gauge: Gauge) => {
+  gauge.tooltip.current.html(" ").style("display", "none");
 }
 const onArcMouseOut = (event: any, d: any, gauge: Gauge) => {
   event.target.style.stroke = "none";
@@ -89,7 +92,6 @@ export const setArcData = (gauge: Gauge) => {
       subArcsLimits.push(limit);
       lastSubArcLimitPercentageAcc = subArcsLength.reduce((count, curr) => count + curr, 0);
       lastSubArcLimit = limit;
-      //subArc.limit = limit;
       if (subArc.tooltip != undefined) subArcsTooltip.push(subArc.tooltip);
     });
     let subArcs = arc.subArcs as SubArc[];
@@ -162,7 +164,6 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
       .on("mouseout", (event: any, d: any) => onArcMouseOut(event, d, gauge))
       .on("mousemove", throttle((event: any, d: any) => onArcMouseMove(event, d, gauge), 20))
       .on("click", (event: any, d: any) => onArcMouseClick(event, d))
-    //Then we treat the grafana main arc data
   }
 }
 export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) => {
@@ -230,6 +231,9 @@ export const applyColors = (subArcsPath: any, gauge: Gauge) => {
 
 export const getArcDataByValue = (value: number, gauge: Gauge): SubArc =>
   gauge.arcData.current.find(subArcData => value <= (subArcData.limit as number)) as SubArc;
+
+export const getArcDataByPercentage = (percentage: number, gauge: Gauge): SubArc =>
+  getArcDataByValue(utils.getCurrentGaugeValueByPercentage(percentage, gauge), gauge) as SubArc;
 
 export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
   gauge.arcData.current.forEach((subArcData) =>

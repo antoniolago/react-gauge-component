@@ -65,6 +65,10 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             "transform",
             "translate(" + dimensions.current.outerRadius + ", " + dimensions.current.outerRadius + ")"
         );
+        //Hide tooltip failsafe (sometimes subarcs events are not fired)
+        gauge.doughnut.current
+            .on("mouseleave", () => arcHooks.hideTooltip(gauge))
+            .on("mouseout", () => arcHooks.hideTooltip(gauge))
         let arcWidth = arc.width as number;
         dimensions.current.innerRadius = dimensions.current.outerRadius * (1 - arcWidth);
         clearChart(gauge);
