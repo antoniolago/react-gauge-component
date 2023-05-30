@@ -1,9 +1,9 @@
 {
   "name": "react-gauge-component",
-  "version": "1.0.13",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "version": "1.0.15",
+  "main": "dist/lib/index.js",
+  "module": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
   "homepage": "https://antoniolago.github.io/react-gauge-component/",
   "keywords": [
     "gauge",

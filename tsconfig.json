@@ -6,6 +6,10 @@
     "declaration": true,
     "strict": true,
     "outDir": "dist",
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "rootDir": "src",
+    "sourceMap": false,
+    "noEmit": false
+  },
+  "include": ["src/lib/**/*"]
 }
