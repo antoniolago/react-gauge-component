@@ -98,7 +98,6 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             pointerHooks.drawPointer(gauge);
         }
         if(arcsPropsChanged || marksChanged) {
-            console.log(arcsPropsChanged, marksChanged)
             labelsHooks.clearMarks(gauge);
             labelsHooks.setupMarks(gauge);
         }
