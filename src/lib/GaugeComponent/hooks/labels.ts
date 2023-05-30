@@ -4,7 +4,7 @@ import { Gauge } from '../types/Gauge';
 import { Mark } from '../types/Mark';
 import React from 'react';
 import { GaugeType } from '../types/GaugeComponentProps';
-import { getArcColorByPercentage, getArcColorByValue, getCoordByValue } from './arc';
+import { getArcDataByValue, getCoordByValue } from './arc';
 import { PointerType } from '../types/Pointer';
 import { Labels, ValueLabel } from '../types/Labels';
 import { Arc } from '../types/Arc';
@@ -68,7 +68,8 @@ export const addMarker = (mark: Mark, gauge: Gauge) => {
   const { markAnchor, angle } = calculateAnchorAndAngleByValue(mark?.value as number, gauge);
   let coords = getLabelCoordsByValue(mark?.value as number, gauge, undefined);
   let char = mark.markerConfig?.char || labels?.markLabel?.markerConfig?.char;
-  let charStyle: React.CSSProperties = mark.markerConfig?.style || (labels?.markLabel?.markerConfig?.style || {})
+  let charStyle = mark.markerConfig?.style || (labels?.markLabel?.markerConfig?.style || {})
+  charStyle = {...charStyle};
   charStyle.textAnchor = markAnchor as any;
   addText(char, coords.x, coords.y, gauge, charStyle, CONSTANTS.markerClassname, angle);
 }
@@ -84,6 +85,7 @@ export const addMarkValue = (mark: Mark, gauge: Gauge) => {
   if(!isInner) centerToArcLengthSubtract = arcWidth * 10 - 20
   let coords = getLabelCoordsByValue(markValue, gauge, centerToArcLengthSubtract);
   let markValueStyle = mark.valueConfig?.style || (labels?.markLabel?.valueConfig?.style || {});
+  markValueStyle = {...markValueStyle};
   let text = '';
   if(labels?.markLabel?.valueConfig?.formatTextValue){
     text = labels.markLabel.valueConfig.formatTextValue(utils.floatingNumber(markValue));
@@ -191,7 +193,7 @@ export const addValueText = (gauge: Gauge) => {
   fontRatio = gauge.dimensions.current.width * widthFactor * fontRatio;
   let fontSizeNumber = parseInt(valueFontSize, 10) * fontRatio;
   valueTextStyle.fontSize = fontSizeNumber + "px";
-  if(valueLabel.matchColorWithArc) valueTextStyle.fill = getArcColorByValue(value, gauge)
+  if(valueLabel.matchColorWithArc) valueTextStyle.fill = getArcDataByValue(value, gauge)?.color as string || "white";
   addText(text, x, y, gauge, valueTextStyle, CONSTANTS.valueLabelClassname);
 };
 

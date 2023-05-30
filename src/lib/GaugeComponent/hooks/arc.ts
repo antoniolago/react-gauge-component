@@ -36,10 +36,12 @@ const applyTooltipStyles = (tooltip: Tooltip, arcColor: string, gauge: Gauge) =>
   //Apply custom styles
   if (tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => gauge.tooltip.current.style(utils.camelCaseToKebabCase(key), value))
 }
-const onArcMouseOut = (event: any, d: any) => {
-  select(`.${CONSTANTS.arcTooltipClassname}`).html(" ").style("display", "none");
-  event.target.style.stroke = "none";
+const onArcMouseLeave = (event: any, d: any, gauge: Gauge) => {
+  gauge.tooltip.current.html(" ").style("display", "none");
   if (d.data.onMouseLeave != undefined) d.data.onMouseLeave(event);
+}
+const onArcMouseOut = (event: any, d: any, gauge: Gauge) => {
+  event.target.style.stroke = "none";
 }
 const onArcMouseClick = (event: any, d: any) => {
   if (d.data.onMouseClick != undefined) d.data.onMouseClick(event);
@@ -117,10 +119,18 @@ const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undef
   let currentPercentage = percent != undefined ? percent : utils.calculatePercentage(gauge.props.minValue as number, 
                                                     gauge.props.maxValue as number, 
                                                     gauge.props.value as number);
+                                                    
+  let value = utils.getCurrentGaugeValueByPercentage(percent as number, gauge);
+  let curArcData = getArcDataByValue(value, gauge);
   let firstSubArc = {
     value: currentPercentage,
-    color: getArcColorByPercentage(currentPercentage, gauge)
-  }  
+    //White indicate that no arc was found and work as an alert for debug
+    color: curArcData?.color || "white", 
+    //disabled for now because onMouseOut is not working properly with the
+    //high amount of renderings of this arc
+    //tooltip: curArcData?.tooltip
+  }
+  //This is the grey arc that will be displayed when the gauge is not full
   let secondSubArc = {
     value: 1-currentPercentage,
     color: "#5C5C5C"
@@ -147,6 +157,11 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
     .append("path")
     .attr("d", outerArc);
     applyColors(outerArcSubarcs, gauge);
+    arcPaths
+      .on("mouseleave", (event: any, d: any) => onArcMouseLeave(event, d, gauge))
+      .on("mouseout", (event: any, d: any) => onArcMouseOut(event, d, gauge))
+      .on("mousemove", throttle((event: any, d: any) => onArcMouseMove(event, d, gauge), 20))
+      .on("click", (event: any, d: any) => onArcMouseClick(event, d))
     //Then we treat the grafana main arc data
   }
 }
@@ -182,21 +197,25 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
     .attr("d", arcObj);
   applyColors(subArcs, gauge);
   arcPaths
-    .on("mouseout", (event: any, d: any) => onArcMouseOut(event, d))
+    .on("mouseleave", (event: any, d: any) => onArcMouseLeave(event, d, gauge))
+    .on("mouseout", (event: any, d: any) => onArcMouseOut(event, d, gauge))
     .on("mousemove", throttle((event: any, d: any) => onArcMouseMove(event, d, gauge), 20))
     .on("click", (event: any, d: any) => onArcMouseClick(event, d))
 
 }
 export const setupArcs = (gauge: Gauge, resize: boolean = false) => {
+  //Setup the arc
+  setupTooltip(gauge);
+  drawGrafanaOuterArc(gauge, resize);
+  drawArc(gauge);
+};
+
+export const setupTooltip = (gauge: Gauge) => {
   //Add tooltip
   let isTooltipInTheDom = document.getElementsByClassName(CONSTANTS.arcTooltipClassname).length != 0;
   if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
   gauge.tooltip.current = select(`.${CONSTANTS.arcTooltipClassname}`);
-  //Setup the arc
-  drawGrafanaOuterArc(gauge, resize);
-  drawArc(gauge);
-
-};
+}
 
 export const applyColors = (subArcsPath: any, gauge: Gauge) => {
   if (gauge.props?.arc?.gradient) {
@@ -208,17 +227,7 @@ export const applyColors = (subArcsPath: any, gauge: Gauge) => {
     subArcsPath.style("fill", (d: any) => d.data.color);
   }
 }
-export const getArcColorByPercentage = (percentage: number, gauge: Gauge): string => {
-  let value = utils.getCurrentGaugeValueByPercentage(percentage, gauge);
-  return getArcColorByValue(value, gauge) as string;
-};
-export const getArcColorByValue = (value: number, gauge: Gauge): string => {
 
-  let arcData = getArcDataByValue(value, gauge);
-  if(arcData == undefined) console.log(gauge.arcData.current);
-  let arcColor: string = arcData?.color as string || "white"
-  return arcColor;
-};
 export const getArcDataByValue = (value: number, gauge: Gauge): SubArc =>
   gauge.arcData.current.find(subArcData => value <= (subArcData.limit as number)) as SubArc;
 

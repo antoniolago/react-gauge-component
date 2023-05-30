@@ -4,7 +4,7 @@ import {
     interpolateNumber,
 } from "d3";
 import { PointerContext, PointerProps, PointerType } from "../types/Pointer";
-import { getArcColorByPercentage, getCoordByValue } from "./arc";
+import { getCoordByValue } from "./arc";
 import { Gauge } from "../types/Gauge";
 import * as utils from "./utils";
 import * as arcHooks from "./arc";
@@ -103,7 +103,7 @@ const updatePointer = (percentage: number, gauge: Gauge) => {
     if(shouldDrawPath && gauge.props.type != GaugeType.Grafana) 
         gauge.pointer.current.path.attr("d", calculatePointerPath(gauge, percentage));
     if(pointer.type == PointerType.Blob) {
-        let currentColor = getArcColorByPercentage(percentage, gauge);
+        let currentColor = arcHooks.getArcDataByValue(percentage, gauge)?.color as string;
         let shouldChangeColor = currentColor != prevColor;
         if(shouldChangeColor) gauge.pointer.current.element.select("circle").attr("stroke", currentColor)
         gauge.pointer.current.context.prevColor = currentColor;
@@ -136,7 +136,6 @@ const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gaug
 }
 
 const isProgressValid = (currentPercent: number, prevPercent: number, gauge: Gauge) => {
-    const { minValue, maxValue } = gauge.props;
     //Avoid unnecessary re-rendering (when progress is too small) but allow the pointer to reach the final value
     let overFlow = currentPercent > 1 || currentPercent < 0;
     let tooSmallValue = Math.abs(currentPercent - prevPercent) < 0.0001;

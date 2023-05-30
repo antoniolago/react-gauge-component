@@ -101,29 +101,33 @@ const App = () => {
               <GaugeComponent />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Simple Gauge</h6>
+              <h6 className="mb-1">Simple Gauge (w/ tooltips)</h6>
               <GaugeComponent
                 arc={{
                   subArcs: [
                     {
                       limit: 20,
                       color: '#EA4228',
-                      showMark: true
+                      showMark: true,
+                      tooltip: { text: 'Empty' }
                     },
                     {
                       limit: 40,
                       color: '#F58B19',
-                      showMark: true
+                      showMark: true,
+                      tooltip: { text: 'Low' }
                     },
                     {
                       limit: 60,
                       color: '#F5CD19',
-                      showMark: true
+                      showMark: true,
+                      tooltip: { text: 'Fine' }
                     },
                     {
                       limit: 80,
                       color: '#5BE12C',
-                      showMark: true
+                      showMark: true,
+                      tooltip: { text: 'Full' }
                     },
                   ]
                 }}

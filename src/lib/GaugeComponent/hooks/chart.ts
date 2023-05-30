@@ -12,7 +12,7 @@ export const initChart = (gauge: Gauge) => {
     let updatedValue = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
     let isFirstTime = utilHooks.isEmptyObject(gauge.svg.current);
     if (updatedValue && !isFirstTime) {
-        renderChart(gauge);
+        renderChart(gauge, false);
         return;
     }
     gauge.container.current.select("svg").remove();
@@ -82,7 +82,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let gaugeType = gauge.props.type as string;
         gauge.svg.current
             .attr("width", boundWidth)
-            .attr("height", boundHeight+gaugeTypeHeightCorrection[gaugeType]);
+            .attr("height", boundHeight + gaugeTypeHeightCorrection[gaugeType]);
     } else {
         let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
         let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
@@ -98,6 +98,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             pointerHooks.drawPointer(gauge);
         }
         if(arcsPropsChanged || marksChanged) {
+            console.log(arcsPropsChanged, marksChanged)
             labelsHooks.clearMarks(gauge);
             labelsHooks.setupMarks(gauge);
         }
