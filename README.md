@@ -195,9 +195,7 @@ const kbitsToMbits = (value) => {
     color: '#345243',
     length: 0.80,
     width: 15,
-    // animate: true,
     // elastic: true,
-    animDelay: 200,
   }}
   labels={{
     valueLabel: { formatTextValue: value => value + 'ºC' },
