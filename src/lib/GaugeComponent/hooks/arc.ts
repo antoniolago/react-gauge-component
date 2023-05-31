@@ -121,9 +121,7 @@ const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undef
   let currentPercentage = percent != undefined ? percent : utils.calculatePercentage(gauge.props.minValue as number, 
                                                     gauge.props.maxValue as number, 
                                                     gauge.props.value as number);
-                                                    
-  let value = utils.getCurrentGaugeValueByPercentage(percent as number, gauge);
-  let curArcData = getArcDataByValue(value, gauge);
+  let curArcData = getArcDataByPercentage(currentPercentage, gauge);
   let firstSubArc = {
     value: currentPercentage,
     //White indicate that no arc was found and work as an alert for debug
