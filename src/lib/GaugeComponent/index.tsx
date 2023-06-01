@@ -61,7 +61,6 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     arcHooks.validateArcs(gauge);
   }
 
-
   const shouldInitChart = () => {
     let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc));
     let pointerPropsChanged = (JSON.stringify(prevProps.current.pointer) !== JSON.stringify(mergedProps.current.pointer));

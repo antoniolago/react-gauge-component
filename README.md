@@ -5,10 +5,11 @@ This is forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/re
 Key differences:
 <ul>
   <li>Added min/max values</li>
+  <li>Added grafana based gauge</li>
   <li>Added arcs limits in value instead of percent</li>
   <li>Added inner/outer marks to the gauge for reference of the values</li>
-  <li>More than one gauge type</li>
-  <li>More than one pointer type</li>
+  <li>Added blob pointer type</li>
+  <li>Added arrow pointer type</li>
   <li>Added tooltips on hover for the arcs</li>
   <li>Added arc with linear gradient colors</li>
   <li>Full responsive</li>
@@ -355,18 +356,20 @@ const kbitsToMbits = (value) => {
       <li><code>gradient: boolean</code>: This will draw a single arc with all colors provided in subArcs, using limits as references to draw the linear-gradient result. (limits may not be accurate in this mode) Default: <code>false</code>.</li>
       <li><code>subArcs: Array&lt;object&gt;</code>: The subArcs of the gauge.
         <ul>
-          <li><code>limit: number</code>: The subArc limit value. When no limits are defined  will auto-calculate remaining arcs limits. Attention: limits are reordered in ascending order.</li>
-              <li><code>color: string</code>: The subArc color. When not provided, it will use default subArc's colors and interpolate first and last colors when subArcs number is greater than <code>colorArray</code>.</li>
-              <li><code>showMark: boolean</code>: Whether or not to show the mark. Default: <code>false</code>.</li>
-              <li><code>tooltip: object</code>: Tooltip object.
-              <ul>
-                <li><code>text: string</code>text that will be displayed in the tooltip when hovering the subArc.</li>
-                <li><code>style: React.CSSProperties</code>: Overrides tooltip styles.</li>
-              </ul>
-              </li>
-              <li><code>onClick: (event: any) => void</code>: onClick callback. Default: <code>undefined</code>.</li>
-              <li><code>onMouseMove: (event: any) => void</code>: onMouseMove callback. Default: <code>undefined</code>.</li>
-              <li><code>onMouseLeave: (event: any) => void</code>: onMouseLeave callback. Default: <code>undefined</code>.</li>
+          <li><code>limit: number</code>: The subArc length using value as reference. When no limits or lengths are defined will auto-calculate remaining arcs limits. Example of valid input: <code>subArcs: [{limit: 50}, {limit: 100}]</code> this will render 2 arcs 50/50</li>
+          <li><code>length: number</code>: The subArc length in percent of the arc (as the behavior of the original project). Example of 
+          a valid input: <code>subArcs: [{length: 0.50}, {length: 0.50}]</code>, this will render 2 arcs 50/50</li>
+          <li><code>color: string</code>: The subArc color. When not provided, it will use default subArc's colors and interpolate first and last colors when subArcs number is greater than <code>colorArray</code>.</li>
+          <li><code>showMark: boolean</code>: Whether or not to show the mark. Default: <code>false</code>.</li>
+          <li><code>tooltip: object</code>: Tooltip object.
+          <ul>
+            <li><code>text: string</code>text that will be displayed in the tooltip when hovering the subArc.</li>
+            <li><code>style: React.CSSProperties</code>: Overrides tooltip styles.</li>
+          </ul>
+          </li>
+          <li><code>onClick: (event: any) => void</code>: onClick callback. Default: <code>undefined</code>.</li>
+          <li><code>onMouseMove: (event: any) => void</code>: onMouseMove callback. Default: <code>undefined</code>.</li>
+          <li><code>onMouseLeave: (event: any) => void</code>: onMouseLeave callback. Default: <code>undefined</code>.</li>
         </ul>
         subArcs default value: 
         <code>

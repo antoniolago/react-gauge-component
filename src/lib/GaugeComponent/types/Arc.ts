@@ -13,6 +13,7 @@ export interface Arc {
 export interface SubArc {
     limit?: number, //The limit of the subArc, in accord to the gauge value
     color?: string | number, //The color of the subArc
+    length?: number, //The length of the subArc, in percent
     // needleColorWhenWithinLimit?: string, //The color of the needle when it is within the subArc
     showMark?: boolean, //Whether or not to show the mark
     tooltip?: Tooltip,

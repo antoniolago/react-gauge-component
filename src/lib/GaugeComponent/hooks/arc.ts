@@ -69,7 +69,10 @@ export const setArcData = (gauge: Gauge) => {
       //map limit for non defined subArcs limits
       let subArcRange = 0;
       let limit = subArc.limit as number;
-      if (subArc.limit == undefined) {
+      if (subArc.length != undefined) {
+        subArcLength = subArc.length;
+        limit = utils.getCurrentGaugeValueByPercentage(subArcLength + lastSubArcLimitPercentageAcc, gauge);
+      } else if (subArc.limit == undefined) {
         subArcRange = lastSubArcLimit;
         let remainingPercentageEquallyDivided: number | undefined = undefined;
         let remainingSubArcs = arc?.subArcs?.slice(i);
@@ -118,21 +121,21 @@ export const setArcData = (gauge: Gauge) => {
 };
 
 const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undefined) => {
-  let currentPercentage = percent != undefined ? percent : utils.calculatePercentage(gauge.props.minValue as number, 
-                                                    gauge.props.maxValue as number, 
-                                                    gauge.props.value as number);
+  let currentPercentage = percent != undefined ? percent : utils.calculatePercentage(gauge.props.minValue as number,
+    gauge.props.maxValue as number,
+    gauge.props.value as number);
   let curArcData = getArcDataByPercentage(currentPercentage, gauge);
   let firstSubArc = {
     value: currentPercentage,
     //White indicate that no arc was found and work as an alert for debug
-    color: curArcData?.color || "white", 
+    color: curArcData?.color || "white",
     //disabled for now because onMouseOut is not working properly with the
     //high amount of renderings of this arc
     //tooltip: curArcData?.tooltip
   }
   //This is the grey arc that will be displayed when the gauge is not full
   let secondSubArc = {
-    value: 1-currentPercentage,
+    value: 1 - currentPercentage,
     color: "#5C5C5C"
   }
   return [firstSubArc, secondSubArc];
@@ -143,10 +146,10 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
   if (gauge.props.type == GaugeType.Grafana && resize) {
     gauge.doughnut.current.selectAll(".outerSubArc").remove();
     let outerArc = arc()
-                  .outerRadius(outerRadius+7)
-                  .innerRadius(outerRadius+2)
-                  .cornerRadius(0)
-                  .padAngle(0);
+      .outerRadius(outerRadius + 7)
+      .innerRadius(outerRadius + 2)
+      .cornerRadius(0)
+      .padAngle(0);
     var arcPaths = gauge.doughnut.current
       .selectAll("anyString")
       .data(gauge.pieChart.current(gauge.arcData.current))
@@ -154,8 +157,8 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
       .append("g")
       .attr("class", "outerSubArc");
     let outerArcSubarcs = arcPaths
-    .append("path")
-    .attr("d", outerArc);
+      .append("path")
+      .attr("d", outerArc);
     applyColors(outerArcSubarcs, gauge);
     arcPaths
       .on("mouseleave", (event: any, d: any) => onArcMouseLeave(event, d, gauge))
@@ -175,16 +178,16 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
   } else {
     data = gauge.arcData.current
   }
-  if(gauge.props.type == GaugeType.Grafana) {
+  if (gauge.props.type == GaugeType.Grafana) {
     data = getGrafanaMainArcData(gauge, percent);
   }
   let arcPadding = gauge.props.type == GaugeType.Grafana ? 0 : padding;
   let arcCornerRadius = gauge.props.type == GaugeType.Grafana ? 0 : cornerRadius;
   let arcObj = arc()
-            .outerRadius(outerRadius)
-            .innerRadius(innerRadius)
-            .cornerRadius(arcCornerRadius as number)
-            .padAngle(arcPadding);
+    .outerRadius(outerRadius)
+    .innerRadius(innerRadius)
+    .cornerRadius(arcCornerRadius as number)
+    .padAngle(arcPadding);
   var arcPaths = gauge.doughnut.current
     .selectAll("anyString")
     .data(gauge.pieChart.current(data))
@@ -215,8 +218,8 @@ export const setupTooltip = (gauge: Gauge) => {
   if (!isTooltipInTheDom) select("body").append("div").attr("class", CONSTANTS.arcTooltipClassname);
   gauge.tooltip.current = select(`.${CONSTANTS.arcTooltipClassname}`);
   gauge.tooltip.current
-                      .on("mouseleave", () => arcHooks.hideTooltip(gauge))
-                      .on("mouseout", () => arcHooks.hideTooltip(gauge))
+    .on("mouseleave", () => arcHooks.hideTooltip(gauge))
+    .on("mouseout", () => arcHooks.hideTooltip(gauge))
 }
 
 export const applyColors = (subArcsPath: any, gauge: Gauge) => {
@@ -297,8 +300,8 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
     }
   };
   let centerToArcLength = positionCenterToArcLength[position]();
-  if(gauge.props.type === GaugeType.Grafana){
-    centerToArcLength+=10;
+  if (gauge.props.type === GaugeType.Grafana) {
+    centerToArcLength += 10;
   }
   let percent = utils.calculatePercentage(gauge.props.minValue as number, gauge.props.maxValue as number, value);
   let gaugeTypesAngles: Record<GaugeType, { startAngle: number; endAngle: number; }> = {
@@ -315,7 +318,7 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
       endAngle: utils.degToRad(221)
     },
   };
-  
+
   let { startAngle, endAngle } = gaugeTypesAngles[gauge.props.type as GaugeType];
   const angle = startAngle + (percent) * (endAngle - startAngle);
 
@@ -365,10 +368,12 @@ const reOrderSubArcs = (gauge: Gauge): void => {
   });
 }
 const verifySubArcsLimits = (gauge: Gauge) => {
-  reOrderSubArcs(gauge);
+  // disabled when length implemented.
+  // reOrderSubArcs(gauge);
   let minValue = gauge.props.minValue as number;
   let maxValue = gauge.props.maxValue as number;
   let arc = gauge.props.arc as Arc;
+  let subArcs = arc.subArcs as SubArc[];
   let prevLimit: number | undefined = undefined;
   for (const subArc of gauge.props.arc?.subArcs || []) {
     const limit = subArc.limit;
@@ -376,12 +381,15 @@ const verifySubArcsLimits = (gauge: Gauge) => {
       // Check if the limit is within the valid range
       if (limit < minValue || limit > maxValue)
         throw new Error(`The limit of a subArc must be between the minValue and maxValue. The limit of the subArc is ${limit}`);
-
+      // Check if the limit is greater than the previous limit
+      if (typeof prevLimit !== 'undefined') {
+        if (limit <= prevLimit)
+          throw new Error(`The limit of a subArc must be greater than the limit of the previous subArc. The limit of the subArc is ${limit}. If you're trying to specify length in percent of the arc, use property "length". refer to: https://github.com/antoniolago/react-gauge-component`);
+      }
       prevLimit = limit;
     }
   }
   // If the user has defined subArcs, make sure the last subArc has a limit equal to the maxValue
-  let subArcs = gauge.props.arc?.subArcs as SubArc[];
   if (subArcs.length > 0) {
     let lastSubArc = subArcs[subArcs.length - 1];
     if (lastSubArc.limit as number < maxValue) lastSubArc.limit = maxValue;

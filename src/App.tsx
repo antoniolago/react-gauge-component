@@ -124,7 +124,7 @@ const App = () => {
                       tooltip: { text: 'Fine' }
                     },
                     {
-                      limit: 80,
+                      limit: 100,
                       color: '#5BE12C',
                       showMark: true,
                       tooltip: { text: 'Full' }
