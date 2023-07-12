@@ -401,6 +401,7 @@ const kbitsToMbits = (value) => {
                <li><code>matchColorWithArc: boolean</code>: when enabled valueLabel color will match current arc color</li>
                <li><code>formatTextValue: (value: any) => string</code>: The format of the value label. Default: <code>undefined</code>.</li>
                <li><code>style: React.CSSProperties</code>: Overrides valueLabel styles. Default: <code>{fontSize: "35px", fill: "#fff", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
+               <li><code>maxDecimalDigits: number</code>: this is the number of decimal digits the value will round up to. Default: <code>2</code></li>
                <li><code>hide: boolean</code>: Whether or not to hide the value label. Default: <code>false</code>.</li>
             </ul></li>
           <li><code>markLabel: object</code> The markLabel of the gauge.
@@ -418,6 +419,7 @@ const kbitsToMbits = (value) => {
                     <ul>
                         <li><code>formatTextValue: (value: any) => string</code>: The format of the mark's value label. Default: <code>undefined</code></li>
                         <li><code>style: React.CSSProperties</code>: Overrides valueConfig styles. Default: <code>{fontSize: "10px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
+                        <li><code>maxDecimalDigits: number</code>: this is the number of decimal digits the value will round up to. Default: <code>2</code></li>
                         <li><code>hide: boolean</code>: Whether or not to hide the mark's value label. Default: <code>false</code></li>
                     </ul>
                   </li>

@@ -7,7 +7,7 @@ import { GaugeType } from '../types/GaugeComponentProps';
 import { getArcDataByValue, getCoordByValue } from './arc';
 import { PointerType } from '../types/Pointer';
 import { Labels, ValueLabel } from '../types/Labels';
-import { Arc } from '../types/Arc';
+import { Arc, SubArc } from '../types/Arc';
 export const setupLabels = (gauge: Gauge) => {
   setupValueLabel(gauge);
   setupMarks(gauge);
@@ -49,9 +49,9 @@ export const setupMarks = (gauge: Gauge) => {
 
 export const addArcMarks = (gauge: Gauge) => {
   const { arc } = gauge.props;
-  gauge.arcData.current?.map((subArc) => {
+  gauge.arcData.current?.map((subArc: SubArc) => {
     if (subArc.showMark) return subArc.limit;
-  }).forEach((markValue) => {
+  }).forEach((markValue: any) => {
     if (markValue) addMark(mapMark(markValue, gauge), gauge);
   });
 }
@@ -87,13 +87,14 @@ export const addMarkValue = (mark: Mark, gauge: Gauge) => {
   let markValueStyle = mark.valueConfig?.style || (labels?.markLabel?.valueConfig?.style || {});
   markValueStyle = {...markValueStyle};
   let text = '';
+  let maxDecimalDigits = gauge.props.labels?.markLabel?.valueConfig?.maxDecimalDigits;
   if(labels?.markLabel?.valueConfig?.formatTextValue){
-    text = labels.markLabel.valueConfig.formatTextValue(utils.floatingNumber(markValue));
+    text = labels.markLabel.valueConfig.formatTextValue(utils.floatingNumber(markValue, maxDecimalDigits));
   } else if(gauge.props.minValue === 0 && gauge.props.maxValue === 100){
-    text = utils.floatingNumber(markValue).toString();
+    text = utils.floatingNumber(markValue, maxDecimalDigits).toString();
     text += "%";
   } else {
-    text = utils.floatingNumber(markValue).toString();
+    text = utils.floatingNumber(markValue, maxDecimalDigits).toString();
   }
   //This is a position correction for the text being too far away from the marker
   if(labels?.markLabel?.type == "inner"){
@@ -152,9 +153,9 @@ export const addText = (html: any, x: number, y: number, gauge: Gauge, style: Re
 
 const applyTextStyles = (div: any, style: React.CSSProperties) => {
   //Apply default styles
-  Object.entries(style).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
+  Object.entries(style).forEach(([key, value]: any) => div.style(utils.camelCaseToKebabCase(key), value))
   //Apply custom styles
-  if(style != undefined) Object.entries(style).forEach(([key, value]) => div.style(utils.camelCaseToKebabCase(key), value))
+  if(style != undefined) Object.entries(style).forEach(([key, value]: any) => div.style(utils.camelCaseToKebabCase(key), value))
 }
 
 //Adds text undeneath the graft to display which percentage is the current one
@@ -163,13 +164,14 @@ export const addValueText = (gauge: Gauge) => {
   let valueLabel = gauge.props.labels?.valueLabel as ValueLabel;
   var textPadding = 20;
   let text = '';
+  let maxDecimalDigits = gauge.props.labels?.valueLabel?.maxDecimalDigits;
   if(valueLabel.formatTextValue){
-    text = valueLabel.formatTextValue(utils.floatingNumber(value));
+    text = valueLabel.formatTextValue(utils.floatingNumber(value, maxDecimalDigits));
   } else if(gauge.props.minValue === 0 && gauge.props.maxValue === 100){
-    text = utils.floatingNumber(value).toString();
+    text = utils.floatingNumber(value, maxDecimalDigits).toString();
     text += "%";
   } else {
-    text = utils.floatingNumber(value).toString();
+    text = utils.floatingNumber(value, maxDecimalDigits).toString();
   }
   const maxLengthBeforeComputation = 4;
   const textLength = text?.length || 0;

@@ -35,9 +35,11 @@ export const mergeObjects = (obj1: any, obj2: Partial<any>): any => {
 export const percentToRad = (percent: number, angle: number) => {
   return percent * (Math.PI / angle);
 };
+
 export const floatingNumber = (value: number, maxDigits = 2) => {
   return Math.round(value * 10 ** maxDigits) / 10 ** maxDigits;
 };
+
 export const degToRad = (degrees: number) => {
   return degrees * (Math.PI / 180);
 }

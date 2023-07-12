@@ -12,6 +12,7 @@ export interface Mark {
 }
 export interface MarkValueConfig {
     formatTextValue?: (value: any) => string;
+    maxDecimalDigits?: number;
     style?: React.CSSProperties;
     hide?: boolean;
 }
@@ -33,6 +34,7 @@ const defaultMarkerConfig: MarkerConfig = {
 
 const defaultMarkValueConfig: MarkValueConfig = {
     formatTextValue: undefined,
+    maxDecimalDigits: 2,
     style:{
         fontSize: "10px",
         fill: "#dedbd7",
