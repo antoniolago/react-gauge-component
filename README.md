@@ -32,7 +32,16 @@ Install it by running `npm install react-gauge-component --save` or `yarn add re
 import GaugeComponent from 'react-gauge-component'
 
 //Component with default values
-<GaugeComponent id="gauge-component1" />
+<GaugeComponent />
+```
+
+For next.js you'll have to do dynamic import:
+```jsx
+import dynamic from "next/dynamic";
+const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: false });
+
+//Component with default values
+<GaugeComponent />
 ```
 
 ## Examples
