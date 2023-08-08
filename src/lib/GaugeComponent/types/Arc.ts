@@ -15,7 +15,7 @@ export interface SubArc {
     color?: string | number, //The color of the subArc
     length?: number, //The length of the subArc, in percent
     // needleColorWhenWithinLimit?: string, //The color of the needle when it is within the subArc
-    showMark?: boolean, //Whether or not to show the mark
+    showTick?: boolean, //Whether or not to show the tick
     tooltip?: Tooltip,
     onClick?: () => void,
     onMouseMove?: () => void,

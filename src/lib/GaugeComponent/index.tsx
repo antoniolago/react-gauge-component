@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useLayoutEffect } from "react";
+import React, { useEffect, useRef, useLayoutEffect, Suspense } from "react";
 import { arc, pie, select } from "d3";
 import { defaultGaugeProps, GaugeComponentProps, GaugeType, getGaugeMarginByType } from "./types/GaugeComponentProps";
 import { Gauge } from "./types/Gauge";
@@ -16,7 +16,7 @@ It will use whichever is smallest of width or height
 The svg element surrounding the gauge will always be square
 "container" is the div where the chart should be placed
 */
-const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
+const CoreGaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const svg = useRef<any>({});
   const tooltip = useRef<any>({});
   const g = useRef<any>({});
@@ -93,7 +93,15 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   );
 };
 
-GaugeComponent.defaultProps = defaultGaugeProps;
+CoreGaugeComponent.defaultProps = defaultGaugeProps;
 // GaugeComponent.propTypes = {...PropTypes.shape(GaugeComponentProps)};
+const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
+  return (
+    <Suspense fallback={<div>Loading GaugeComponent...</div>}>
+      <CoreGaugeComponent {...props} />
+    </Suspense>
+  );
+};
 
 export default GaugeComponent;
+// export default GaugeComponent;

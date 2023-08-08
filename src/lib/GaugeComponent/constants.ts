@@ -1,10 +1,10 @@
 export const CONSTANTS: any = {
     arcTooltipClassname: "gauge-component-arc-tooltip",
-    markerClassname: "marker",
-    markValueClassname: "mark-value",
+    tickClassname: "tick",
+    tickValueClassname: "tick-value",
     valueLabelClassname: "value-text",
-    debugMarkersRadius: false,
+    debugTickersRadius: false,
     debugSingleGauge: false,
-    rangeBetweenCenteredMarkValueLabel: [0.35, 0.65]
+    rangeBetweenCenteredTickValueLabel: [0.35, 0.65]
 } 
 export default CONSTANTS;
