@@ -421,10 +421,10 @@ const kbitsToMbits = (value) => {
                     <ul>
                         <li><code>value: number</code>: The value of the tick.</li>
                         <li><code>valueConfig: object</code>: The config of the tick's value label. When not provided, it will use default config.</li>
-                        <li><code>ticksConfig: object</code>: The config of the tick's char. When not provided, it will use default config.</li>
+                        <li><code>lineConfig: object</code>: The config of the tick's line. When not provided, it will use default config.</li>
                     </ul>
                   </li>
-                <li><code>valueConfig: object</code>: The default config of the tick's value label.
+                <li><code>defaultTickValueConfig: object</code>: The default config of the tick's value label.
                     <ul>
                         <li><code>formatTextValue: (value: any) => string</code>: The format of the tick's value label. Default: <code>undefined</code></li>
                         <li><code>style: React.CSSProperties</code>: Overrides valueConfig styles. Default: <code>{fontSize: "10px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
@@ -432,7 +432,7 @@ const kbitsToMbits = (value) => {
                         <li><code>hide: boolean</code>: Whether or not to hide the tick's value label. Default: <code>false</code></li>
                     </ul>
                   </li>
-                <li><code>ticksConfig: object</code>: The default config of the tick's char.
+                <li><code>defaultTickLineConfig: object</code>: The default config of the tick's line.
                   <ul>
                       <li><code>char: string</code>: The char of the tick. Default: <code>'_'</code></li>
                       <li><code>style: React.CSSProperties</code>: Overrides ticksConfig styles. Default: <code>{fontSize: "18px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>

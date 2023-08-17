@@ -20,7 +20,7 @@ export const setupTicks = (gauge: Gauge) => {
   let labels = gauge.props.labels as Labels;
   let minValue = gauge.props.minValue as number;
   let maxValue = gauge.props.maxValue as number;
-  if (CONSTANTS.debugTickssRadius) {
+  if (CONSTANTS.debugTicksRadius) {
     for (let index = 0; index < maxValue; index++) {
       let indexTick = mapTick(index, gauge);
       addTick(indexTick, gauge);
@@ -63,7 +63,7 @@ export const mapTick = (value: number, gauge: Gauge): Tick => {
     ticksConfig: tickLabels?.defaultTickLineConfig
   } as Tick;
 }
-export const addTicks = (tick: Tick, gauge: Gauge) => {
+export const addTickLine = (tick: Tick, gauge: Gauge) => {
   const { labels } = gauge.props;
   const { tickAnchor, angle } = calculateAnchorAndAngleByValue(tick?.value as number, gauge);
   let coords = getLabelCoordsByValue(tick?.value as number, gauge, undefined);
@@ -71,7 +71,7 @@ export const addTicks = (tick: Tick, gauge: Gauge) => {
   let charStyle = tick.lineConfig?.style || (labels?.tickLabels?.defaultTickLineConfig?.style || {})
   charStyle = {...charStyle};
   charStyle.textAnchor = tickAnchor as any;
-  addText(char, coords.x, coords.y, gauge, charStyle, CONSTANTS.ticksClassname, angle);
+  addText(char, coords.x, coords.y, gauge, charStyle, CONSTANTS.tickLineClassname, angle);
 }
 
 export const addTickValue = (tick: Tick, gauge: Gauge) => {
@@ -116,8 +116,8 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
 
 export const addTick = (tick: Tick, gauge: Gauge) => {
   const { minValue, maxValue, labels, arc } = gauge.props;
-  addTicks(tick, gauge);
-  if (!CONSTANTS.debugTickssRadius) {
+  addTickLine(tick, gauge);
+  if (!CONSTANTS.debugTicksRadius) {
     addTickValue(tick, gauge);
   }
 }
@@ -201,7 +201,7 @@ export const addValueText = (gauge: Gauge) => {
 
 export const clearValueLabel = (gauge: Gauge) => gauge.g.current.selectAll(`.${CONSTANTS.valueLabelClassname}`).remove();
 export const clearTicks = (gauge: Gauge) => {
-  gauge.g.current.selectAll(`.${CONSTANTS.ticksClassname}`).remove();
+  gauge.g.current.selectAll(`.${CONSTANTS.tickLineClassname}`).remove();
   gauge.g.current.selectAll(`.${CONSTANTS.tickValueClassname}`).remove();
 }
 
