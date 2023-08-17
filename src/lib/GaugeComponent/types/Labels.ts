@@ -1,4 +1,4 @@
-import { defaultTickLabel, TickLabels } from './Tick';
+import { defaultTickLabels, TickLabels } from './Tick';
 export interface Labels {
     valueLabel?: ValueLabel,
     tickLabels?: TickLabels
@@ -25,5 +25,5 @@ export const defaultValueLabel: ValueLabel = {
 }
 export const defaultLabels: Labels = {
     valueLabel: defaultValueLabel,
-    tickLabels: defaultTickLabel
+    tickLabels: defaultTickLabels
 }

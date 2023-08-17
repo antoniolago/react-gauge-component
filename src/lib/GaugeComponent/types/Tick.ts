@@ -43,7 +43,7 @@ const defaultTickValueConfig: TickValueConfig = {
     hide: false,
 };
 const defaultTickList: Tick[] = [];
-export const defaultTickLabel: TickLabels = {
+export const defaultTickLabels: TickLabels = {
     type: 'outer',
     hideMinMax: false,
     ticks: defaultTickList,
