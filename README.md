@@ -7,7 +7,7 @@ Key differences:
   <li>Added min/max values</li>
   <li>Added grafana based gauge</li>
   <li>Added arcs limits in value instead of percent</li>
-  <li>Added inner/outer marks to the gauge for reference of the values</li>
+  <li>Added inner/outer ticks to the gauge for reference of the values</li>
   <li>Added blob pointer type</li>
   <li>Added arrow pointer type</li>
   <li>Added tooltips on hover for the arcs</li>
@@ -59,22 +59,22 @@ const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: fal
       {
         limit: 20,
         color: '#EA4228',
-        showMark: true
+        showTick: true
       },
       {
         limit: 40,
         color: '#F58B19',
-        showMark: true
+        showTick: true
       },
       {
         limit: 60,
         color: '#F5CD19',
-        showMark: true
+        showTick: true
       },
       {
         limit: 100,
         color: '#5BE12C',
-        showMark: true
+        showTick: true
       },
     ]
   }}
@@ -115,9 +115,9 @@ const kbitsToMbits = (value) => {
       fontSize: 40,
       formatTextValue: kbitsToMbits
     },
-    markLabel: {
+    tickLabels: {
       type: "outer",
-      marks: [
+      ticks: [
         { value: 100 },
         { value: 200 },
         { value: 300 },
@@ -163,7 +163,7 @@ const kbitsToMbits = (value) => {
       {
         limit: 15,
         color: '#EA4228',
-        showMark: true,
+        showTick: true,
         tooltip: {
           text: 'Too low temperature!'
         },
@@ -174,7 +174,7 @@ const kbitsToMbits = (value) => {
       {
         limit: 17,
         color: '#F5CD19',
-        showMark: true,
+        showTick: true,
         tooltip: {
           text: 'Low temperature!'
         }
@@ -182,13 +182,13 @@ const kbitsToMbits = (value) => {
       {
         limit: 28,
         color: '#5BE12C',
-        showMark: true,
+        showTick: true,
         tooltip: {
           text: 'OK temperature!'
         }
       },
       {
-        limit: 30, color: '#F5CD19', showMark: true,
+        limit: 30, color: '#F5CD19', showTick: true,
         tooltip: {
           text: 'High temperature!'
         }
@@ -209,10 +209,10 @@ const kbitsToMbits = (value) => {
   }}
   labels={{
     valueLabel: { formatTextValue: value => value + 'ºC' },
-    markLabel: {
+    tickLabels: {
       type: 'outer',
       valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 10 },
-      marks: [
+      ticks: [
         { value: 13 },
         { value: 22.5 },
         { value: 32 }
@@ -275,22 +275,22 @@ const kbitsToMbits = (value) => {
       {
         limit: 15,
         color: '#EA4228',
-        showMark: true
+        showTick: true
       },
       {
         limit: 37,
         color: '#F5CD19',
-        showMark: true
+        showTick: true
       },
       {
         limit: 58,
         color: '#5BE12C',
-        showMark: true
+        showTick: true
       },
       {
         limit: 75,
         color: '#F5CD19',
-        showMark: true
+        showTick: true
       },
       { color: '#EA4228' }
     ]
@@ -313,9 +313,9 @@ const kbitsToMbits = (value) => {
   value={50}
   type="radial"
   labels={{
-    markLabel: {
+    tickLabels: {
       type: "inner",
-      marks: [
+      ticks: [
         { value: 20 },
         { value: 40 },
         { value: 60 },
@@ -369,7 +369,7 @@ const kbitsToMbits = (value) => {
           <li><code>length: number</code>: The subArc length in percent of the arc (as the behavior of the original project). Example of 
           a valid input: <code>subArcs: [{length: 0.50}, {length: 0.50}]</code>, this will render 2 arcs 50/50</li>
           <li><code>color: string</code>: The subArc color. When not provided, it will use default subArc's colors and interpolate first and last colors when subArcs number is greater than <code>colorArray</code>.</li>
-          <li><code>showMark: boolean</code>: Whether or not to show the mark. Default: <code>false</code>.</li>
+          <li><code>showTick: boolean</code>: Whether or not to show the tick. Default: <code>false</code>.</li>
           <li><code>tooltip: object</code>: Tooltip object.
           <ul>
             <li><code>text: string</code>text that will be displayed in the tooltip when hovering the subArc.</li>
@@ -413,30 +413,30 @@ const kbitsToMbits = (value) => {
                <li><code>maxDecimalDigits: number</code>: this is the number of decimal digits the value will round up to. Default: <code>2</code></li>
                <li><code>hide: boolean</code>: Whether or not to hide the value label. Default: <code>false</code>.</li>
             </ul></li>
-          <li><code>markLabel: object</code> The markLabel of the gauge.
+          <li><code>tickLabels: object</code> The tickLabels of the gauge.
             <ul>
-                <li><code>type: string</code>: This makes the marks <code>"inner"</code> or <code>"outer"</code> the radius. Default:<code>"outer"</code></li>
+                <li><code>type: string</code>: This makes the ticks <code>"inner"</code> or <code>"outer"</code> the radius. Default:<code>"outer"</code></li>
                 <li><code>hideMinMax: boolean</code>: Whether or not to hide the min and max labels. Default: <code>false</code></li>
-                <li><code>marks: Array&lt;object&gt;</code>: The marks of the gauge. When not provided, it will use default gauge marks with five values.
+                <li><code>ticks: Array&lt;object&gt;</code>: The ticks of the gauge. When not provided, it will use default gauge ticks with five values.
                     <ul>
-                        <li><code>value: number</code>: The value of the mark.</li>
-                        <li><code>valueConfig: object</code>: The config of the mark's value label. When not provided, it will use default config.</li>
-                        <li><code>markerConfig: object</code>: The config of the mark's char. When not provided, it will use default config.</li>
+                        <li><code>value: number</code>: The value of the tick.</li>
+                        <li><code>valueConfig: object</code>: The config of the tick's value label. When not provided, it will use default config.</li>
+                        <li><code>lineConfig: object</code>: The config of the tick's line. When not provided, it will use default config.</li>
                     </ul>
                   </li>
-                <li><code>valueConfig: object</code>: The default config of the mark's value label.
+                <li><code>defaultTickValueConfig: object</code>: The default config of the tick's value label.
                     <ul>
-                        <li><code>formatTextValue: (value: any) => string</code>: The format of the mark's value label. Default: <code>undefined</code></li>
-                        <li><code>style: React.CSSProperties</code>: Overrides valueConfig styles. Default: <code>{fontSize: "10px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
+                        <li><code>formatTextValue: (value: any) => string</code>: The format of the tick's value label. Default: <code>undefined</code></li>
+                        <li><code>style: React.CSSProperties</code>: Overrides tick's valueConfig styles. Default: <code>{fontSize: "10px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
                         <li><code>maxDecimalDigits: number</code>: this is the number of decimal digits the value will round up to. Default: <code>2</code></li>
-                        <li><code>hide: boolean</code>: Whether or not to hide the mark's value label. Default: <code>false</code></li>
+                        <li><code>hide: boolean</code>: Whether or not to hide the tick's value label. Default: <code>false</code></li>
                     </ul>
                   </li>
-                <li><code>markerConfig: object</code>: The default config of the mark's char.
+                <li><code>defaultTickLineConfig: object</code>: The default config of the tick's line.
                   <ul>
-                      <li><code>char: string</code>: The char of the mark. Default: <code>'_'</code></li>
-                      <li><code>style: React.CSSProperties</code>: Overrides markerConfig styles. Default: <code>{fontSize: "18px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
-                      <li><code>hide: boolean</code>: Whether or not to hide the mark's char. Default: <code>false</code></li>
+                      <li><code>char: string</code>: The char of the tick. Default: <code>'_'</code></li>
+                      <li><code>style: React.CSSProperties</code>: Overrides tick's lineConfig styles. Default: <code>{fontSize: "18px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
+                      <li><code>hide: boolean</code>: Whether or not to hide the tick's char. Default: <code>false</code></li>
                   </ul>
                 </li>
             </ul>

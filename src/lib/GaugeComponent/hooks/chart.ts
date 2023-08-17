@@ -91,7 +91,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
         let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
         let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
-        let marksChanged = (JSON.stringify(gauge.prevProps.current.labels?.markLabel) !== JSON.stringify(labels.markLabel));
+        let ticksChanged = (JSON.stringify(gauge.prevProps.current.labels?.tickLabels) !== JSON.stringify(labels.tickLabels));
         let shouldRedrawArcs = arcsPropsChanged
         if(shouldRedrawArcs) {
             arcHooks.clearArcs(gauge);
@@ -101,9 +101,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         if((pointerPropsChanged || valueChanged)) {
             pointerHooks.drawPointer(gauge);
         }
-        if(arcsPropsChanged || marksChanged) {
-            labelsHooks.clearMarks(gauge);
-            labelsHooks.setupMarks(gauge);
+        if(arcsPropsChanged || ticksChanged) {
+            labelsHooks.clearTicks(gauge);
+            labelsHooks.setupTicks(gauge);
         }
         if(valueChanged) {
             labelsHooks.clearValueLabel(gauge);
@@ -166,7 +166,7 @@ export const centerGraph = (gauge: Gauge) => {
 
 export const clearChart = (gauge: Gauge) => {
     //Remove the old stuff
-    labelsHooks.clearMarks(gauge);
+    labelsHooks.clearTicks(gauge);
     labelsHooks.clearValueLabel(gauge);
     pointerHooks.clearPointerElement(gauge);
     arcHooks.clearArcs(gauge);

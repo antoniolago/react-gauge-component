@@ -1,28 +1,28 @@
-export interface MarkLabel {
+export interface TickLabels {
     hideMinMax?: boolean;
     type?: string;
-    marks?: Array<Mark>;
-    valueConfig?: MarkValueConfig;
-    markerConfig?: MarkerConfig;
+    ticks?: Array<Tick>;
+    defaultTickValueConfig?: TickValueConfig;
+    defaultTickLineConfig?: TickLineConfig;
 }
-export interface Mark {
+export interface Tick {
     value?: number;
-    valueConfig?: MarkValueConfig;
-    markerConfig?: MarkerConfig;
+    valueConfig?: TickValueConfig;
+    lineConfig?: TickLineConfig;
 }
-export interface MarkValueConfig {
+export interface TickValueConfig {
     formatTextValue?: (value: any) => string;
     maxDecimalDigits?: number;
     style?: React.CSSProperties;
     hide?: boolean;
 }
-export interface MarkerConfig {
+export interface TickLineConfig {
     char?: string;
     style?: React.CSSProperties;
     hide?: boolean;
 }
 
-const defaultMarkerConfig: MarkerConfig = {
+const defaultTickLineConfig: TickLineConfig = {
     char: "_",
     style:{
         fontSize: "18px",
@@ -32,7 +32,7 @@ const defaultMarkerConfig: MarkerConfig = {
     hide: false
 };
 
-const defaultMarkValueConfig: MarkValueConfig = {
+const defaultTickValueConfig: TickValueConfig = {
     formatTextValue: undefined,
     maxDecimalDigits: 2,
     style:{
@@ -42,11 +42,11 @@ const defaultMarkValueConfig: MarkValueConfig = {
     },
     hide: false,
 };
-const defaultMarkList: Mark[] = [];
-export const defaultMarkLabel: MarkLabel = {
+const defaultTickList: Tick[] = [];
+export const defaultTickLabels: TickLabels = {
     type: 'outer',
     hideMinMax: false,
-    marks: defaultMarkList,
-    valueConfig: defaultMarkValueConfig,
-    markerConfig: defaultMarkerConfig
+    ticks: defaultTickList,
+    defaultTickValueConfig: defaultTickValueConfig,
+    defaultTickLineConfig: defaultTickLineConfig
 };

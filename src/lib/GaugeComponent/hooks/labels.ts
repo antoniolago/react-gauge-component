@@ -1,7 +1,7 @@
 import * as utils from './utils';
 import CONSTANTS from '../constants';
 import { Gauge } from '../types/Gauge';
-import { Mark } from '../types/Mark';
+import { Tick } from '../types/Tick';
 import React from 'react';
 import { GaugeType } from '../types/GaugeComponentProps';
 import { getArcDataByValue, getCoordByValue } from './arc';
@@ -10,127 +10,127 @@ import { Labels, ValueLabel } from '../types/Labels';
 import { Arc, SubArc } from '../types/Arc';
 export const setupLabels = (gauge: Gauge) => {
   setupValueLabel(gauge);
-  setupMarks(gauge);
+  setupTicks(gauge);
 }
 export const setupValueLabel = (gauge: Gauge) => {
   const { labels } = gauge.props;
   if (!labels?.valueLabel?.hide) addValueText(gauge)
 }
-export const setupMarks = (gauge: Gauge) => {
+export const setupTicks = (gauge: Gauge) => {
   let labels = gauge.props.labels as Labels;
   let minValue = gauge.props.minValue as number;
   let maxValue = gauge.props.maxValue as number;
-  if (CONSTANTS.debugMarkersRadius) {
+  if (CONSTANTS.debugTicksRadius) {
     for (let index = 0; index < maxValue; index++) {
-      let indexMark = mapMark(index, gauge);
-      addMark(indexMark, gauge);
+      let indexTick = mapTick(index, gauge);
+      addTick(indexTick, gauge);
     }
-  } else if (!labels.markLabel?.hideMinMax) {
-    let alreadyHaveMinValueMark = labels.markLabel?.marks?.some((mark: Mark) => mark.value == minValue);
-    if(!alreadyHaveMinValueMark) {
-      //Add min value mark
-      let minValueMark = mapMark(minValue, gauge);
-      addMark(minValueMark, gauge);
+  } else if (!labels.tickLabels?.hideMinMax) {
+    let alreadyHaveMinValueTick = labels.tickLabels?.ticks?.some((tick: Tick) => tick.value == minValue);
+    if(!alreadyHaveMinValueTick) {
+      //Add min value tick
+      let minValueTick = mapTick(minValue, gauge);
+      addTick(minValueTick, gauge);
     }
-    let alreadyHaveMaxValueMark = labels.markLabel?.marks?.some((mark: Mark) => mark.value == maxValue);
-    if(!alreadyHaveMaxValueMark){
-      // //Add max value mark
-      let maxValueMark = mapMark(maxValue, gauge);
-      addMark(maxValueMark, gauge);
+    let alreadyHaveMaxValueTick = labels.tickLabels?.ticks?.some((tick: Tick) => tick.value == maxValue);
+    if(!alreadyHaveMaxValueTick){
+      // //Add max value tick
+      let maxValueTick = mapTick(maxValue, gauge);
+      addTick(maxValueTick, gauge);
     }
   }
-  if (labels.markLabel?.marks?.length as number > 0) {
-    labels.markLabel?.marks?.forEach((mark: Mark) => {
-      addMark(mark, gauge);
+  if (labels.tickLabels?.ticks?.length as number > 0) {
+    labels.tickLabels?.ticks?.forEach((tick: Tick) => {
+      addTick(tick, gauge);
     });
   }
-  addArcMarks(gauge);
+  addArcTicks(gauge);
 }
 
-export const addArcMarks = (gauge: Gauge) => {
+export const addArcTicks = (gauge: Gauge) => {
   const { arc } = gauge.props;
   gauge.arcData.current?.map((subArc: SubArc) => {
-    if (subArc.showMark) return subArc.limit;
-  }).forEach((markValue: any) => {
-    if (markValue) addMark(mapMark(markValue, gauge), gauge);
+    if (subArc.showTick) return subArc.limit;
+  }).forEach((tickValue: any) => {
+    if (tickValue) addTick(mapTick(tickValue, gauge), gauge);
   });
 }
-export const mapMark = (value: number, gauge: Gauge): Mark => {
-  const { markLabel } = gauge.props.labels as Labels;
+export const mapTick = (value: number, gauge: Gauge): Tick => {
+  const { tickLabels } = gauge.props.labels as Labels;
   return {
     value: value,
-    valueConfig: markLabel?.valueConfig,
-    markerConfig: markLabel?.markerConfig
-  } as Mark;
+    valueConfig: tickLabels?.defaultTickValueConfig,
+    lineConfig: tickLabels?.defaultTickLineConfig
+  } as Tick;
 }
-export const addMarker = (mark: Mark, gauge: Gauge) => {
+export const addTickLine = (tick: Tick, gauge: Gauge) => {
   const { labels } = gauge.props;
-  const { markAnchor, angle } = calculateAnchorAndAngleByValue(mark?.value as number, gauge);
-  let coords = getLabelCoordsByValue(mark?.value as number, gauge, undefined);
-  let char = mark.markerConfig?.char || labels?.markLabel?.markerConfig?.char;
-  let charStyle = mark.markerConfig?.style || (labels?.markLabel?.markerConfig?.style || {})
+  const { tickAnchor, angle } = calculateAnchorAndAngleByValue(tick?.value as number, gauge);
+  let coords = getLabelCoordsByValue(tick?.value as number, gauge, undefined);
+  let char = tick.lineConfig?.char || labels?.tickLabels?.defaultTickLineConfig?.char;
+  let charStyle = tick.lineConfig?.style || (labels?.tickLabels?.defaultTickLineConfig?.style || {})
   charStyle = {...charStyle};
-  charStyle.textAnchor = markAnchor as any;
-  addText(char, coords.x, coords.y, gauge, charStyle, CONSTANTS.markerClassname, angle);
+  charStyle.textAnchor = tickAnchor as any;
+  addText(char, coords.x, coords.y, gauge, charStyle, CONSTANTS.tickLineClassname, angle);
 }
 
-export const addMarkValue = (mark: Mark, gauge: Gauge) => {
+export const addTickValue = (tick: Tick, gauge: Gauge) => {
   const { labels, value } = gauge.props;
   let arc = gauge.props.arc as Arc;
   let arcWidth = arc.width as number;
-  let markValue = mark?.value as number;
-  let { markAnchor, angle } = calculateAnchorAndAngleByValue(markValue, gauge);
+  let tickValue = tick?.value as number;
+  let { tickAnchor, angle } = calculateAnchorAndAngleByValue(tickValue, gauge);
   let centerToArcLengthSubtract = 27 - arcWidth * 10;
-  let isInner = labels?.markLabel?.type == "inner";
+  let isInner = labels?.tickLabels?.type == "inner";
   if(!isInner) centerToArcLengthSubtract = arcWidth * 10 - 20
-  let coords = getLabelCoordsByValue(markValue, gauge, centerToArcLengthSubtract);
-  let markValueStyle = mark.valueConfig?.style || (labels?.markLabel?.valueConfig?.style || {});
-  markValueStyle = {...markValueStyle};
+  let coords = getLabelCoordsByValue(tickValue, gauge, centerToArcLengthSubtract);
+  let tickValueStyle = tick.valueConfig?.style || (labels?.tickLabels?.defaultTickValueConfig?.style || {});
+  tickValueStyle = {...tickValueStyle};
   let text = '';
-  let maxDecimalDigits = gauge.props.labels?.markLabel?.valueConfig?.maxDecimalDigits;
-  if(labels?.markLabel?.valueConfig?.formatTextValue){
-    text = labels.markLabel.valueConfig.formatTextValue(utils.floatingNumber(markValue, maxDecimalDigits));
+  let maxDecimalDigits = gauge.props.labels?.tickLabels?.defaultTickValueConfig?.maxDecimalDigits;
+  if(labels?.tickLabels?.defaultTickValueConfig?.formatTextValue){
+    text = labels.tickLabels.defaultTickValueConfig.formatTextValue(utils.floatingNumber(tickValue, maxDecimalDigits));
   } else if(gauge.props.minValue === 0 && gauge.props.maxValue === 100){
-    text = utils.floatingNumber(markValue, maxDecimalDigits).toString();
+    text = utils.floatingNumber(tickValue, maxDecimalDigits).toString();
     text += "%";
   } else {
-    text = utils.floatingNumber(markValue, maxDecimalDigits).toString();
+    text = utils.floatingNumber(tickValue, maxDecimalDigits).toString();
   }
-  //This is a position correction for the text being too far away from the marker
-  if(labels?.markLabel?.type == "inner"){
-    if(markAnchor === "end") coords.x += 10;
-    if(markAnchor === "start") coords.x -= 10;
-    if(markAnchor === "middle") coords.y -= 15;
+  //This is a position correction for the text being too far away from the ticks
+  if(labels?.tickLabels?.type == "inner"){
+    if(tickAnchor === "end") coords.x += 10;
+    if(tickAnchor === "start") coords.x -= 10;
+    if(tickAnchor === "middle") coords.y -= 15;
   } else {
-    // if(markAnchor === "end") coords.x -= 10;
-    // if(markAnchor === "start") coords.x += 10;
+    // if(tickAnchor === "end") coords.x -= 10;
+    // if(tickAnchor === "start") coords.x += 10;
   }
-  if(markAnchor === "middle"){
+  if(tickAnchor === "middle"){
     coords.y += 8;
   } else{
     coords.y += 3;
   }
-  markValueStyle.textAnchor = markAnchor as any;
-  addText(text, coords.x, coords.y, gauge, markValueStyle, CONSTANTS.markValueClassname);
+  tickValueStyle.textAnchor = tickAnchor as any;
+  addText(text, coords.x, coords.y, gauge, tickValueStyle, CONSTANTS.tickValueClassname);
 }
 
-export const addMark = (mark: Mark, gauge: Gauge) => {
+export const addTick = (tick: Tick, gauge: Gauge) => {
   const { minValue, maxValue, labels, arc } = gauge.props;
-  addMarker(mark, gauge);
-  if (!CONSTANTS.debugMarkersRadius) {
-    addMarkValue(mark, gauge);
+  addTickLine(tick, gauge);
+  if (!CONSTANTS.debugTicksRadius) {
+    addTickValue(tick, gauge);
   }
 }
 export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLengthSubtract = 0) => {
   let labels = gauge.props.labels as Labels;
   let minValue = gauge.props.minValue as number;
   let maxValue = gauge.props.maxValue as number;
-  let type = labels.markLabel?.type;
+  let type = labels.tickLabels?.type;
   let { x, y } = getCoordByValue(value, gauge, type, centerToArcLengthSubtract, 0.93);
   let percent = utils.calculatePercentage(minValue, maxValue, value);
   //This corrects labels in the cener being too close from the arc
-  let isValueBetweenCenter = percent > CONSTANTS.rangeBetweenCenteredMarkValueLabel[0] && 
-                                percent < CONSTANTS.rangeBetweenCenteredMarkValueLabel[1];
+  let isValueBetweenCenter = percent > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] && 
+                                percent < CONSTANTS.rangeBetweenCenteredTickValueLabel[1];
   if (isValueBetweenCenter){
     let isInner = type == "inner";
     y+= isInner ? 8 : -1;
@@ -200,9 +200,9 @@ export const addValueText = (gauge: Gauge) => {
 };
 
 export const clearValueLabel = (gauge: Gauge) => gauge.g.current.selectAll(`.${CONSTANTS.valueLabelClassname}`).remove();
-export const clearMarks = (gauge: Gauge) => {
-  gauge.g.current.selectAll(`.${CONSTANTS.markerClassname}`).remove();
-  gauge.g.current.selectAll(`.${CONSTANTS.markValueClassname}`).remove();
+export const clearTicks = (gauge: Gauge) => {
+  gauge.g.current.selectAll(`.${CONSTANTS.tickLineClassname}`).remove();
+  gauge.g.current.selectAll(`.${CONSTANTS.tickValueClassname}`).remove();
 }
 
 export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
@@ -230,17 +230,17 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   let halfPercentage = halfInPercentage;
   let isValueLessThanHalf = valuePercentage < halfPercentage;
   //Values between 40% and 60% are aligned in the middle
-  let isValueBetweenTolerance = valuePercentage > CONSTANTS.rangeBetweenCenteredMarkValueLabel[0] && 
-                                valuePercentage < CONSTANTS.rangeBetweenCenteredMarkValueLabel[1];
-  let markAnchor = '';
-  let isInner = gauge.props.labels?.markLabel?.type == "inner";
+  let isValueBetweenTolerance = valuePercentage > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] && 
+                                valuePercentage < CONSTANTS.rangeBetweenCenteredTickValueLabel[1];
+  let tickAnchor = '';
+  let isInner = gauge.props.labels?.tickLabels?.type == "inner";
   if (isValueBetweenTolerance) {
-    markAnchor = "middle";
+    tickAnchor = "middle";
   } else if (isValueLessThanHalf) {
-    markAnchor = isInner ? "start" : "end";
+    tickAnchor = isInner ? "start" : "end";
   } else {
-    markAnchor = isInner ? "end" : "start";
+    tickAnchor = isInner ? "end" : "start";
   }
   if(valuePercentage > 0.50) angle = angle - 180;
-  return { markAnchor, angle };
+  return { tickAnchor, angle };
 }

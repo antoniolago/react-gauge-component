@@ -36,18 +36,18 @@ const App = () => {
       // nbSubArcs: 100,
       // colorArray: ['#EA4228', '#EFFF']
       subArcs: [
-        { limit: 15, color: '#EA4228', showMark: true },
-        { limit: 17, color: '#F5CD19', showMark: true },
-        { limit: 28, color: '#5BE12C', showMark: true },
-        { limit: 30, color: '#F5CD19', showMark: true },
+        { limit: 15, color: '#EA4228', showTick: true },
+        { limit: 17, color: '#F5CD19', showTick: true },
+        { limit: 28, color: '#5BE12C', showTick: true },
+        { limit: 30, color: '#F5CD19', showTick: true },
         { color: '#EA4228' }
       ]
     }}
     labels={{
       valueLabel: { formatTextValue: value => value + 'ºC' },
-      markLabel: {
-        valueConfig: { formatTextValue: value => value + 'ºC'},
-        marks: [
+      tickLabels: {
+        defaultTickValueConfig: { formatTextValue: value => value + 'ºC'},
+        ticks: [
           { value: 22.5 }
         ]
       }
@@ -88,7 +88,7 @@ const App = () => {
                 className="mx-5"
                 style={{ textAlign: 'justify' }}>
                 Enhance your projects with this React Gauge chart built with D3 library.
-                This component features custom min/max values, marks, and tooltips,
+                This component features custom min/max values, ticks, and tooltips,
                 making it perfect for visualizing various metrics such as speed,
                 temperature, charge, and humidity. This data visualization tool can be very useful for React developers looking to create engaging and informative dashboards.
                 <br />Documentation at <a href="https://github.com/antoniolago/react-gauge-component" target="_blank">react-gauge-component</a>
@@ -108,25 +108,25 @@ const App = () => {
                     {
                       limit: 20,
                       color: '#EA4228',
-                      showMark: true,
+                      showTick: true,
                       tooltip: { text: 'Empty' }
                     },
                     {
                       limit: 40,
                       color: '#F58B19',
-                      showMark: true,
+                      showTick: true,
                       tooltip: { text: 'Low' }
                     },
                     {
                       limit: 60,
                       color: '#F5CD19',
-                      showMark: true,
+                      showTick: true,
                       tooltip: { text: 'Fine' }
                     },
                     {
                       limit: 100,
                       color: '#5BE12C',
-                      showMark: true,
+                      showTick: true,
                       tooltip: { text: 'Full' }
                     },
                   ]
@@ -167,9 +167,9 @@ const App = () => {
                   valueLabel: {
                     formatTextValue: kbitsToMbits
                   },
-                  markLabel: {
+                  tickLabels: {
                     type: "outer",
-                    marks: [
+                    ticks: [
                       { value: 100 },
                       { value: 200 },
                       { value: 300 },
@@ -185,7 +185,7 @@ const App = () => {
                       { value: 2500 },
                       { value: 3000 },
                     ],
-                    valueConfig: {
+                    defaultTickValueConfig: {
                       formatTextValue: kbitsToMbits
                     }
                   }
@@ -228,8 +228,8 @@ const App = () => {
                   ]
                 }}
                 labels={{
-                  markLabel: {
-                    marks: [
+                  tickLabels: {
+                    ticks: [
                       { value: 0 },
                       { value: 20 },
                       { value: 40 },
@@ -278,7 +278,7 @@ const App = () => {
                     {
                       limit: 15,
                       color: '#EA4228',
-                      showMark: true,
+                      showTick: true,
                       tooltip: {
                         text: 'Too low temperature!'
                       },
@@ -289,7 +289,7 @@ const App = () => {
                     {
                       limit: 17,
                       color: '#F5CD19',
-                      showMark: true,
+                      showTick: true,
                       tooltip: {
                         text: 'Low temperature!'
                       }
@@ -297,13 +297,13 @@ const App = () => {
                     {
                       limit: 28,
                       color: '#5BE12C',
-                      showMark: true,
+                      showTick: true,
                       tooltip: {
                         text: 'OK temperature!'
                       }
                     },
                     {
-                      limit: 30, color: '#F5CD19', showMark: true,
+                      limit: 30, color: '#F5CD19', showTick: true,
                       tooltip: {
                         text: 'High temperature!'
                       }
@@ -326,10 +326,10 @@ const App = () => {
                 }}
                 labels={{
                   valueLabel: { formatTextValue: value => value + 'ºC' },
-                  markLabel: {
+                  tickLabels: {
                     type: 'outer',
-                    valueConfig: { formatTextValue: value => value + 'ºC'},
-                    marks: [
+                    defaultTickValueConfig: { formatTextValue: value => value + 'ºC'},
+                    ticks: [
                       { value: 13 },
                       { value: 22.5 },
                       { value: 32 }
@@ -352,8 +352,8 @@ const App = () => {
                 value={currentValue}
                 type="radial"
                 labels={{
-                  markLabel: {
-                    marks: [
+                  tickLabels: {
+                    ticks: [
                       { value: 20 },
                       { value: 50 },
                       { value: 80 },
@@ -371,7 +371,7 @@ const App = () => {
               />
             </Col>
             <Col xs={12} lg={3}>
-              <h6 className="mb-1">Radial inner marks</h6>
+              <h6 className="mb-1">Radial inner ticks</h6>
               <GaugeComponent
                 id="gauge-component-radial"
                 value={currentValue}
@@ -382,9 +382,9 @@ const App = () => {
                   colorArray: ['#FF5F6D', '#FFC371']
                 }}
                 labels={{
-                  markLabel: {
+                  tickLabels: {
                     type: "inner",
-                    marks: [
+                    ticks: [
                       { value: 20 },
                       { value: 40 },
                       { value: 60 },
@@ -403,9 +403,9 @@ const App = () => {
                 value={currentValue}
                 type="radial"
                 labels={{
-                  markLabel: {
+                  tickLabels: {
                     type: "inner",
-                    marks: [
+                    ticks: [
                       { value: 20 },
                       { value: 40 },
                       { value: 60 },

@@ -1,12 +1,12 @@
-import React, { useEffect, useRef, useLayoutEffect } from "react";
-import { arc, pie, select } from "d3";
+import React, { useEffect, useRef, useLayoutEffect, Suspense } from "react";
+import { pie, select } from "d3";
 import { defaultGaugeProps, GaugeComponentProps, GaugeType, getGaugeMarginByType } from "./types/GaugeComponentProps";
 import { Gauge } from "./types/Gauge";
 import * as chartHooks from "./hooks/chart";
 import * as arcHooks from "./hooks/arc";
 import { isEmptyObject, mergeObjects } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
-import { PointerContext, PointerRef, defaultPointerRef } from "./types/Pointer";
+import { PointerRef, defaultPointerRef } from "./types/Pointer";
 import { Arc, getArcWidthByType } from "./types/Arc";
 /*
 GaugeComponent creates a gauge chart using D3
@@ -92,8 +92,5 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     />
   );
 };
-
-GaugeComponent.defaultProps = defaultGaugeProps;
-// GaugeComponent.propTypes = {...PropTypes.shape(GaugeComponentProps)};
 
 export default GaugeComponent;

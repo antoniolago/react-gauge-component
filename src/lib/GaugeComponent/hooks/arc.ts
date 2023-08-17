@@ -102,7 +102,7 @@ export const setArcData = (gauge: Gauge) => {
       value: length,
       limit: subArcsLimits[i],
       color: colorArray[i],
-      showMark: subArcs[i].showMark || false,
+      showTick: subArcs[i].showTick || false,
       tooltip: subArcs[i].tooltip || undefined,
       onMouseMove: subArcs[i].onMouseMove,
       onMouseLeave: subArcs[i].onMouseLeave,
