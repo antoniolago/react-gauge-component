@@ -427,7 +427,7 @@ const kbitsToMbits = (value) => {
                 <li><code>defaultTickValueConfig: object</code>: The default config of the tick's value label.
                     <ul>
                         <li><code>formatTextValue: (value: any) => string</code>: The format of the tick's value label. Default: <code>undefined</code></li>
-                        <li><code>style: React.CSSProperties</code>: Overrides valueConfig styles. Default: <code>{fontSize: "10px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
+                        <li><code>style: React.CSSProperties</code>: Overrides tick's valueConfig styles. Default: <code>{fontSize: "10px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
                         <li><code>maxDecimalDigits: number</code>: this is the number of decimal digits the value will round up to. Default: <code>2</code></li>
                         <li><code>hide: boolean</code>: Whether or not to hide the tick's value label. Default: <code>false</code></li>
                     </ul>
@@ -435,7 +435,7 @@ const kbitsToMbits = (value) => {
                 <li><code>defaultTickLineConfig: object</code>: The default config of the tick's line.
                   <ul>
                       <li><code>char: string</code>: The char of the tick. Default: <code>'_'</code></li>
-                      <li><code>style: React.CSSProperties</code>: Overrides ticksConfig styles. Default: <code>{fontSize: "18px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
+                      <li><code>style: React.CSSProperties</code>: Overrides tick's lineConfig styles. Default: <code>{fontSize: "18px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
                       <li><code>hide: boolean</code>: Whether or not to hide the tick's char. Default: <code>false</code></li>
                   </ul>
                 </li>

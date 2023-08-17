@@ -60,7 +60,7 @@ export const mapTick = (value: number, gauge: Gauge): Tick => {
   return {
     value: value,
     valueConfig: tickLabels?.defaultTickValueConfig,
-    ticksConfig: tickLabels?.defaultTickLineConfig
+    lineConfig: tickLabels?.defaultTickLineConfig
   } as Tick;
 }
 export const addTickLine = (tick: Tick, gauge: Gauge) => {
