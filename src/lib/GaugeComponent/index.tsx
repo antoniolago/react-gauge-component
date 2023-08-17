@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useLayoutEffect, Suspense } from "react";
-import { arc, pie, select } from "d3";
+import { pie, select } from "d3";
 import { defaultGaugeProps, GaugeComponentProps, GaugeType, getGaugeMarginByType } from "./types/GaugeComponentProps";
 import { Gauge } from "./types/Gauge";
 import * as chartHooks from "./hooks/chart";
 import * as arcHooks from "./hooks/arc";
 import { isEmptyObject, mergeObjects } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
-import { PointerContext, PointerRef, defaultPointerRef } from "./types/Pointer";
+import { PointerRef, defaultPointerRef } from "./types/Pointer";
 import { Arc, getArcWidthByType } from "./types/Arc";
 /*
 GaugeComponent creates a gauge chart using D3
@@ -16,7 +16,7 @@ It will use whichever is smallest of width or height
 The svg element surrounding the gauge will always be square
 "container" is the div where the chart should be placed
 */
-const CoreGaugeComponent = (props: Partial<GaugeComponentProps>) => {
+const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const svg = useRef<any>({});
   const tooltip = useRef<any>({});
   const g = useRef<any>({});
@@ -93,15 +93,4 @@ const CoreGaugeComponent = (props: Partial<GaugeComponentProps>) => {
   );
 };
 
-CoreGaugeComponent.defaultProps = defaultGaugeProps;
-// GaugeComponent.propTypes = {...PropTypes.shape(GaugeComponentProps)};
-const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
-  return (
-    <Suspense fallback={<div>Loading GaugeComponent...</div>}>
-      <CoreGaugeComponent {...props} />
-    </Suspense>
-  );
-};
-
 export default GaugeComponent;
-// export default GaugeComponent;
