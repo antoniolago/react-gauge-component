@@ -25,7 +25,7 @@ Key differences:
 # Demo
 https://antoniolago.github.io/react-gauge-component/
 
-#Attention
+# Attention
 After release 1.1.20 "marks" were renamed to "ticks" please refer to the documentation below
 
 # Usage
