@@ -25,6 +25,9 @@ Key differences:
 # Demo
 https://antoniolago.github.io/react-gauge-component/
 
+#Attention
+After release 1.1.20 "marks" were renamed to "ticks" please refer to the documentation below
+
 # Usage
 Install it by running `npm install react-gauge-component --save` or `yarn add react-gauge-component`. Then to use it:
 
