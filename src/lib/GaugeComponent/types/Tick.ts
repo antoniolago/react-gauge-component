@@ -26,7 +26,7 @@ const defaultTickLineConfig: TickLineConfig = {
     char: "_",
     style:{
         fontSize: "18px",
-        fill: "#dedbd7",
+        fill: "rgb(173 172 171)",
         // textShadow: "black 1px 0.5px 0px, black 0px 0px 0.03em, black 0px 0px 0.01em"
     },
     hide: false
