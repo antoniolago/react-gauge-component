@@ -1,12 +1,21 @@
 export interface PointerProps {
-    type?: string;
+    /** Pointer type */
+    type?: "needle" | "blob" | "arrow",
+    /** Pointer color */
     color?: string,
+    /** Pointer color of the central circle */
     baseColor?: string,
+    /** Pointer length */
     length?: number,
-    width?: number, // this is a factor to multiply by the width of the gauge
+    /** This is a factor to multiply by the width of the gauge */
+    width?: number,
+    /** This enables pointer animation for transiction between values when enabled */
     animate?: boolean,
+    /** This gives animation an elastic transiction between values */
     elastic?: boolean,
+    /** Animation duration in ms */
     animationDuration?: number,
+    /** Animation delay in ms */
     animationDelay?: number,
 }
 export interface PointerRef {

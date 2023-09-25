@@ -196,8 +196,7 @@ const App = () => {
             </Col>
             <Col xs={12} lg={3}>
               <h6 className="mb-1">Default semicircle Gauge</h6>
-              <GaugeComponent 
-                pointer={{color: '#dfa810'}}type="semicircle" />
+              <GaugeComponent type="semicircle" />
             </Col>
             <Col xs={12} lg={3}>
               <h6 className="mb-1">Gradient arc with arrow</h6>
