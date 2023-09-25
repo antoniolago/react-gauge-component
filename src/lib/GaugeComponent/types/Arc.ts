@@ -5,11 +5,11 @@ export interface Arc {
     /** The corner radius of the arc. */
     cornerRadius?: number,
     /** The padding between subArcs, in rad. */
-    padding?: number, //
+    padding?: number,
     /** The width of the arc given in percent of the radius. */
-    width?: number, //
+    width?: number,
     /** The number of subArcs, this overrides "subArcs" limits. */
-    nbSubArcs?: number, //
+    nbSubArcs?: number,
     /** Boolean flag that enables or disables gradient mode, which
      * draws a single arc with provided colors. */
     gradient?: boolean,
