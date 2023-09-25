@@ -27,7 +27,7 @@ const defaultTickLineConfig: TickLineConfig = {
     style:{
         fontSize: "18px",
         fill: "#dedbd7",
-        textShadow: "black 1px 0.5px 0px, black 0px 0px 0.03em, black 0px 0px 0.01em"
+        // textShadow: "black 1px 0.5px 0px, black 0px 0px 0.03em, black 0px 0px 0.01em"
     },
     hide: false
 };
@@ -37,8 +37,7 @@ const defaultTickValueConfig: TickValueConfig = {
     maxDecimalDigits: 2,
     style:{
         fontSize: "10px",
-        fill: "#dedbd7",
-        textShadow: "black 1px 0.5px 0px, black 0px 0px 0.03em, black 0px 0px 0.01em"
+        fill: "rgb(173 172 171)",
     },
     hide: false,
 };

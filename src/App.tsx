@@ -196,7 +196,8 @@ const App = () => {
             </Col>
             <Col xs={12} lg={3}>
               <h6 className="mb-1">Default semicircle Gauge</h6>
-              <GaugeComponent type="semicircle" />
+              <GaugeComponent 
+                pointer={{color: '#dfa810'}}type="semicircle" />
             </Col>
             <Col xs={12} lg={3}>
               <h6 className="mb-1">Gradient arc with arrow</h6>
@@ -239,7 +240,7 @@ const App = () => {
                   }
                 }}
                 value={currentValue}
-                pointer={{ type: "arrow" }}
+                pointer={{ type: "arrow", color: '#dfa810'}}
               />
             </Col>
             <Col xs={12} lg={3}>
