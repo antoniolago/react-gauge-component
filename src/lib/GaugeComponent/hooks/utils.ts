@@ -39,7 +39,10 @@ export const percentToRad = (percent: number, angle: number) => {
 export const floatingNumber = (value: number, maxDigits = 2) => {
   return Math.round(value * 10 ** maxDigits) / 10 ** maxDigits;
 };
-
+// Function to normalize a value between a new min and max
+export function normalize(value: number, min: number, max: number) {
+  return ((value - min) / (max - min)) * 100;
+}
 export const degToRad = (degrees: number) => {
   return degrees * (Math.PI / 180);
 }

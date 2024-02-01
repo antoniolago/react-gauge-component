@@ -240,11 +240,14 @@ export const getArcDataByPercentage = (percentage: number, gauge: Gauge): SubArc
   getArcDataByValue(utils.getCurrentGaugeValueByPercentage(percentage, gauge), gauge) as SubArc;
 
 export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
-  gauge.arcData.current.forEach((subArcData) =>
+
+  gauge.arcData.current.forEach((subArcData: SubArc) => {
+    const normalizedOffset = utils.normalize(subArcData?.limit!, gauge?.props?.minValue ?? 0, gauge?.props?.maxValue ?? 100);
     gradEl.append("stop")
-      .attr("offset", `${subArcData.limit}%`)
+      .attr("offset", `${normalizedOffset}%`)
       .style("stop-color", subArcData.color)//end in red
       .style("stop-opacity", 1)
+  }
   )
 }
 
