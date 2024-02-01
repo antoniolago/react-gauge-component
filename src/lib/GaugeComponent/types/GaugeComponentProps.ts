@@ -58,7 +58,7 @@ export const defaultGaugeProps: GaugeComponentProps = {
 export const getGaugeMarginByType = (type: string): GaugeInnerMarginInPercent | number => {
     let gaugeTypesMargin: Record<string, GaugeInnerMarginInPercent | number> = {
         [GaugeType.Grafana]: { top: 0.12, bottom: 0.00, left: 0.07, right: 0.07 },
-        [GaugeType.Semicircle]: { top: 0.08, bottom: 0.00, left: 0.07, right: 0.07 },
+        [GaugeType.Semicircle]: { top: 0.08, bottom: 0.00, left: 0.08, right: 0.08 },
         [GaugeType.Radial]: { top: 0.07, bottom: 0.00, left: 0.07, right: 0.07 },
     };
     return gaugeTypesMargin[type as string];
