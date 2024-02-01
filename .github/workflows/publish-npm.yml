@@ -35,7 +35,7 @@ jobs:
         with:
           version: ${{steps.get_version.outputs.version-without-v}}
       - name: build
-        run: yarn run build
+        run: yarn run build-package
       - name: Publish to npm
         run: npm publish --access public
         env:
