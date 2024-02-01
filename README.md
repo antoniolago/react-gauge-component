@@ -13,7 +13,7 @@ Key differences:
   <li>Added tooltips on hover for the arcs</li>
   <li>Added arc with linear gradient colors</li>
   <li>Full responsive</li>
-  <li>All render flow fixed and optimized avoiding unecessary resource usage [performance test, left is original](https://user-images.githubusercontent.com/45375617/239447916-217630e7-8e34-4a3e-a59f-7301471b9855.png) </li>
+  <li>All render flow fixed and optimized avoiding unecessary resource usage. Performance test, left is original: https://user-images.githubusercontent.com/45375617/239447916-217630e7-8e34-4a3e-a59f-7301471b9855.png</li>
   <li>Refactored project structure to separated files</li>
   <li>Refactored to Typescript</li>
   <li>Added complex objects for better modulation and organization of the project</li>
@@ -24,9 +24,6 @@ Key differences:
 
 # Demo
 https://antoniolago.github.io/react-gauge-component/
-
-# Attention
-After release 1.1.20 "marks" were renamed to "ticks" please refer to the documentation below
 
 # Usage
 Install it by running `npm install react-gauge-component --save` or `yarn add react-gauge-component`. Then to use it:
@@ -447,6 +444,7 @@ const kbitsToMbits = (value) => {
       </ul>
     </li>
 </ul>
+
 ##### Colors for the chart
 
 The 'colorArray' prop could either be specified as an array of hex color values, such as `["#FF0000", "#00FF00", "#0000FF"]` where
