@@ -1,4 +1,3 @@
-import { get } from 'lodash';
 import { GaugeType, defaultGaugeProps } from './GaugeComponentProps';
 import { Tooltip } from './Tooltip';
 export interface Arc {
