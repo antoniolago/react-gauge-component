@@ -88,7 +88,9 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   tickValueStyle = {...tickValueStyle};
   let text = '';
   let maxDecimalDigits = gauge.props.labels?.tickLabels?.defaultTickValueConfig?.maxDecimalDigits;
-  if(labels?.tickLabels?.defaultTickValueConfig?.formatTextValue){
+  if (tick.valueConfig?.formatTextValue){
+    text = tick.valueConfig.formatTextValue(utils.floatingNumber(tickValue, maxDecimalDigits));
+  } else if(labels?.tickLabels?.defaultTickValueConfig?.formatTextValue){
     text = labels.tickLabels.defaultTickValueConfig.formatTextValue(utils.floatingNumber(tickValue, maxDecimalDigits));
   } else if(gauge.props.minValue === 0 && gauge.props.maxValue === 100){
     text = utils.floatingNumber(tickValue, maxDecimalDigits).toString();
@@ -166,13 +168,14 @@ export const addValueText = (gauge: Gauge) => {
   var textPadding = 20;
   let text = '';
   let maxDecimalDigits = gauge.props.labels?.valueLabel?.maxDecimalDigits;
+  let floatValue = utils.floatingNumber(value, maxDecimalDigits);
   if(valueLabel.formatTextValue){
-    text = valueLabel.formatTextValue(utils.floatingNumber(value, maxDecimalDigits));
+    text = valueLabel.formatTextValue(floatValue);
   } else if(gauge.props.minValue === 0 && gauge.props.maxValue === 100){
-    text = utils.floatingNumber(value, maxDecimalDigits).toString();
+    text = floatValue.toString();
     text += "%";
   } else {
-    text = utils.floatingNumber(value, maxDecimalDigits).toString();
+    text = floatValue.toString();
   }
   const maxLengthBeforeComputation = 4;
   const textLength = text?.length || 0;
