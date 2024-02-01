@@ -13,7 +13,7 @@ Key differences:
   <li>Added tooltips on hover for the arcs</li>
   <li>Added arc with linear gradient colors</li>
   <li>Full responsive</li>
-  <li>All render flow fixed and optimized avoiding unecessary resource usage (better performance)</li>
+  <li>All render flow fixed and optimized avoiding unecessary resource usage [performance test, left is original](https://user-images.githubusercontent.com/45375617/239447916-217630e7-8e34-4a3e-a59f-7301471b9855.png) </li>
   <li>Refactored project structure to separated files</li>
   <li>Refactored to Typescript</li>
   <li>Added complex objects for better modulation and organization of the project</li>
