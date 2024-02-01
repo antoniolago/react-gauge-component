@@ -118,7 +118,7 @@ export const addTick = (tick: Tick, gauge: Gauge) => {
   const { minValue, maxValue, labels, arc } = gauge.props;
   if(!labels?.tickLabels?.defaultTickLineConfig?.hide)
     addTickLine(tick, gauge);
-  if (!CONSTANTS.debugTicksRadius) {
+  if (!CONSTANTS.debugTicksRadius && !labels?.tickLabels?.defaultTickValueConfig?.hide) {
     addTickValue(tick, gauge);
   }
 }
