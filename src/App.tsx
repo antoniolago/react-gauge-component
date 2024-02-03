@@ -10,7 +10,7 @@ const App = () => {
   return(
     <>
       <MainPreviews />
-      {/* <InputTest /> */}
+      <InputTest />
     </>
   )
 };

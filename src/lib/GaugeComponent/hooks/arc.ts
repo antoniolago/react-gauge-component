@@ -295,16 +295,19 @@ export const createGradientElement = (div: any, uniqueId: string) => {
 export const getCoordByValue = (value: number, gauge: Gauge, position = "inner", centerToArcLengthSubtract = 0, radiusFactor = 1) => {
   let positionCenterToArcLength: { [key: string]: () => number } = {
     "outer": () => gauge.dimensions.current.outerRadius - centerToArcLengthSubtract + 2,
-    "inner": () => gauge.dimensions.current.innerRadius * radiusFactor - centerToArcLengthSubtract,
+    "inner": () => gauge.dimensions.current.innerRadius * radiusFactor - centerToArcLengthSubtract + 9,
     "between": () => {
       let lengthBetweenOuterAndInner = (gauge.dimensions.current.outerRadius - gauge.dimensions.current.innerRadius);
-      let middlePosition = gauge.dimensions.current.innerRadius + lengthBetweenOuterAndInner / 2;
+      let middlePosition = gauge.dimensions.current.innerRadius + lengthBetweenOuterAndInner - 5;
       return middlePosition;
     }
   };
   let centerToArcLength = positionCenterToArcLength[position]();
+  // This normalizes the labels when distanceFromArc = 0 to be just touching the arcs 
   if (gauge.props.type === GaugeType.Grafana) {
-    centerToArcLength += 10;
+    centerToArcLength += 5;
+  } else if (gauge.props.type === GaugeType.Semicircle) {
+    centerToArcLength += -2;
   }
   let percent = utils.calculatePercentage(gauge.props.minValue as number, gauge.props.maxValue as number, value);
   let gaugeTypesAngles: Record<GaugeType, { startAngle: number; endAngle: number; }> = {

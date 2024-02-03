@@ -120,15 +120,15 @@ const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gaug
             translatePointer(dimensions.current.outerRadius,dimensions.current.outerRadius, gauge);
         },
         [PointerType.Arrow]: () => {
-            let { x, y } = getCoordByValue(value, gauge, "inner", 0, 0.75);
+            let { x, y } = getCoordByValue(value, gauge, "inner", 0, 0.70);
             x -= 1;
-            y += pointerRadius-1;
+            y += pointerRadius-3;
             translatePointer(x, y, gauge);
         },
         [PointerType.Blob]: () => {
             let { x, y } = getCoordByValue(value, gauge, "between", 0, 0.75);
             x -= 1;
-            y += pointerRadius - 5;
+            y += pointerRadius;
             translatePointer(x, y, gauge);
         },
     };

@@ -33,7 +33,7 @@ export const ReactGaugeComponent: React.FC<ReactGaugeComponentProps> = ({
             {},
           ],
         }}
-        pointer={{ type: "blob", animationDelay: 0 }}
+        // pointer={{ type: "blob", animationDelay: 0 }}
         value={value}
         minValue={min}
         maxValue={max}

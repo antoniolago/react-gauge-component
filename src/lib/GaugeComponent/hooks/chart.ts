@@ -77,7 +77,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         labelsHooks.setupLabels(gauge);
         pointerHooks.drawPointer(gauge, resize);
         let gaugeTypeHeightCorrection: Record<string, number> = {
-            [GaugeType.Semicircle]: 70,
+            [GaugeType.Semicircle]: 50,
             [GaugeType.Radial]: 55,
             [GaugeType.Grafana]: 55
         }
