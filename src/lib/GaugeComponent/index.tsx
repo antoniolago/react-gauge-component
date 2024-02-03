@@ -65,7 +65,9 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc));
     let pointerPropsChanged = (JSON.stringify(prevProps.current.pointer) !== JSON.stringify(mergedProps.current.pointer));
     let valueChanged = (JSON.stringify(prevProps.current.value) !== JSON.stringify(mergedProps.current.value));
-    return arcsPropsChanged || pointerPropsChanged || valueChanged;
+    let minValueChanged = (JSON.stringify(prevProps.current.minValue) !== JSON.stringify(mergedProps.current.minValue));
+    let maxValueChanged = (JSON.stringify(prevProps.current.maxValue) !== JSON.stringify(mergedProps.current.maxValue));
+    return arcsPropsChanged || pointerPropsChanged || valueChanged || minValueChanged || maxValueChanged;
   }
   useLayoutEffect(() => {
     updateMergedProps();
