@@ -122,13 +122,13 @@ const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gaug
         [PointerType.Arrow]: () => {
             let { x, y } = getCoordByValue(value, gauge, "inner", 0, 0.75);
             x -= 1;
-            y += pointerRadius;
+            y += pointerRadius-1;
             translatePointer(x, y, gauge);
         },
         [PointerType.Blob]: () => {
             let { x, y } = getCoordByValue(value, gauge, "between", 0, 0.75);
             x -= 1;
-            y += pointerRadius;
+            y += pointerRadius - 5;
             translatePointer(x, y, gauge);
         },
     };
@@ -146,7 +146,7 @@ const isProgressValid = (currentPercent: number, prevPercent: number, gauge: Gau
 const calculatePointerPath = (gauge: Gauge, percent: number) => {
     const { centerPoint, pointerRadius, pathLength } = gauge.pointer.current.context;
     let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -42);
-    let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 222);
+    let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 223);
     const angle = startAngle + (percent) * (endAngle - startAngle);
     var topPoint = [
         centerPoint[0] - pathLength * Math.cos(angle),

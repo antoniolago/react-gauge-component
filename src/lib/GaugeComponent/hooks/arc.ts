@@ -309,23 +309,23 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
   let percent = utils.calculatePercentage(gauge.props.minValue as number, gauge.props.maxValue as number, value);
   let gaugeTypesAngles: Record<GaugeType, { startAngle: number; endAngle: number; }> = {
     [GaugeType.Grafana]: {
-      startAngle: utils.degToRad(-24),
-      endAngle: utils.degToRad(203.5)
+      startAngle: utils.degToRad(-23),
+      endAngle: utils.degToRad(203)
     },
     [GaugeType.Semicircle]: {
-      startAngle: utils.degToRad(0),
-      endAngle: utils.degToRad(180)
+      startAngle: utils.degToRad(0.9),
+      endAngle: utils.degToRad(179.1)
     },
     [GaugeType.Radial]: {
-      startAngle: utils.degToRad(-41),
-      endAngle: utils.degToRad(221)
+      startAngle: utils.degToRad(-39),
+      endAngle: utils.degToRad(219)
     },
   };
 
   let { startAngle, endAngle } = gaugeTypesAngles[gauge.props.type as GaugeType];
   const angle = startAngle + (percent) * (endAngle - startAngle);
 
-  let coordsRadius = 15 * (gauge.dimensions.current.width / 500);
+  let coordsRadius = 1 * (gauge.dimensions.current.width / 500);
   let coord = [0, -coordsRadius / 2];
   let coordMinusCenter = [
     coord[0] - centerToArcLength * Math.cos(angle),

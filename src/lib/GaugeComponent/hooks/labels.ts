@@ -2,6 +2,7 @@ import * as utils from './utils';
 import CONSTANTS from '../constants';
 import { Gauge } from '../types/Gauge';
 import { Tick } from '../types/Tick';
+import * as d3 from 'd3';
 import React from 'react';
 import { GaugeType } from '../types/GaugeComponentProps';
 import { getArcDataByValue, getCoordByValue } from './arc';
@@ -67,13 +68,36 @@ export const addTickLine = (tick: Tick, gauge: Gauge) => {
   const { labels } = gauge.props;
   const { tickAnchor, angle } = calculateAnchorAndAngleByValue(tick?.value as number, gauge);
   let coords = getLabelCoordsByValue(tick?.value as number, gauge, undefined);
-  let char = tick.lineConfig?.char || labels?.tickLabels?.defaultTickLineConfig?.char;
-  let charStyle = tick.lineConfig?.style || (labels?.tickLabels?.defaultTickLineConfig?.style || {})
-  charStyle = {...charStyle};
-  charStyle.textAnchor = tickAnchor as any;
-  addText(char, coords.x, coords.y, gauge, charStyle, CONSTANTS.tickLineClassname, angle);
-}
 
+  var tickColor = labels?.tickLabels?.defaultTickLineConfig?.color || tick.lineConfig?.color || "black";
+  var tickWidth = labels?.tickLabels?.defaultTickLineConfig?.width || tick.lineConfig?.width || 1;
+  var tickLength = labels?.tickLabels?.defaultTickLineConfig?.length || tick.lineConfig?.length || 10;
+
+  // Calculate the end coordinates based on the adjusted position
+  const endX = coords.x - tickLength * Math.cos((angle * Math.PI) / 180);
+  const endY = coords.y - tickLength * Math.sin((angle * Math.PI) / 180);
+
+  // (gauge.dimensions.current.outerRadius - gauge.dimensions.current.innerRadius)
+  // Create a D3 line generator
+  const lineGenerator = d3.line();
+
+  // Define the line coordinates
+  const lineCoordinates = [[coords.x, coords.y], [endX, endY]];
+
+  // Append a path element for the line
+  gauge.g.current
+    .append("path")
+    .datum(lineCoordinates)
+    .attr("class", CONSTANTS.tickLineClassname)
+    .attr("d", lineGenerator)
+    // .attr("transform", `translate(${0}, ${0})`)
+    .attr("stroke", tickColor)
+    .attr("stroke-width", tickWidth)
+    .attr("fill", "none")
+    // .attr("stroke-linecap", "round")
+    // .attr("stroke-linejoin", "round")
+    // .attr("transform", `rotate(${angle})`);
+};
 export const addTickValue = (tick: Tick, gauge: Gauge) => {
   const { labels, value } = gauge.props;
   let arc = gauge.props.arc as Arc;
@@ -108,7 +132,7 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
     // if(tickAnchor === "start") coords.x += 10;
   }
   if(tickAnchor === "middle"){
-    coords.y += 8;
+    coords.y += 0;
   } else{
     coords.y += 3;
   }
@@ -132,12 +156,12 @@ export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLe
   let { x, y } = getCoordByValue(value, gauge, type, centerToArcLengthSubtract, 0.93);
   let percent = utils.calculatePercentage(minValue, maxValue, value);
   //This corrects labels in the cener being too close from the arc
-  let isValueBetweenCenter = percent > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] && 
-                                percent < CONSTANTS.rangeBetweenCenteredTickValueLabel[1];
-  if (isValueBetweenCenter){
-    let isInner = type == "inner";
-    y+= isInner ? 8 : -1;
-  }
+  // let isValueBetweenCenter = percent > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] && 
+  //                               percent < CONSTANTS.rangeBetweenCenteredTickValueLabel[1];
+  // if (isValueBetweenCenter){
+  //   let isInner = type == "inner";
+  //   y+= isInner ? 8 : -1;
+  // }
   if(gauge.props.type == GaugeType.Radial){
     y += 3;
   }
@@ -245,6 +269,6 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   } else {
     tickAnchor = isInner ? "end" : "start";
   }
-  if(valuePercentage > 0.50) angle = angle - 180;
+  // if(valuePercentage > 0.50) angle = angle - 180;
   return { tickAnchor, angle };
 }
