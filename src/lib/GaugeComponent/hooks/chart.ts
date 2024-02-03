@@ -77,9 +77,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         labelsHooks.setupLabels(gauge);
         pointerHooks.drawPointer(gauge, resize);
         let gaugeTypeHeightCorrection: Record<string, number> = {
-            [GaugeType.Semicircle]: 45,
-            [GaugeType.Radial]: 45,
-            [GaugeType.Grafana]: 50
+            [GaugeType.Semicircle]: 50,
+            [GaugeType.Radial]: 55,
+            [GaugeType.Grafana]: 55
         }
         let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height; 
         let boundWidth = gauge.container.current.node().getBoundingClientRect().width;

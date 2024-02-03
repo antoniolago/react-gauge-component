@@ -434,9 +434,11 @@ const kbitsToMbits = (value) => {
                   </li>
                 <li><code>defaultTickLineConfig: object</code>: The default config of the tick's line.
                   <ul>
-                      <li><code>char: string</code>: The char of the tick. Default: <code>'_'</code></li>
-                      <li><code>style: React.CSSProperties</code>: Overrides tick's lineConfig styles. Default: <code>{fontSize: "18px", fill: "#464A4F", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
-                      <li><code>hide: boolean</code>: Whether or not to hide the tick's char. Default: <code>false</code></li>
+                      <li><code>width: number</code>: The width of the tick's line. Default: <code>1</code></li>
+                      <li><code>length: number</code>: The length of the tick's line. Default: <code>7</code></li>
+                      <li><code>color: string</code>: The color of the tick's line. Default: <code>rgb(173 172 171)</code></li>
+                      <li><code>distanceFromArc: number</code>: The distance of the tick's line from the arc. Default: <code>3</code></li>
+                      <li><code>hide: boolean</code>: Whether or not to hide the tick's line. Default: <code>false</code></li>
                   </ul>
                 </li>
             </ul>

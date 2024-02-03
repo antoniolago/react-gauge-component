@@ -32,23 +32,23 @@ export interface TickValueConfig {
     hide?: boolean;
 }
 export interface TickLineConfig {
-    /** Tick char, currently is "_" but this got to be deprecated
-     * when we migrate this with d3 lines
-     */
-    char?: string;
-    /** The tick line label will inherit this */
-    style?: React.CSSProperties;
-    /** If true will hide the tick line label */
+    /** The width of the tick's line */
+    width?: number;
+    /** The length of the tick's line */
+    length?: number;
+    /** The distance of the tick's line from the arc */
+    distanceFromArc?: number;
+    /** The color of the tick's line */
+    color?: string;
+    /** If true will hide the tick line */
     hide?: boolean;
 }
 
 const defaultTickLineConfig: TickLineConfig = {
-    char: "_",
-    style:{
-        fontSize: "18px",
-        fill: "rgb(173 172 171)",
-        // textShadow: "black 1px 0.5px 0px, black 0px 0px 0.03em, black 0px 0px 0.01em"
-    },
+    color: "rgb(173 172 171)",
+    length: 7,
+    width: 1,
+    distanceFromArc: 3,
     hide: false
 };
 
