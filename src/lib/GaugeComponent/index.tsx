@@ -80,14 +80,13 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   useEffect(() => {
     const observer = new MutationObserver(function () {
       if (!selectedRef.current?.offsetParent) return;
-
+      
       chartHooks.renderChart(gauge, true);
       observer.disconnect()
     });
-
-    observer.observe(window.document, {attributes: true, subtree: true});
+    observer.observe(selectedRef.current?.parentNode, {attributes: true, subtree: false});
     return () => observer.disconnect();
-  }, [selectedRef.current?.parentNode]);
+  }, [selectedRef.current?.parentNode?.offsetWidth, selectedRef.current?.parentNode?.offsetHeight]);
 
   useEffect(() => {
     const handleResize = () => chartHooks.renderChart(gauge, true);
@@ -100,7 +99,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   return (
     <div
       id={id}
-      className={`${className} ${type == GaugeType.Semicircle ? "semicircle-gauge" : "radial-gauge"}`}
+      className={`${gauge.props.type}-gauge${className ? ' '+className : ''}`}
       style={style}
       ref={(svg) => (selectedRef.current = svg)}
     />
