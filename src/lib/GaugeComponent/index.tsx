@@ -78,6 +78,18 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   }, [props]);
 
   useEffect(() => {
+    const observer = new MutationObserver(function () {
+      if (!selectedRef.current?.offsetParent) return;
+
+      chartHooks.renderChart(gauge, true);
+      observer.disconnect()
+    });
+
+    observer.observe(window.document, {attributes: true, subtree: true});
+    return () => observer.disconnect();
+  }, [selectedRef.current?.parentNode]);
+
+  useEffect(() => {
     const handleResize = () => chartHooks.renderChart(gauge, true);
     //Set up resize event listener to re-render the chart everytime the window is resized
     window.addEventListener("resize", handleResize);
