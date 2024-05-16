@@ -278,9 +278,7 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   let { startAngle, endAngle } = gaugeTypesAngles[gauge.props.type as string];
 
   let angle = startAngle + (valuePercentage * 100) * endAngle / 100;
-  let halfInPercentage = utils.calculatePercentage(minValue, maxValue, (maxValue / 2));
-  let halfPercentage = halfInPercentage;
-  let isValueLessThanHalf = valuePercentage < halfPercentage;
+  let isValueLessThanHalf = valuePercentage < 0.5;
   //Values between 40% and 60% are aligned in the middle
   let isValueBetweenTolerance = valuePercentage > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] &&
     valuePercentage < CONSTANTS.rangeBetweenCenteredTickValueLabel[1];
