@@ -4,7 +4,7 @@ export const calculatePercentage = (minValue: number, maxValue: number, value: n
   if (value < minValue) {
     return 0;
   } else if (value > maxValue) {
-    return 100;
+    return 1;
   } else {
     let percentage = (value - minValue) / (maxValue - minValue)
     return (percentage);
