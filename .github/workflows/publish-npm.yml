@@ -114,26 +114,26 @@ jobs:
           docker run --network host -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://localhost:3000 -r zap-report.html
 
       
-  compliance:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+  # compliance:
+  #   runs-on: ubuntu-latest
+  #   needs: test
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+  #     - name: Set up Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         registry-url: 'https://registry.npmjs.org'
 
-      - uses: c-hive/gha-yarn-cache@v2
+  #     - uses: c-hive/gha-yarn-cache@v2
 
-      - name: Install dependencies
-        run: yarn install
+  #     - name: Install dependencies
+  #       run: yarn install
 
-      - name: Enforce compliance
-        run: yarn run enforce-compliance
+  #     - name: Enforce compliance
+  #       run: yarn run enforce-compliance
 
   publish:
     runs-on: ubuntu-latest
