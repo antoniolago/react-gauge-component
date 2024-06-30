@@ -59,16 +59,14 @@ jobs:
         if: matrix.scan == 'secret-scan'
         uses: secret-scanner/action@0.0.2
 
-      - uses: AppThreat/sast-scan-action@master
+     
+      - name: nodejsscan scan
         if: matrix.scan == 'sast-scan'
+        id: njsscan
+        uses: ajinabraham/njsscan-action@master
         with:
-          type: "nodejs"
+          args: '.'
       
-      - uses: actions/upload-artifact@v1
-        if: matrix.scan == 'sast-scan'
-        with:
-          name: reports
-          path: reports
       - name: Depcheck
         if: matrix.scan == 'dependency-scan'
         uses: dependency-check/Dependency-Check_Action@main
