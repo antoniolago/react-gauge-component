@@ -111,7 +111,7 @@ jobs:
           yarn add global serve
           yarn run serve -s build &
           sleep 10
-          docker run -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://localhost:3000 -r zap-report.html
+          docker run --network host -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://localhost:3000 -r zap-report.html
 
       
   compliance:
