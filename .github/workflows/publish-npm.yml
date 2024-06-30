@@ -27,7 +27,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: pre
+    #needs: pre
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
