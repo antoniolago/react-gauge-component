@@ -101,7 +101,7 @@ jobs:
         if: matrix.scan == 'dast'
         run: |
           echo "Running DAST"
-          docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py -t http://localhost:3000 -r zap-report.html
+          docker run -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://localhost:3000 -r zap-report.html
 
       
   compliance:
