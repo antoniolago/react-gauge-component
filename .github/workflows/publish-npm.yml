@@ -6,25 +6,6 @@ on:
       - 'v*.*.*'
 
 jobs:
-  pre:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-
-      - uses: c-hive/gha-yarn-cache@v2
-
-      - name: Install dependencies
-        run: yarn install
-      - name: Test lint
-        run: yarn run eslint
-
   build:
     runs-on: ubuntu-latest
     #needs: pre
@@ -53,7 +34,8 @@ jobs:
           secret-scan, 
           sast-scan, 
           dependency-scan, 
-          dast
+          dast-scan,
+          lint-scan
         ]
     steps:
       - name: Checkout code
@@ -106,13 +88,19 @@ jobs:
           name: Depcheck report
           path: ${{github.workspace}}/reports
       - name: Run DAST
-        if: matrix.scan == 'dast'
+        if: matrix.scan == 'dast-scan'
         run: |
           yarn add global serve
           yarn run serve -s build &
           sleep 10
           docker run --network host -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://localhost:3000 -r zap-report.html
 
+          - name: Install dependencies
+          run: yarn install
+      - name: Test lint
+        if: matrix.scan == 'lint-scan'
+        run: yarn run eslint
+  
       
   # compliance:
   #   runs-on: ubuntu-latest
