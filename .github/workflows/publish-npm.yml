@@ -85,12 +85,12 @@ jobs:
           args: >
             --failOnCVSS 7
             --enableRetired
-        - name: Upload Test results
-          if: matrix.scan == 'dependency-scan'
-          uses: actions/upload-artifact@master
-          with:
-             name: Depcheck report
-             path: ${{github.workspace}}/reports
+      - name: Upload Test results
+        if: matrix.scan == 'dependency-scan'
+        uses: actions/upload-artifact@master
+        with:
+          name: Depcheck report
+          path: ${{github.workspace}}/reports
       - name: Run DAST
         if: matrix.scan == 'dast'
         run: |
