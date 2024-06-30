@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Test lint
-        run: yarn lint
+        run: yarn run eslint
 
   build:
     runs-on: ubuntu-latest
