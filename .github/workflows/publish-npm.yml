@@ -52,13 +52,9 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Build app
-        run: yarn run build
-
       - name: Secret Scanner
         if: matrix.scan == 'secret-scan'
         uses: secret-scanner/action@0.0.2
-
      
       - name: nodejsscan scan
         if: matrix.scan == 'sast-scan'
@@ -97,28 +93,6 @@ jobs:
         if: matrix.scan == 'lint-scan'
         run: yarn run eslint
   
-      
-  # compliance:
-  #   runs-on: ubuntu-latest
-  #   needs: test
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
-
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-  #         registry-url: 'https://registry.npmjs.org'
-
-  #     - uses: c-hive/gha-yarn-cache@v2
-
-  #     - name: Install dependencies
-  #       run: yarn install
-
-  #     - name: Enforce compliance
-  #       run: yarn run enforce-compliance
-
   publish:
     runs-on: ubuntu-latest
     needs: test
@@ -146,8 +120,7 @@ jobs:
         uses: jaywcjlove/github-action-package@main
         with:
           version: ${{steps.get_version.outputs.version-without-v}}
-
-      #- name: Publish to npm
-      # run: npm publish --access public
-      #  env:
-      #    NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
