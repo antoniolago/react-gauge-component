@@ -42,6 +42,7 @@ jobs:
       - name: build
         run: yarn run build
 
+
   test:
     runs-on: ubuntu-latest
     needs: build
@@ -63,18 +64,29 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Run scan
-        run: |
-          if [ "${{ matrix.scan }}" == "secret-scan" ]; then
-            yarn run secret-scan
-          elif [ "${{ matrix.scan }}" == "sast-scan" ]; then
-            yarn run sast-scan
-          elif [ "${{ matrix.scan }}" == "dependency-scan" ]; then
-            yarn audit
-          elif [ "${{ matrix.scan }}" == "dast" ]; then
-            yarn run dast
-          fi
+      - name: Secret Scanner
+        if: matrix.scan == 'secret-scan'
+        uses: secret-scanner/action@0.0.2
 
+      # - name: Run SAST Scan
+      #   if: matrix.scan == 'sast-scan'
+      #   run: |
+      #     echo "Running SAST Scan"
+      #     eslint . --ext .js,.jsx,.ts,.tsx --output-file eslint-report.json -f json
+
+      - name: Run Dependency Scan
+        if: matrix.scan == 'dependency-scan'
+        run: |
+          echo "Running Dependency Scan"
+          yarn run audit --json > yarn-run-audit-report.json
+
+      - name: Run DAST
+        if: matrix.scan == 'dast'
+        run: |
+          echo "Running DAST"
+          docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py -t http://localhost:3000 -r zap-report.html
+
+      
   compliance:
     runs-on: ubuntu-latest
     needs: test
