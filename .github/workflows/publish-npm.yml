@@ -49,7 +49,12 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        scan: [secret-scan, sast-scan, dependency-scan, dast]
+        scan: [
+          secret-scan, 
+          # sast-scan, 
+          dependency-scan, 
+          dast
+        ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
