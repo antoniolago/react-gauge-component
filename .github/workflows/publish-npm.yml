@@ -51,7 +51,7 @@ jobs:
       matrix:
         scan: [
           secret-scan, 
-          # sast-scan, 
+          sast-scan, 
           dependency-scan, 
           dast
         ]
@@ -77,11 +77,16 @@ jobs:
         if: matrix.scan == 'secret-scan'
         uses: secret-scanner/action@0.0.2
 
-      # - name: Run SAST Scan
-      #   if: matrix.scan == 'sast-scan'
-      #   run: |
-      #     echo "Running SAST Scan"
-      #     eslint . --ext .js,.jsx,.ts,.tsx --output-file eslint-report.json -f json
+      - uses: AppThreat/sast-scan-action@master
+        if: matrix.scan == 'sast-scan'
+        with:
+          type: "python"
+      
+      - uses: actions/upload-artifact@v1
+        if: matrix.scan == 'sast-scan'
+        with:
+          name: reports
+          path: reports
       - name: Depcheck
         if: matrix.scan == 'dependency-scan'
         uses: dependency-check/Dependency-Check_Action@main
@@ -104,7 +109,7 @@ jobs:
         if: matrix.scan == 'dast'
         run: |
           yarn add global serve
-          serve -s build &
+          yarn run serve -s build &
           sleep 10
           docker run -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://localhost:3000 -r zap-report.html
 
