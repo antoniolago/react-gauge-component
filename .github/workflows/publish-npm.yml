@@ -73,13 +73,24 @@ jobs:
       #   run: |
       #     echo "Running SAST Scan"
       #     eslint . --ext .js,.jsx,.ts,.tsx --output-file eslint-report.json -f json
-
-      - name: Run Dependency Scan
+      - name: Depcheck
         if: matrix.scan == 'dependency-scan'
-        run: |
-          echo "Running Dependency Scan"
-          yarn run audit --json > yarn-run-audit-report.json
-
+        uses: dependency-check/Dependency-Check_Action@main
+        id: Depcheck
+        with:
+          project: 'test'
+          path: '.'
+          format: 'HTML'
+          out: 'reports' # this is the default, no need to specify unless you wish to override it
+          args: >
+            --failOnCVSS 7
+            --enableRetired
+        - name: Upload Test results
+          if: matrix.scan == 'dependency-scan'
+          uses: actions/upload-artifact@master
+          with:
+             name: Depcheck report
+             path: ${{github.workspace}}/reports
       - name: Run DAST
         if: matrix.scan == 'dast'
         run: |
