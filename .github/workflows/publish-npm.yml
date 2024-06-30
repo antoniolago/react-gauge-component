@@ -6,11 +6,99 @@ on:
       - 'v*.*.*'
 
 jobs:
-  update-and-publish:
+  pre:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    permissions:
-      contents: read
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - uses: c-hive/gha-yarn-cache@v2
+
+      - name: Install dependencies
+        run: yarn install
+      - name: Test lint
+        run: yarn lint
+
+  build:
+    runs-on: ubuntu-latest
+    needs: pre
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      - uses: c-hive/gha-yarn-cache@v2
+      - name: Install dependencies
+        run: yarn install
+      - name: build
+        run: yarn run build
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        scan: [secret-scan, sast-scan, dependency-scan, dast]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - uses: c-hive/gha-yarn-cache@v2
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Run scan
+        run: |
+          if [ "${{ matrix.scan }}" == "secret-scan" ]; then
+            yarn run secret-scan
+          elif [ "${{ matrix.scan }}" == "sast-scan" ]; then
+            yarn run sast-scan
+          elif [ "${{ matrix.scan }}" == "dependency-scan" ]; then
+            yarn audit
+          elif [ "${{ matrix.scan }}" == "dast" ]; then
+            yarn run dast
+          fi
+
+  compliance:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - uses: c-hive/gha-yarn-cache@v2
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Enforce compliance
+        run: yarn run enforce-compliance
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: compliance
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -29,14 +117,14 @@ jobs:
       - name: Extract tag version number
         id: get_version
         uses: battila7/get-version-action@v2
+
       - name: package.json info
         id: info
         uses: jaywcjlove/github-action-package@main
         with:
           version: ${{steps.get_version.outputs.version-without-v}}
-      - name: build
-        run: yarn run build-package
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+      #- name: Publish to npm
+      # run: npm publish --access public
+      #  env:
+      #    NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
