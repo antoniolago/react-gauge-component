@@ -80,7 +80,7 @@ jobs:
       - uses: AppThreat/sast-scan-action@master
         if: matrix.scan == 'sast-scan'
         with:
-          type: "python"
+          type: "nodejs"
       
       - uses: actions/upload-artifact@v1
         if: matrix.scan == 'sast-scan'
