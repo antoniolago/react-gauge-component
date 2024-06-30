@@ -4,7 +4,7 @@
   "main": "dist/lib/index.js",
   "module": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
-  "homepage": "https://antoniolago.github.io/react-gauge-component/",
+  "homepage": ".",
   "keywords": [
     "gauge",
     "chart",
@@ -24,7 +24,8 @@
   "dependencies": {
     "@types/d3": "^7.4.0",
     "d3": "^7.6.1",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "serve": "^14.2.3"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -41,9 +42,6 @@
   },
   "resolutions": {
     "@types/react": "~17.0.1"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
   },
   "browserslist": [
     ">0.2%",

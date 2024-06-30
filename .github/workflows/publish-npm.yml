@@ -91,12 +91,10 @@ jobs:
         if: matrix.scan == 'dast-scan'
         run: |
           yarn add global serve
+          yarn run build-page
           yarn run serve -s build &
-          sleep 10
+          sleep 5
           docker run --network host -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://localhost:3000 -r zap-report.html
-
-          - name: Install dependencies
-          run: yarn install
       - name: Test lint
         if: matrix.scan == 'lint-scan'
         run: yarn run eslint
