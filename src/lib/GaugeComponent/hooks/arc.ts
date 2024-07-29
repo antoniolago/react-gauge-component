@@ -10,7 +10,7 @@ import * as arcHooks from './arc';
 import CONSTANTS from '../constants';
 import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 import { GaugeType } from '../types/GaugeComponentProps';
-import { throttle } from 'lodash';
+import { throttle } from 'lodash-es';
 import { Arc, SubArc } from '../types/Arc';
 
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
