@@ -387,7 +387,6 @@ const MainPreviews = () => {
                         <Col xs={12} lg={3}>
                             <h6 className="mb-1">Radial inner ticks</h6>
                             <GaugeComponent
-                                id="gauge-component-radial"
                                 value={currentValue}
                                 type="radial"
                                 arc={{

@@ -56,7 +56,7 @@ const defaultTickValueConfig: TickValueConfig = {
     formatTextValue: undefined,
     maxDecimalDigits: 2,
     style:{
-        fontSize: "10px",
+        fontSize: "7px",
         fill: "rgb(173 172 171)",
     },
     hide: false,

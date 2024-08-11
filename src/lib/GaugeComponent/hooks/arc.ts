@@ -377,30 +377,31 @@ const reOrderSubArcs = (gauge: Gauge): void => {
   });
 }
 const verifySubArcsLimits = (gauge: Gauge) => {
+  return;
   // disabled when length implemented.
   // reOrderSubArcs(gauge);
-  let minValue = gauge.props.minValue as number;
-  let maxValue = gauge.props.maxValue as number;
-  let arc = gauge.props.arc as Arc;
-  let subArcs = arc.subArcs as SubArc[];
-  let prevLimit: number | undefined = undefined;
-  for (const subArc of gauge.props.arc?.subArcs || []) {
-    const limit = subArc.limit;
-    if (typeof limit !== 'undefined') {
-      // Check if the limit is within the valid range
-      if (limit < minValue || limit > maxValue)
-        throw new Error(`The limit of a subArc must be between the minValue and maxValue. The limit of the subArc is ${limit}`);
-      // Check if the limit is greater than the previous limit
-      if (typeof prevLimit !== 'undefined') {
-        if (limit <= prevLimit)
-          throw new Error(`The limit of a subArc must be greater than the limit of the previous subArc. The limit of the subArc is ${limit}. If you're trying to specify length in percent of the arc, use property "length". refer to: https://github.com/antoniolago/react-gauge-component`);
-      }
-      prevLimit = limit;
-    }
-  }
-  // If the user has defined subArcs, make sure the last subArc has a limit equal to the maxValue
-  if (subArcs.length > 0) {
-    let lastSubArc = subArcs[subArcs.length - 1];
-    if (lastSubArc.limit as number < maxValue) lastSubArc.limit = maxValue;
-  }
+  // let minValue = gauge.props.minValue as number;
+  // let maxValue = gauge.props.maxValue as number;
+  // let arc = gauge.props.arc as Arc;
+  // let subArcs = arc.subArcs as SubArc[];
+  // let prevLimit: number | undefined = undefined;
+  // for (const subArc of gauge.props.arc?.subArcs || []) {
+  //   const limit = subArc.limit;
+  //   if (typeof limit !== 'undefined') {
+  //     // Check if the limit is within the valid range
+  //     if (limit < minValue || limit > maxValue)
+  //       throw new Error(`The limit of a subArc must be between the minValue and maxValue. The limit of the subArc is ${limit}`);
+  //     // Check if the limit is greater than the previous limit
+  //     if (typeof prevLimit !== 'undefined') {
+  //       if (limit <= prevLimit)
+  //         throw new Error(`The limit of a subArc must be greater than the limit of the previous subArc. The limit of the subArc is ${limit}. If you're trying to specify length in percent of the arc, use property "length". refer to: https://github.com/antoniolago/react-gauge-component`);
+  //     }
+  //     prevLimit = limit;
+  //   }
+  // }
+  // // If the user has defined subArcs, make sure the last subArc has a limit equal to the maxValue
+  // if (subArcs.length > 0) {
+  //   let lastSubArc = subArcs[subArcs.length - 1];
+  //   if (lastSubArc.limit as number < maxValue) lastSubArc.limit = maxValue;
+  // }
 }

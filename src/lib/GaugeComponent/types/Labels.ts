@@ -3,7 +3,17 @@ export interface Labels {
     /** This configures the central value label. */
     valueLabel?: ValueLabel,
     /** This configures the ticks and it's values labels. */
-    tickLabels?: TickLabels
+    tickLabels?: TickLabels,
+    /** This configures the description label */
+    descriptionLabel?: DescriptionLabel
+}
+export interface DescriptionLabel {
+    /** labelText */
+    labelText?: string;
+    /** labelText's position */
+    position?: 'top' | 'bottom' | 'center';
+    /** labelText style */
+    style?: React.CSSProperties;
 }
 
 export interface ValueLabel {
@@ -33,5 +43,15 @@ export const defaultValueLabel: ValueLabel = {
 }
 export const defaultLabels: Labels = {
     valueLabel: defaultValueLabel,
-    tickLabels: defaultTickLabels
+    tickLabels: defaultTickLabels,
+    descriptionLabel: {
+        labelText: "",
+        position: 'bottom',
+        style: {
+            textAnchor: 'middle',
+            fontSize: "18px",
+            fill: '#fff',
+            textShadow: "black 1px 0.5px 0px, black 0px 0px 0.03em, black 0px 0px 0.01em"
+        }
+    }
 }

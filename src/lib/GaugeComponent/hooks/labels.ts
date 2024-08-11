@@ -12,6 +12,36 @@ import { Arc, SubArc } from '../types/Arc';
 export const setupLabels = (gauge: Gauge) => {
   setupValueLabel(gauge);
   setupTicks(gauge);
+  setupDescriptionLabel(gauge);
+}
+export const setupDescriptionLabel = (gauge: Gauge) => {
+  const { labels } = gauge.props;
+  if (labels?.descriptionLabel) {
+    let descriptionLabel = labels.descriptionLabel;
+    let text = descriptionLabel.labelText;
+    let style = descriptionLabel.style;
+    let yCorrectionByPlacementGrafana: Record<string, number> = {
+      ["top"]: -0.25,
+      ["center"]: 0.80,
+      ["bottom"]: 1.6
+    };
+    let yCorrection: Record<string, number> = {
+      [GaugeType.Grafana]: yCorrectionByPlacementGrafana[gauge.props.labels?.descriptionLabel?.position as string],
+      [GaugeType.Semicircle]: 25,
+      [GaugeType.Radial]: 25,
+    };
+    let x = gauge.dimensions.current.innerRadius + 25;
+    let y = 0;
+    // if (gauge.props.type == GaugeType.Semicircle) {
+    //   y = gauge.dimensions.current.outerRadius / 1.5;
+    // } else if (gauge.props.type == GaugeType.Radial) {
+    //   y = gauge.dimensions.current.outerRadius * 1.45;
+    // } else if (gauge.props.type == GaugeType.Grafana) {
+    //   y = gauge.dimensions.current.outerRadius * yCorrection[gauge.props.type as string];
+    // }
+    y = gauge.dimensions.current.outerRadius * yCorrection[gauge.props.type as string];
+    addText(text, x, y, gauge, style!, CONSTANTS.descriptionLabelClassname);
+  }
 }
 export const setupValueLabel = (gauge: Gauge) => {
   const { labels } = gauge.props;
@@ -117,7 +147,7 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   let { tickAnchor } = calculateAnchorAndAngleByValue(tickValue, gauge);
   let centerToArcLengthSubtract = 27 - arcWidth * 10;
   let isInner = labels?.tickLabels?.type == "inner";
-  if (!isInner) centerToArcLengthSubtract = arcWidth * 10 - 10
+  if (!isInner) centerToArcLengthSubtract = arcWidth * 10 - 6
   else centerToArcLengthSubtract -= 10
   var tickDistanceFromArc = labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc || tick.lineConfig?.distanceFromArc || 0;
   var tickLength = labels?.tickLabels?.defaultTickLineConfig?.length || tick.lineConfig?.length || 0;
@@ -238,7 +268,8 @@ export const addValueText = (gauge: Gauge) => {
   } else if (gauge.props.type == GaugeType.Radial) {
     y = gauge.dimensions.current.outerRadius * 1.45 + textPadding;
   } else if (gauge.props.type == GaugeType.Grafana) {
-    y = gauge.dimensions.current.outerRadius * 1.0 + textPadding;
+    let corr = gauge.props.labels?.descriptionLabel?.position != "center" ? 0.85 : 1.0;
+    y = gauge.dimensions.current.outerRadius * corr  + textPadding;
   }
   //if(gauge.props.pointer.type == PointerType.Arrow){
   //  y = gauge.dimensions.current.outerRadius * 0.79 + textPadding;
@@ -255,6 +286,9 @@ export const clearValueLabel = (gauge: Gauge) => gauge.g.current.selectAll(`.${C
 export const clearTicks = (gauge: Gauge) => {
   gauge.g.current.selectAll(`.${CONSTANTS.tickLineClassname}`).remove();
   gauge.g.current.selectAll(`.${CONSTANTS.tickValueClassname}`).remove();
+}
+export const clearDescriptionLabel = (gauge: Gauge) => {
+  gauge.g.current.selectAll(`.${CONSTANTS.descriptionLabelClassname}`).remove();
 }
 
 export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
@@ -278,7 +312,9 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   let { startAngle, endAngle } = gaugeTypesAngles[gauge.props.type as string];
 
   let angle = startAngle + (valuePercentage * 100) * endAngle / 100;
-  let isValueLessThanHalf = valuePercentage < 0.5;
+  let halfInPercentage = utils.calculatePercentage(minValue, maxValue, (maxValue / 2));
+  let halfPercentage = halfInPercentage;
+  let isValueLessThanHalf = valuePercentage < halfPercentage;
   //Values between 40% and 60% are aligned in the middle
   let isValueBetweenTolerance = valuePercentage > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] &&
     valuePercentage < CONSTANTS.rangeBetweenCenteredTickValueLabel[1];
