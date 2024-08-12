@@ -4,7 +4,7 @@ import GaugeComponent from '../lib';
 import CONSTANTS from '../lib/GaugeComponent/constants';
 
 const MainPreviews = () => {
-    const [currentValue, setCurrentValue] = useState(50);
+    const [currentValue, setCurrentValue] = useState(33);
     const [arcs, setArcs] = useState([{ limit: 30 }, { limit: 50 }, { limit: 100 }])
 
     useEffect(() => {

@@ -14,21 +14,19 @@ import './index.css';
 import { Arc, getArcWidthByType } from "./types/Arc";
 
 const ErrorFallback: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) => (
-  <div role="alert" style={{ color: "red" }}>
+  <div role="alert" style={{ color: "red", padding: "20px", backgroundColor: "#fff", textAlign: "center" }}>
     <h1>Something went wrong.</h1>
     <p>{error.message}</p>
     <button onClick={resetErrorBoundary}>Try again</button>
   </div>
 );
-
 const GaugeComponent: React.FC<Partial<GaugeComponentProps>> = (props) => {
   return (
     <ErrorBoundary
-      FallbackComponent={ErrorFallback}
-      onReset={() => {
-        // Reset the state of your app so the error doesn't happen again
-      }}
-    >
+    FallbackComponent={ErrorFallback}
+    onReset={() => {
+      // Reset the state of your app so the error doesn't happen again
+    }}>
       <GaugeComponentContent {...props} />
     </ErrorBoundary>
   );
@@ -38,6 +36,7 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
   const [currentProps, setCurrentProps] = useState<Partial<GaugeComponentProps>>(mergeObjects(defaultGaugeProps, props));
   const [editMode, setEditMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [useTextEditor, setUseTextEditor] = useState(false); // State for toggling editors
   const svg = useRef<any>({});
   const tooltip = useRef<any>({});
   const g = useRef<any>({});
@@ -141,6 +140,8 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
         setEditMode={setEditMode}
         isDarkMode={isDarkMode}
         setIsDarkMode={setIsDarkMode}
+        useTextEditor={useTextEditor}
+        setUseTextEditor={setUseTextEditor}
         currentProps={currentProps}
         setCurrentProps={setCurrentProps}
       />
@@ -155,10 +156,21 @@ type DebugModalProps = {
   setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
   isDarkMode: boolean;
   setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
+  useTextEditor: boolean;
+  setUseTextEditor: React.Dispatch<React.SetStateAction<boolean>>;
   currentProps: Partial<GaugeComponentProps>;
   setCurrentProps: React.Dispatch<React.SetStateAction<Partial<GaugeComponentProps>>>;
 };
-const DebugModal: React.FC<DebugModalProps> = ({ editMode, setEditMode, isDarkMode, setIsDarkMode, currentProps, setCurrentProps }) => {
+
+const DebugModal: React.FC<DebugModalProps> = ({ editMode, setEditMode, isDarkMode, setIsDarkMode, useTextEditor, setUseTextEditor, currentProps, setCurrentProps }) => {
+  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    try {
+      const updatedProps = JSON.parse(event.target.value);
+      setCurrentProps(updatedProps);
+    } catch (error) {
+      console.error("Invalid JSON format", error);
+    }
+  };
 
   const formatPropValue = (value: any, isTopLevel: boolean = true): string => {
     if (value === null || value === undefined) {
@@ -189,14 +201,14 @@ const DebugModal: React.FC<DebugModalProps> = ({ editMode, setEditMode, isDarkMo
     const gaugeJSX = `
 <GaugeComponent
   ${Object.entries(currentProps)
-    .map(([key, value]) => {
-      const formattedValue = formatPropValue(value, true);
-      return formattedValue !== '' ? `${key}=${formattedValue}` : '';
-    })
-    .filter(val => val !== '')  // Remove any empty lines where values were null
-    .join('\n  ')}
+        .map(([key, value]) => {
+          const formattedValue = formatPropValue(value, true);
+          return formattedValue !== '' ? `${key}=${formattedValue}` : '';
+        })
+        .filter(val => val !== '')  // Remove any empty lines where values were null
+        .join('\n  ')}
 />`;
-    
+
     navigator.clipboard.writeText(gaugeJSX).then(() => {
       alert("GaugeComponent JSX copied to clipboard!");
     });
@@ -217,26 +229,39 @@ const DebugModal: React.FC<DebugModalProps> = ({ editMode, setEditMode, isDarkMo
             size={80}
           />
         </div>
+        <div>
+          <button onClick={() => setUseTextEditor(!useTextEditor)}>
+            Switch to {useTextEditor ? "JSON Viewer" : "Text Editor"}
+          </button>
+        </div>
         <div className="modal-body">
-          <div className={`editor json-editor ${isDarkMode ? "dark-mode" : "light-mode"}`}>
-            <PropertyEditor
-              currentProps={currentProps}
-              setCurrentProps={setCurrentProps}
+          {useTextEditor ? (
+            <textarea
+              className={`json-textarea ${isDarkMode ? "dark-mode" : "light-mode"}`}
+              value={JSON.stringify(currentProps, null, 2)}
+              onChange={handleTextChange}
+              rows={20}
+              cols={50}
             />
-          </div>
-          <div className="gauge-preview" style={{display: "flex", flexDirection: "column-reverse"}}>
-            <button onClick={copyGaugeComponent}>Copy Gauge JSX</button>
-            <GaugeComponentContent key={JSON.stringify(currentProps)} {...currentProps} />
+          ) : (
+            <div className={`editor json-editor ${isDarkMode ? "dark-mode" : "light-mode"}`}>
+              <PropertyEditor
+                currentProps={currentProps}
+                setCurrentProps={setCurrentProps}
+              />
+            </div>
+          )}
+          <div className="gauge-preview">
+            <div className="gauge-preview" style={{ display: "flex", flexDirection: "column-reverse" }}>
+              <button onClick={copyGaugeComponent}>Copy Gauge JSX</button>
+              <GaugeComponentContent key={JSON.stringify(currentProps)} {...currentProps} />
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
-
-
-
-
 
 type PropertyEditorProps = {
   currentProps: Partial<GaugeComponentProps>;
