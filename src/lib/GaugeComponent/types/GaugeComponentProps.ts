@@ -34,6 +34,8 @@ export interface GaugeComponentProps {
     maxValue?: number,
     /** This configures the arc of the Gauge. */
     arc?: Arc,
+    /** This enables/disables debug mode. */
+    debug?: boolean,
     /** This configures the labels of the Gauge. */
     labels?: Labels,
     /** This configures the pointer of the Gauge. */
@@ -47,6 +49,7 @@ export const defaultGaugeProps: GaugeComponentProps = {
     className: "gauge-component-class",
     style: { width: "100%"},
     marginInPercent: 0.07,
+    debug: true,
     value: 33,
     minValue: 0,
     maxValue: 100,

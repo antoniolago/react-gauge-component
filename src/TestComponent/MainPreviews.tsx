@@ -86,6 +86,7 @@ const MainPreviews = () => {
                         {debugGauge()}
                     </Col>
                 </Row>
+
             </Container>
             :
             <>

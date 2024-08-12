@@ -40,6 +40,25 @@
     width: 50%;
     padding: 10px;
   }
+  .modal-content.dark-mode {
+    background-color: #333;
+    color: white;
+  }
+  
+  .modal-content.light-mode {
+    background-color: #fff;
+    color: black;
+  }
+  
+  .json-editor.dark-mode {
+    background-color: #444;
+    color: white;
+  }
+  
+  .json-editor.light-mode {
+    background-color: #f9f9f9;
+    color: black;
+  }
   
   .gauge-preview {
     width: 50%;

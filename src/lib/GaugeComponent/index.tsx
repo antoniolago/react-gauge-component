@@ -7,15 +7,12 @@ import * as arcHooks from "./hooks/arc";
 import { isEmptyObject, mergeObjects } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
 import { PointerRef, defaultPointerRef } from "./types/Pointer";
-import { Arc, getArcWidthByType } from "./types/Arc";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
-import JsonView from '@uiw/react-json-view';
-import './index.css';
 import JsonViewEditor from '@uiw/react-json-view/editor';
-import { lightTheme } from '@uiw/react-json-view/light';
-import { darkTheme } from '@uiw/react-json-view/dark';
-import { TriangleArrow } from '@uiw/react-json-view/triangle-arrow';
-import { TriangleSolidArrow } from '@uiw/react-json-view/triangle-solid-arrow';
+import { DarkModeToggle } from 'react-dark-mode-toggle-2';
+import './index.css';
+import { Arc, getArcWidthByType } from "./types/Arc";
+
 const ErrorFallback: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) => (
   <div role="alert" style={{ color: "red" }}>
     <h1>Something went wrong.</h1>
@@ -30,7 +27,6 @@ const GaugeComponent: React.FC<Partial<GaugeComponentProps>> = (props) => {
       FallbackComponent={ErrorFallback}
       onReset={() => {
         // Reset the state of your app so the error doesn't happen again
-        // You might want to do something here
       }}
     >
       <GaugeComponentContent {...props} />
@@ -41,6 +37,7 @@ const GaugeComponent: React.FC<Partial<GaugeComponentProps>> = (props) => {
 const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) => {
   const [currentProps, setCurrentProps] = useState<Partial<GaugeComponentProps>>(mergeObjects(defaultGaugeProps, props));
   const [editMode, setEditMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const svg = useRef<any>({});
   const tooltip = useRef<any>({});
   const g = useRef<any>({});
@@ -54,9 +51,9 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
   const dimensions = useRef<Dimensions>({ ...defaultDimensions });
   const mergedProps = useRef<GaugeComponentProps>(currentProps as GaugeComponentProps);
   const prevProps = useRef<any>({});
-  let selectedRef = useRef<HTMLDivElement>(null);
+  const selectedRef = useRef<HTMLDivElement>(null);
 
-  var gauge: Gauge = {
+  const gauge: Gauge = {
     props: mergedProps.current,
     prevProps,
     svg,
@@ -69,21 +66,21 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
     container,
     arcData,
     pieChart,
-    tooltip
+    tooltip,
   };
 
   const updateMergedProps = () => {
     let defaultValues = { ...defaultGaugeProps };
     gauge.props = mergedProps.current = mergeObjects(defaultValues, currentProps);
-    if (gauge.props.arc?.width == defaultGaugeProps.arc?.width) {
+    if (gauge.props.arc?.width === defaultGaugeProps.arc?.width) {
       let mergedArc = mergedProps.current.arc as Arc;
       mergedArc.width = getArcWidthByType(gauge.props.type as GaugeType);
     }
-    if (gauge.props.marginInPercent == defaultGaugeProps.marginInPercent) {
+    if (gauge.props.marginInPercent === defaultGaugeProps.marginInPercent) {
       mergedProps.current.marginInPercent = getGaugeMarginByType(gauge.props.type as GaugeType);
     }
     arcHooks.validateArcs(gauge);
-  }
+  };
 
   const shouldInitChart = () => {
     let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc));
@@ -92,11 +89,11 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
     let minValueChanged = (JSON.stringify(prevProps.current.minValue) !== JSON.stringify(mergedProps.current.minValue));
     let maxValueChanged = (JSON.stringify(prevProps.current.maxValue) !== JSON.stringify(mergedProps.current.maxValue));
     return arcsPropsChanged || pointerPropsChanged || minValueChanged || maxValueChanged || subArcsPropsChanged;
-  }
+  };
 
   useLayoutEffect(() => {
     updateMergedProps();
-    isFirstRun.current = isEmptyObject(container.current)
+    isFirstRun.current = isEmptyObject(container.current);
     if (isFirstRun.current) container.current = select(selectedRef.current);
     if (shouldInitChart()) chartHooks.initChart(gauge);
     gauge.prevProps.current = mergedProps.current;
@@ -107,12 +104,14 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
       if (!selectedRef.current?.offsetParent) return;
 
       chartHooks.renderChart(gauge, true);
-      observer.disconnect()
+      observer.disconnect();
     });
-    observer.observe(selectedRef.current?.parentNode!, { attributes: true, subtree: true });
+    const parentNode = selectedRef.current?.parentNode as HTMLElement | null;
+    if (parentNode) {
+      observer.observe(parentNode, { attributes: true, subtree: true });
+    }
     return () => observer.disconnect();
-    //@ts-ignore
-  }, [selectedRef.current?.parentNode?.offsetWidth, selectedRef.current?.parentNode?.offsetHeight]);
+  }, [selectedRef.current?.parentNode]);
 
   useEffect(() => {
     const handleResize = () => chartHooks.renderChart(gauge, true);
@@ -125,7 +124,7 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
   const gaugeTypeClasses: Record<GaugeType, string> = {
     [GaugeType.Semicircle]: "semicircle-gauge",
     [GaugeType.Radial]: "radial-gauge",
-    [GaugeType.Grafana]: "grafana-gauge"
+    [GaugeType.Grafana]: "grafana-gauge",
   };
 
   return (
@@ -137,29 +136,107 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
         ref={selectedRef}
         onClick={() => setEditMode(true)}
       />
-      {editMode && (
-        <div className="modal">
-          <div className="modal-content">
-            <button className="close-button" onClick={() => setEditMode(false)}>Close</button>
-            <div className="modal-body">
-              <div className="editor">
-                <PropertyEditor
-                  currentProps={currentProps}
-                  setCurrentProps={setCurrentProps}
-                />
-              </div>
-              <div className="gauge-preview">
-                <GaugeComponentContent {...currentProps} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <DebugModal
+        editMode={editMode}
+        setEditMode={setEditMode}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+        currentProps={currentProps}
+        setCurrentProps={setCurrentProps}
+      />
     </div>
   );
 };
 
 export default GaugeComponent;
+
+type DebugModalProps = {
+  editMode: boolean;
+  setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
+  isDarkMode: boolean;
+  setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
+  currentProps: Partial<GaugeComponentProps>;
+  setCurrentProps: React.Dispatch<React.SetStateAction<Partial<GaugeComponentProps>>>;
+};
+const DebugModal: React.FC<DebugModalProps> = ({ editMode, setEditMode, isDarkMode, setIsDarkMode, currentProps, setCurrentProps }) => {
+
+  const formatPropValue = (value: any, isTopLevel: boolean = true): string => {
+    if (value === null || value === undefined) {
+      return '';  // Omit null or undefined values
+    } else if (typeof value === 'string') {
+      return `"${value}"`;
+    } else if (typeof value === 'number' || typeof value === 'boolean') {
+      return isTopLevel ? `{${value}}` : `${value}`;  // Wrap numbers/booleans in braces only at the top level
+    } else if (Array.isArray(value)) {
+      return `[
+        ${value.map(val => formatPropValue(val, false)).filter(val => val !== '').join(',\n        ')}
+      ]`;
+    } else if (typeof value === 'object' && value !== null) {
+      const formattedObject = Object.entries(value)
+        .map(([key, val]) => {
+          const formattedVal = formatPropValue(val, false);
+          return formattedVal !== '' ? `${key}: ${formattedVal}` : '';
+        })
+        .filter(val => val !== '') // Remove entries where values were null
+        .join(',\n        ');
+      return isTopLevel ? `{{${formattedObject}}}` : `{${formattedObject}}`;
+    } else {
+      return `${JSON.stringify(value)}`;
+    }
+  };
+
+  const copyGaugeComponent = () => {
+    const gaugeJSX = `
+<GaugeComponent
+  ${Object.entries(currentProps)
+    .map(([key, value]) => {
+      const formattedValue = formatPropValue(value, true);
+      return formattedValue !== '' ? `${key}=${formattedValue}` : '';
+    })
+    .filter(val => val !== '')  // Remove any empty lines where values were null
+    .join('\n  ')}
+/>`;
+    
+    navigator.clipboard.writeText(gaugeJSX).then(() => {
+      alert("GaugeComponent JSX copied to clipboard!");
+    });
+  };
+
+  if (!editMode) return null;
+
+  return (
+    <div className={`modal`}>
+      <div className={`modal-content ${isDarkMode ? "dark-mode" : "light-mode"}`}>
+        <button className="close-button" onClick={() => setEditMode(false)}>
+          Close
+        </button>
+        <div>
+          <DarkModeToggle
+            onChange={setIsDarkMode}
+            isDarkMode={isDarkMode}
+            size={80}
+          />
+        </div>
+        <div className="modal-body">
+          <div className={`editor json-editor ${isDarkMode ? "dark-mode" : "light-mode"}`}>
+            <PropertyEditor
+              currentProps={currentProps}
+              setCurrentProps={setCurrentProps}
+            />
+          </div>
+          <div className="gauge-preview" style={{display: "flex", flexDirection: "column-reverse"}}>
+            <button onClick={copyGaugeComponent}>Copy Gauge JSX</button>
+            <GaugeComponentContent key={JSON.stringify(currentProps)} {...currentProps} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
+
 
 type PropertyEditorProps = {
   currentProps: Partial<GaugeComponentProps>;
@@ -168,10 +245,24 @@ type PropertyEditorProps = {
 
 const PropertyEditor: React.FC<PropertyEditorProps> = ({ currentProps, setCurrentProps }) => {
   const handleEdit = (edit: any) => {
-    setCurrentProps((prevProps) => ({
-      ...prevProps,
-      [edit.name]: edit.updated_src[edit.name]
-    }));
+    const { namespace, value } = edit;
+
+    setCurrentProps((prevProps: any) => {
+      // Create a shallow copy of the current props
+      const updatedProps = { ...prevProps };
+
+      // Recursively apply the value based on the namespace array
+      let obj = updatedProps;
+      for (let i = 0; i < namespace.length - 1; i++) {
+        const key = namespace[i];
+        if (!obj[key]) obj[key] = {};  // Create the nested object if it doesn't exist
+        obj = obj[key];
+      }
+
+      // Apply the new value
+      obj[namespace[namespace.length - 1]] = value;
+      return updatedProps;
+    });
   };
 
   return (
@@ -185,7 +276,6 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ currentProps, setCurren
         displayDataTypes={true}
         displayObjectSize={true}
         onEdit={handleEdit}
-        // theme="dark"
       />
     </div>
   );
