@@ -105,5 +105,5 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     />
   );
 };
-
+export { GaugeComponent };
 export default GaugeComponent;
