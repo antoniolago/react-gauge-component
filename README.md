@@ -394,6 +394,7 @@ const kbitsToMbits = (value) => {
     <li><code>pointer: object</code>: The value pointer of the gauge. Grafana gauge have it's own pointer logic, but animation properties will be applied.
       <ul>
         <li><code>type: string</code> This can be "needle", "blob" or "arrow". Default: <code>"needle"</code></li>
+        <li><code>hide: boolean</code> Enabling this flag will hide the pointer. Default: <code>false</code></li>
         <li><code>color: string</code>: The color of the pointer. Default: <code>#464A4F</code></li>
         <li><code>baseColor: string</code>: The color of the base of the pointer. Default: <code>#464A4F</code></li>
         <li><code>length: number</code>: The length of the pointer 0-1, 1 being the outer radius length. Default: <code>0.70</code></li>
