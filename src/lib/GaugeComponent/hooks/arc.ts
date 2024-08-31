@@ -137,7 +137,7 @@ const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undef
   //This is the grey arc that will be displayed when the gauge is not full
   let secondSubArc = {
     value: 1 - currentPercentage,
-    color: gauge.props.arc?.emptyArcColor,
+    color: gauge.props.arc?.emptyColor,
   }
   return [firstSubArc, secondSubArc];
 }

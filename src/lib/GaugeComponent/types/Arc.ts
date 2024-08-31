@@ -15,7 +15,7 @@ export interface Arc {
     /** The colors of the arcs, this overrides "subArcs" colors. */
     colorArray?: Array<string>,
     /** Color of the grafana's empty subArc  */
-    emptyArcColor?: string,
+    emptyColor?: string,
     /** list of sub arcs segments of the whole arc. */
     subArcs?: Array<SubArc>
 }
@@ -58,7 +58,7 @@ export const defaultArc: Arc = {
     width: 0.25,
     cornerRadius: 7,
     nbSubArcs: undefined,
-    emptyArcColor: "#5C5C5C",
+    emptyColor: "#5C5C5C",
     colorArray: undefined,
     subArcs: defaultSubArcs,
     gradient: false
