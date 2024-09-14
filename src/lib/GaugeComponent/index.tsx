@@ -47,7 +47,6 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     pieChart,
     tooltip
   };
-
   //Merged properties will get the default props and overwrite by the user's defined props
   //To keep the original default props in the object
   const updateMergedProps = () => {
@@ -79,6 +78,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
 
   useEffect(() => {
     const observer = new MutationObserver(function () {
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
       if (!selectedRef.current?.offsetParent) return;
       
       chartHooks.renderChart(gauge, true);
@@ -95,6 +95,40 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     return () => window.removeEventListener("resize", handleResize);
   }, [props]);
 
+  // useEffect(() => {
+  //   console.log(selectedRef.current?.offsetWidth)
+  //   // workaround to trigger recomputing of gauge size on first load (e.g. F5)
+  //   setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
+  // }, [selectedRef.current?.parentNode]);
+
+  useEffect(() => {
+    const element = selectedRef.current;
+    if (!element) return;
+
+    const handleResize = () => {
+      const parentNode = element.parentNode;
+      if (parentNode) {
+        chartHooks.renderChart(gauge, true);
+        // console.log("Parent node width:", width);
+      }
+    };
+
+    // Create a ResizeObserver to watch the parent node
+    const observer = new ResizeObserver(handleResize);
+
+    // Observe the parent node
+    if (element.parentNode) {
+      observer.observe(element.parentNode);
+    }
+
+    // Cleanup observer when component unmounts
+    return () => {
+      if (element.parentNode) {
+        observer.unobserve(element.parentNode);
+      }
+    };
+  }, []);
+  
   const { id, style, className, type } = props;
   return (
     <div
