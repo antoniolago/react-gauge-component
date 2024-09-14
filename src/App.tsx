@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
+import React from 'react';
 import './App.css';
-import GaugeComponent from './lib';
-import CONSTANTS from './lib/GaugeComponent/constants';
 import MainPreviews from './TestComponent/MainPreviews';
 import InputTest from './TestComponent/InputTest';
+import GridLayoutComponent from './TestComponent/GridLayout';
+import 'react-grid-layout/css/styles.css'
+import 'react-resizable/css/styles.css';
 
 const App = () => {
   return(
     <>
+    {/* <GridLayoutComponent /> */}
       <MainPreviews />
       <InputTest />
     </>
