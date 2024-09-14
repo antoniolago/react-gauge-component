@@ -45,8 +45,7 @@ export const calculateAngles = (gauge: Gauge) => {
     }
 }
 //Renders the chart, should be called every time the window is resized
-export const renderChart = (gauge: Gauge, resize: boolean = false, w = 0, h = 0) => {
-    console.log("teste")
+export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     const { dimensions } = gauge;
     let arc = gauge.props.arc as Arc;
     let labels = gauge.props.labels as Labels;
