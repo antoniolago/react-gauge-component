@@ -75,7 +75,8 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         arcHooks.setArcData(gauge);
         arcHooks.setupArcs(gauge, resize);
         labelsHooks.setupLabels(gauge);
-        pointerHooks.drawPointer(gauge, resize);
+        if (!gauge.props?.pointer?.hide)
+            pointerHooks.drawPointer(gauge, resize);
         let gaugeTypeHeightCorrection: Record<string, number> = {
             [GaugeType.Semicircle]: 50,
             [GaugeType.Radial]: 55,
@@ -98,7 +99,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             arcHooks.setArcData(gauge);
             arcHooks.setupArcs(gauge, resize);
         }
-        if ((pointerPropsChanged || valueChanged)) {
+        //If pointer is hidden there's no need to redraw it when only value changes
+        var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
+        if ((shouldRedrawPointer)) {
             pointerHooks.drawPointer(gauge);
         }
         if (arcsPropsChanged || ticksChanged) {
@@ -148,7 +151,7 @@ export const calculateRadius = (gauge: Gauge) => {
         dimensions.current.outerRadius = (dimensions.current.width - dimensions.current.margin.left - dimensions.current.margin.right) / 2;
     } else {
         dimensions.current.outerRadius =
-            dimensions.current.height - dimensions.current.margin.top - dimensions.current.margin.bottom;
+            dimensions.current.height - dimensions.current.margin.top - dimensions.current.margin.bottom // + 35;
     }
     centerGraph(gauge);
 };

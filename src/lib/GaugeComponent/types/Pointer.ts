@@ -3,6 +3,8 @@ export interface PointerProps {
     type?: "needle" | "blob" | "arrow",
     /** Pointer color */
     color?: string,
+    /** Enabling this flag will hide the pointer */
+    hide?: boolean,
     /** Pointer color of the central circle */
     baseColor?: string,
     /** Pointer length */
@@ -63,6 +65,7 @@ export const defaultPointer: PointerProps = {
     width: 20, // this is a factor to multiply by the width of the gauge
     animate: true,
     elastic: false,
+    hide: false,
     animationDuration: 3000,
     animationDelay: 100,
 }

@@ -67,7 +67,8 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
     pieChart,
     tooltip,
   };
-
+  //Merged properties will get the default props and overwrite by the user's defined props
+  //To keep the original default props in the object
   const updateMergedProps = () => {
     let defaultValues = { ...defaultGaugeProps };
     gauge.props = mergedProps.current = mergeObjects(defaultValues, currentProps);
@@ -98,19 +99,20 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
     gauge.prevProps.current = mergedProps.current;
   }, [currentProps]);
 
-  useEffect(() => {
-    const observer = new MutationObserver(function () {
-      if (!selectedRef.current?.offsetParent) return;
+  // useEffect(() => {
+  //   const observer = new MutationObserver(function () {
+  //     setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
+  //     if (!selectedRef.current?.offsetParent) return;
 
-      chartHooks.renderChart(gauge, true);
-      observer.disconnect();
-    });
-    const parentNode = selectedRef.current?.parentNode as HTMLElement | null;
-    if (parentNode) {
-      observer.observe(parentNode, { attributes: true, subtree: true });
-    }
-    return () => observer.disconnect();
-  }, [selectedRef.current?.parentNode]);
+  //     chartHooks.renderChart(gauge, true);
+  //     observer.disconnect();
+  //   });
+  //   const parentNode = selectedRef.current?.parentNode as HTMLElement | null;
+  //   if (parentNode) {
+  //     observer.observe(parentNode, { attributes: true, subtree: true });
+  //   }
+  //   return () => observer.disconnect();
+  // }, [selectedRef.current?.parentNode]);
 
   useEffect(() => {
     const handleResize = () => chartHooks.renderChart(gauge, true);
@@ -126,6 +128,41 @@ const GaugeComponentContent: React.FC<Partial<GaugeComponentProps>> = (props) =>
     [GaugeType.Grafana]: "grafana-gauge",
   };
 
+  // useEffect(() => {
+  //   console.log(selectedRef.current?.offsetWidth)
+  //   // workaround to trigger recomputing of gauge size on first load (e.g. F5)
+  //   setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
+  // }, [selectedRef.current?.parentNode]);
+
+  useEffect(() => {
+    const element = selectedRef.current;
+    if (!element) return;
+
+    const handleResize = () => {
+      const parentNode = element.parentNode;
+      if (parentNode) {
+        chartHooks.renderChart(gauge, true);
+        // console.log("Parent node width:", width);
+      }
+    };
+
+    // Create a ResizeObserver to watch the parent node
+    const observer = new ResizeObserver(handleResize);
+
+    // Observe the parent node
+    if (element.parentNode) {
+      //@ts-ignore
+      observer.observe(element.parentNode);
+    }
+
+    // Cleanup observer when component unmounts
+    return () => {
+      if (element.parentNode) {
+        //@ts-ignore
+        observer.unobserve(element.parentNode);
+      }
+    };
+  }, []);
   return (
     <div>
       <div
