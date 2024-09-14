@@ -33,13 +33,13 @@ export const initChart = (gauge: Gauge) => {
 }
 export const calculateAngles = (gauge: Gauge) => {
     const { angles } = gauge.dimensions.current;
-    if(gauge.props.type == GaugeType.Semicircle){
+    if (gauge.props.type == GaugeType.Semicircle) {
         angles.startAngle = -Math.PI / 2 + 0.02;
         angles.endAngle = Math.PI / 2 - 0.02;
-    } else if(gauge.props.type == GaugeType.Radial) {
+    } else if (gauge.props.type == GaugeType.Radial) {
         angles.startAngle = -Math.PI / 1.37;
         angles.endAngle = Math.PI / 1.37;
-    } else if(gauge.props.type == GaugeType.Grafana) {
+    } else if (gauge.props.type == GaugeType.Grafana) {
         angles.startAngle = -Math.PI / 1.6;
         angles.endAngle = Math.PI / 1.6;
     }
@@ -51,7 +51,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     let labels = gauge.props.labels as Labels;
     //if resize recalculate dimensions, clear chart and redraw
     //if not resize, treat each prop separately
-    if(resize){
+    if (resize) {
         updateDimensions(gauge);
         //Set dimensions of svg element and translations
         gauge.g.current.attr(
@@ -75,14 +75,14 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         arcHooks.setArcData(gauge);
         arcHooks.setupArcs(gauge, resize);
         labelsHooks.setupLabels(gauge);
-        if(!gauge.props?.pointer?.hide)
+        if (!gauge.props?.pointer?.hide)
             pointerHooks.drawPointer(gauge, resize);
         let gaugeTypeHeightCorrection: Record<string, number> = {
             [GaugeType.Semicircle]: 50,
             [GaugeType.Radial]: 55,
             [GaugeType.Grafana]: 55
         }
-        let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height; 
+        let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height;
         let boundWidth = gauge.container.current.node().getBoundingClientRect().width;
         let gaugeType = gauge.props.type as string;
         gauge.svg.current
@@ -94,21 +94,21 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
         let ticksChanged = (JSON.stringify(gauge.prevProps.current.labels?.tickLabels) !== JSON.stringify(labels.tickLabels));
         let shouldRedrawArcs = arcsPropsChanged
-        if(shouldRedrawArcs) {
+        if (shouldRedrawArcs) {
             arcHooks.clearArcs(gauge);
             arcHooks.setArcData(gauge);
             arcHooks.setupArcs(gauge, resize);
         }
         //If pointer is hidden there's no need to redraw it when only value changes
         var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
-        if((shouldRedrawPointer)) {
+        if ((shouldRedrawPointer)) {
             pointerHooks.drawPointer(gauge);
         }
-        if(arcsPropsChanged || ticksChanged) {
+        if (arcsPropsChanged || ticksChanged) {
             labelsHooks.clearTicks(gauge);
             labelsHooks.setupTicks(gauge);
         }
-        if(valueChanged) {
+        if (valueChanged) {
             labelsHooks.clearValueLabel(gauge);
             labelsHooks.setupValueLabel(gauge);
         }
@@ -120,7 +120,7 @@ export const updateDimensions = (gauge: Gauge) => {
     var divDimensions = gauge.container.current.node().getBoundingClientRect(),
         divWidth = divDimensions.width,
         divHeight = divDimensions.height;
-    if(dimensions.current.fixedHeight == 0) dimensions.current.fixedHeight = divHeight + 200;
+    if (dimensions.current.fixedHeight == 0) dimensions.current.fixedHeight = divHeight + 200;
     //Set the new width and horizontal margins
     let isMarginBox = typeof marginInPercent == 'number';
     let marginLeft: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).left;
@@ -150,7 +150,7 @@ export const calculateRadius = (gauge: Gauge) => {
         dimensions.current.outerRadius = (dimensions.current.width - dimensions.current.margin.left - dimensions.current.margin.right) / 2;
     } else {
         dimensions.current.outerRadius =
-        dimensions.current.height - dimensions.current.margin.top - dimensions.current.margin.bottom + 35;
+            dimensions.current.height - dimensions.current.margin.top - dimensions.current.margin.bottom + 35;
     }
     centerGraph(gauge);
 };
