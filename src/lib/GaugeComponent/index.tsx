@@ -78,6 +78,17 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   }, [props]);
 
   useEffect(() => {
+    const observer = new MutationObserver(function () {
+      if (!selectedRef.current?.offsetParent) return;
+      
+      chartHooks.renderChart(gauge, true);
+      observer.disconnect()
+    });
+    observer.observe(selectedRef.current?.parentNode, {attributes: true, subtree: false});
+    return () => observer.disconnect();
+  }, [selectedRef.current?.parentNode?.offsetWidth, selectedRef.current?.parentNode?.offsetHeight]);
+
+  useEffect(() => {
     const handleResize = () => chartHooks.renderChart(gauge, true);
     //Set up resize event listener to re-render the chart everytime the window is resized
     window.addEventListener("resize", handleResize);
@@ -88,11 +99,11 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   return (
     <div
       id={id}
-      className={`${className} ${type == GaugeType.Semicircle ? "semicircle-gauge" : "radial-gauge"}`}
+      className={`${gauge.props.type}-gauge${className ? ' '+className : ''}`}
       style={style}
       ref={(svg) => (selectedRef.current = svg)}
     />
   );
 };
-
+export { GaugeComponent };
 export default GaugeComponent;

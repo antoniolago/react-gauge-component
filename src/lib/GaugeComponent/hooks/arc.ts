@@ -36,7 +36,8 @@ const applyTooltipStyles = (tooltip: Tooltip, arcColor: string, gauge: Gauge) =>
   //Apply custom styles
   if (tooltip.style != undefined) Object.entries(tooltip.style).forEach(([key, value]) => gauge.tooltip.current.style(utils.camelCaseToKebabCase(key), value))
 }
-const onArcMouseLeave = (event: any, d: any, gauge: Gauge) => {
+const onArcMouseLeave = (event: any, d: any, gauge: Gauge, mousemoveCbThrottled: any) => {
+  mousemoveCbThrottled.cancel();
   hideTooltip(gauge);
   if (d.data.onMouseLeave != undefined) d.data.onMouseLeave(event);
 }
@@ -136,7 +137,7 @@ const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undef
   //This is the grey arc that will be displayed when the gauge is not full
   let secondSubArc = {
     value: 1 - currentPercentage,
-    color: "#5C5C5C"
+    color: gauge.props.arc?.emptyColor,
   }
   return [firstSubArc, secondSubArc];
 }
@@ -160,10 +161,11 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
       .append("path")
       .attr("d", outerArc);
     applyColors(outerArcSubarcs, gauge);
+    const mousemoveCbThrottled = throttle((event: any, d: any) => onArcMouseMove(event, d, gauge), 20);
     arcPaths
-      .on("mouseleave", (event: any, d: any) => onArcMouseLeave(event, d, gauge))
+      .on("mouseleave", (event: any, d: any) => onArcMouseLeave(event, d, gauge, mousemoveCbThrottled))
       .on("mouseout", (event: any, d: any) => onArcMouseOut(event, d, gauge))
-      .on("mousemove", throttle((event: any, d: any) => onArcMouseMove(event, d, gauge), 20))
+      .on("mousemove", mousemoveCbThrottled)
       .on("click", (event: any, d: any) => onArcMouseClick(event, d))
   }
 }
@@ -198,10 +200,11 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
     .append("path")
     .attr("d", arcObj);
   applyColors(subArcs, gauge);
+  const mousemoveCbThrottled = throttle((event: any, d: any) => onArcMouseMove(event, d, gauge), 20);
   arcPaths
-    .on("mouseleave", (event: any, d: any) => onArcMouseLeave(event, d, gauge))
+    .on("mouseleave", (event: any, d: any) => onArcMouseLeave(event, d, gauge, mousemoveCbThrottled))
     .on("mouseout", (event: any, d: any) => onArcMouseOut(event, d, gauge))
-    .on("mousemove", throttle((event: any, d: any) => onArcMouseMove(event, d, gauge), 20))
+    .on("mousemove", mousemoveCbThrottled)
     .on("click", (event: any, d: any) => onArcMouseClick(event, d))
 
 }
