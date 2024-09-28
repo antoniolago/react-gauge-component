@@ -114,7 +114,7 @@ const kbitsToMbits = (value) => {
   }}
   labels={{
     valueLabel: {
-      fontSize: 40,
+      style: {fontSize: 40},
       formatTextValue: kbitsToMbits
     },
     tickLabels: {
@@ -135,7 +135,7 @@ const kbitsToMbits = (value) => {
         { value: 2500 },
         { value: 3000 },
       ],
-      valueConfig: {
+      defaultTickValueConfig: {
         formatTextValue: kbitsToMbits
       }
     }
@@ -213,7 +213,10 @@ const kbitsToMbits = (value) => {
     valueLabel: { formatTextValue: value => value + 'ºC' },
     tickLabels: {
       type: 'outer',
-      valueConfig: { formatTextValue: value => value + 'ºC', fontSize: 10 },
+      defaultTickValueConfig: { 
+        formatTextValue: (value: any) => value + 'ºC' ,
+        style: {fontSize: 10}
+    },
       ticks: [
         { value: 13 },
         { value: 22.5 },
