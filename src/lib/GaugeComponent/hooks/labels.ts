@@ -119,8 +119,8 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   else centerToArcLengthSubtract -= 10
   var tickDistanceFromArc = tick.lineConfig?.distanceFromArc || labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc || 0;
   var tickLength = tick.lineConfig?.length || labels?.tickLabels?.defaultTickLineConfig?.length || 0;
-  var hideTick = tick.lineConfig?.hide || labels?.tickLabels?.defaultTickLineConfig?.hide ;
-  if (!hideTick) {
+  var _shouldHideTickLine = shouldHideTickLine(tick, gauge);
+  if (!_shouldHideTickLine) {
     if (isInner) {
       centerToArcLengthSubtract += tickDistanceFromArc;
       centerToArcLengthSubtract += tickLength;
@@ -161,23 +161,14 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   tickValueStyle.textAnchor = tickAnchor as any;
   addText(text, coords.x, coords.y, gauge, tickValueStyle, CONSTANTS.tickValueClassname);
 }
-
 export const addTick = (tick: Tick, gauge: Gauge) => {
   const { labels } = gauge.props;
   //Make validation for sequence of values respecting DEFAULT -> DEFAULT FROM USER -> SPECIFIC TICK VALUE
-  var defaultHideValue = defaultTickLabels.defaultTickLineConfig?.hide;
-  var shouldHide = defaultHideValue;
-  var defaultHideValueFromUser = labels?.tickLabels?.defaultTickLineConfig?.hide;
-  if(defaultHideValueFromUser != undefined){
-    shouldHide = defaultHideValueFromUser;
-  }
-  var specificHideValueFromUser = tick.lineConfig?.hide;
-  if(specificHideValueFromUser != undefined) {
-    shouldHide = specificHideValueFromUser;
-  }
-  if (!shouldHide)
+  var _shouldHideTickLine = shouldHideTickLine(tick, gauge);
+  var _shouldHideTickValue = shouldHideTickValue(tick, gauge);
+  if (!_shouldHideTickLine)
     addTickLine(tick, gauge);
-  if (!CONSTANTS.debugTicksRadius && !shouldHide) {
+  if (!CONSTANTS.debugTicksRadius && !_shouldHideTickValue) {
     addTickValue(tick, gauge);
   }
 }
@@ -304,4 +295,32 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   }
   // if(valuePercentage > 0.50) angle = angle - 180;
   return { tickAnchor, angle };
+}
+const shouldHideTickLine = (tick: Tick, gauge: Gauge): boolean => {
+  const { labels } = gauge.props;
+  var defaultHideValue = defaultTickLabels.defaultTickLineConfig?.hide;
+  var shouldHide = defaultHideValue;
+  var defaultHideLineFromUser = labels?.tickLabels?.defaultTickLineConfig?.hide;
+  if (defaultHideLineFromUser != undefined) {
+    shouldHide = defaultHideLineFromUser;
+  }
+  var specificHideValueFromUser = tick.lineConfig?.hide;
+  if (specificHideValueFromUser != undefined) {
+    shouldHide = specificHideValueFromUser;
+  }
+  return shouldHide as boolean;
+}
+const shouldHideTickValue = (tick: Tick, gauge: Gauge): boolean => {
+  const { labels } = gauge.props;
+  var defaultHideValue = defaultTickLabels.defaultTickValueConfig?.hide;
+  var shouldHide = defaultHideValue;
+  var defaultHideValueFromUser = labels?.tickLabels?.defaultTickValueConfig?.hide;
+  if (defaultHideValueFromUser != undefined) {
+    shouldHide = defaultHideValueFromUser;
+  }
+  var specificHideValueFromUser = tick.valueConfig?.hide;
+  if (specificHideValueFromUser != undefined) {
+    shouldHide = specificHideValueFromUser;
+  }
+  return shouldHide as boolean;
 }
