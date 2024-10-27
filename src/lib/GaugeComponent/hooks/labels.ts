@@ -169,7 +169,7 @@ export const addTick = (tick: Tick, gauge: Gauge) => {
   var shouldHide = defaultHideValue;
   var defaultHideValueFromUser = labels?.tickLabels?.defaultTickLineConfig?.hide;
   if(defaultHideValueFromUser != undefined){
-    shouldHide = specificHideValueFromUser;
+    shouldHide = defaultHideValueFromUser;
   }
   var specificHideValueFromUser = tick.lineConfig?.hide;
   if(specificHideValueFromUser != undefined) {
