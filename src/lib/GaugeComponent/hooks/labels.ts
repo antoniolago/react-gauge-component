@@ -6,7 +6,6 @@ import * as d3 from 'd3';
 import React from 'react';
 import { GaugeType } from '../types/GaugeComponentProps';
 import { getArcDataByValue, getCoordByValue } from './arc';
-import { PointerType } from '../types/Pointer';
 import { Labels, ValueLabel } from '../types/Labels';
 import { Arc, SubArc } from '../types/Arc';
 export const setupLabels = (gauge: Gauge) => {
@@ -49,7 +48,6 @@ export const setupTicks = (gauge: Gauge) => {
 }
 
 export const addArcTicks = (gauge: Gauge) => {
-  const { arc } = gauge.props;
   gauge.arcData.current?.map((subArc: SubArc) => {
     if (subArc.showTick) return subArc.limit;
   }).forEach((tickValue: any) => {
@@ -67,14 +65,14 @@ export const mapTick = (value: number, gauge: Gauge): Tick => {
 export const addTickLine = (tick: Tick, gauge: Gauge) => {
   const { labels } = gauge.props;
   const { tickAnchor, angle } = calculateAnchorAndAngleByValue(tick?.value as number, gauge);
-  var tickDistanceFromArc = labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc || tick.lineConfig?.distanceFromArc || 0;
+  var tickDistanceFromArc = tick.lineConfig?.distanceFromArc || labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc || 0;
   if (gauge.props.labels?.tickLabels?.type == "outer") tickDistanceFromArc = -tickDistanceFromArc;
   // else tickDistanceFromArc = tickDistanceFromArc - 10;
   let coords = getLabelCoordsByValue(tick?.value as number, gauge, tickDistanceFromArc);
 
-  var tickColor = labels?.tickLabels?.defaultTickLineConfig?.color || tick.lineConfig?.color || defaultTickLabels.defaultTickLineConfig?.color;
-  var tickWidth = labels?.tickLabels?.defaultTickLineConfig?.width || tick.lineConfig?.width || defaultTickLabels.defaultTickLineConfig?.width;
-  var tickLength = labels?.tickLabels?.defaultTickLineConfig?.length || tick.lineConfig?.length || defaultTickLabels.defaultTickLineConfig?.length as number;
+  var tickColor = tick.lineConfig?.color || labels?.tickLabels?.defaultTickLineConfig?.color || defaultTickLabels.defaultTickLineConfig?.color;
+  var tickWidth = tick.lineConfig?.width || labels?.tickLabels?.defaultTickLineConfig?.width || defaultTickLabels.defaultTickLineConfig?.width;
+  var tickLength = tick.lineConfig?.length || labels?.tickLabels?.defaultTickLineConfig?.length || defaultTickLabels.defaultTickLineConfig?.length as number;
   // Calculate the end coordinates based on the adjusted position
   var endX;
   var endY;
@@ -119,9 +117,9 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   let isInner = labels?.tickLabels?.type == "inner";
   if (!isInner) centerToArcLengthSubtract = arcWidth * 10 - 10
   else centerToArcLengthSubtract -= 10
-  var tickDistanceFromArc = labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc || tick.lineConfig?.distanceFromArc || 0;
-  var tickLength = labels?.tickLabels?.defaultTickLineConfig?.length || tick.lineConfig?.length || 0;
-  var hideTick = labels?.tickLabels?.defaultTickLineConfig?.hide || tick.lineConfig?.hide;
+  var tickDistanceFromArc = tick.lineConfig?.distanceFromArc || labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc || 0;
+  var tickLength = tick.lineConfig?.length || labels?.tickLabels?.defaultTickLineConfig?.length || 0;
+  var hideTick = tick.lineConfig?.hide || labels?.tickLabels?.defaultTickLineConfig?.hide ;
   if (!hideTick) {
     if (isInner) {
       centerToArcLengthSubtract += tickDistanceFromArc;
@@ -135,7 +133,7 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   let tickValueStyle = tick.valueConfig?.style || (labels?.tickLabels?.defaultTickValueConfig?.style || {});
   tickValueStyle = { ...tickValueStyle };
   let text = '';
-  let maxDecimalDigits = gauge.props.labels?.tickLabels?.defaultTickValueConfig?.maxDecimalDigits;
+  let maxDecimalDigits = tick.valueConfig?.maxDecimalDigits || labels?.tickLabels?.defaultTickValueConfig?.maxDecimalDigits;
   if (tick.valueConfig?.formatTextValue) {
     text = tick.valueConfig.formatTextValue(utils.floatingNumber(tickValue, maxDecimalDigits));
   } else if (labels?.tickLabels?.defaultTickValueConfig?.formatTextValue) {
@@ -165,10 +163,21 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
 }
 
 export const addTick = (tick: Tick, gauge: Gauge) => {
-  const { minValue, maxValue, labels, arc } = gauge.props;
-  if (!labels?.tickLabels?.defaultTickLineConfig?.hide)
+  const { labels } = gauge.props;
+  //Make validation for sequence of values respecting DEFAULT -> DEFAULT FROM USER -> SPECIFIC TICK VALUE
+  var defaultHideValue = defaultTickLabels.defaultTickLineConfig?.hide;
+  var shouldHide = defaultHideValue;
+  var defaultHideValueFromUser = labels?.tickLabels?.defaultTickLineConfig?.hide;
+  if(defaultHideValueFromUser != undefined){
+    shouldHide = defaultHideValueFromUser;
+  }
+  var specificHideValueFromUser = tick.lineConfig?.hide;
+  if(specificHideValueFromUser != undefined) {
+    shouldHide = specificHideValueFromUser;
+  }
+  if (!shouldHide)
     addTickLine(tick, gauge);
-  if (!CONSTANTS.debugTicksRadius && !labels?.tickLabels?.defaultTickValueConfig?.hide) {
+  if (!CONSTANTS.debugTicksRadius && !shouldHide) {
     addTickValue(tick, gauge);
   }
 }
@@ -211,11 +220,12 @@ const applyTextStyles = (div: any, style: React.CSSProperties) => {
 
 //Adds text undeneath the graft to display which percentage is the current one
 export const addValueText = (gauge: Gauge) => {
+  const { labels } = gauge.props;
   let value = gauge.props.value as number;
-  let valueLabel = gauge.props.labels?.valueLabel as ValueLabel;
+  let valueLabel = labels?.valueLabel as ValueLabel;
   var textPadding = 20;
   let text = '';
-  let maxDecimalDigits = gauge.props.labels?.valueLabel?.maxDecimalDigits;
+  let maxDecimalDigits = labels?.valueLabel?.maxDecimalDigits;
   let floatValue = utils.floatingNumber(value, maxDecimalDigits);
   if (valueLabel.formatTextValue) {
     text = valueLabel.formatTextValue(floatValue);
@@ -258,6 +268,7 @@ export const clearTicks = (gauge: Gauge) => {
 }
 
 export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
+  const { labels } = gauge.props;
   let minValue = gauge.props.minValue as number;
   let maxValue = gauge.props.maxValue as number;
   let valuePercentage = utils.calculatePercentage(minValue, maxValue, value)
@@ -283,7 +294,7 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   let isValueBetweenTolerance = valuePercentage > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] &&
     valuePercentage < CONSTANTS.rangeBetweenCenteredTickValueLabel[1];
   let tickAnchor = '';
-  let isInner = gauge.props.labels?.tickLabels?.type == "inner";
+  let isInner = labels?.tickLabels?.type == "inner";
   if (isValueBetweenTolerance) {
     tickAnchor = "middle";
   } else if (isValueLessThanHalf) {
