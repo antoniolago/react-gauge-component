@@ -220,11 +220,12 @@ const applyTextStyles = (div: any, style: React.CSSProperties) => {
 
 //Adds text undeneath the graft to display which percentage is the current one
 export const addValueText = (gauge: Gauge) => {
+  const { labels } = gauge.props;
   let value = gauge.props.value as number;
-  let valueLabel = gauge.props.labels?.valueLabel as ValueLabel;
+  let valueLabel = labels?.valueLabel as ValueLabel;
   var textPadding = 20;
   let text = '';
-  let maxDecimalDigits = gauge.props.labels?.valueLabel?.maxDecimalDigits;
+  let maxDecimalDigits = labels?.valueLabel?.maxDecimalDigits;
   let floatValue = utils.floatingNumber(value, maxDecimalDigits);
   if (valueLabel.formatTextValue) {
     text = valueLabel.formatTextValue(floatValue);
@@ -267,6 +268,7 @@ export const clearTicks = (gauge: Gauge) => {
 }
 
 export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
+  const { labels } = gauge.props;
   let minValue = gauge.props.minValue as number;
   let maxValue = gauge.props.maxValue as number;
   let valuePercentage = utils.calculatePercentage(minValue, maxValue, value)
@@ -292,7 +294,7 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   let isValueBetweenTolerance = valuePercentage > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] &&
     valuePercentage < CONSTANTS.rangeBetweenCenteredTickValueLabel[1];
   let tickAnchor = '';
-  let isInner = gauge.props.labels?.tickLabels?.type == "inner";
+  let isInner = labels?.tickLabels?.type == "inner";
   if (isValueBetweenTolerance) {
     tickAnchor = "middle";
   } else if (isValueLessThanHalf) {
