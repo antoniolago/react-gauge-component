@@ -19,6 +19,8 @@ export interface PointerProps {
     animationDuration?: number,
     /** Animation delay in ms */
     animationDelay?: number,
+    /** Stroke width of the pointer */
+    strokeWidth?: number
 }
 export interface PointerRef {
     element: any,
