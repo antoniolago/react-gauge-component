@@ -408,6 +408,7 @@ const kbitsToMbits = (value) => {
         <li><code>animationDuration: number</code>: The duration of the pointer animation. Default: <code>3000</code></li>
         <li><code>animationDelay: number</code>: The delay of the pointer animation. Default: <code>100</code></li>
         <li><code>width: number</code>: The width of the pointer. Default: <code>20</code></li>
+        <li><code>strokeWidth: number</code>: Only available for blob type. Set the width of the stroke. Default: <code>8</code></li>
       </ul>
     </li>
     <li><code>labels: object</code>: The labels of the gauge.

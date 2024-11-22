@@ -91,7 +91,7 @@ const initPointer = (gauge: Gauge) => {
             .attr("r", pointerRadius)
             .attr("fill", pointer.baseColor)
             .attr("stroke", pointer.color)
-            .attr("stroke-width", 8*pointerRadius/10);
+            .attr("stroke-width", pointer.strokeWidth! * pointerRadius / 10);
     }
     //Translate the pointer starting point of the arc
     setPointerPosition(pointerRadius, value, gauge);
@@ -106,6 +106,8 @@ const updatePointer = (percentage: number, gauge: Gauge) => {
         let currentColor = arcHooks.getArcDataByPercentage(percentage, gauge)?.color as string;
         let shouldChangeColor = currentColor != prevColor;
         if(shouldChangeColor) gauge.pointer.current.element.select("circle").attr("stroke", currentColor)
+        var strokeWidth = pointer.strokeWidth! * pointerRadius / 10;
+        gauge.pointer.current.element.select("circle").attr("stroke-width", strokeWidth);
         gauge.pointer.current.context.prevColor = currentColor;
     }
 }
