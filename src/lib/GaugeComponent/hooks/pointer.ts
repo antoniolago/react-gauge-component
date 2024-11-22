@@ -106,7 +106,8 @@ const updatePointer = (percentage: number, gauge: Gauge) => {
         let currentColor = arcHooks.getArcDataByPercentage(percentage, gauge)?.color as string;
         let shouldChangeColor = currentColor != prevColor;
         if(shouldChangeColor) gauge.pointer.current.element.select("circle").attr("stroke", currentColor)
-        gauge.pointer.current.element.select("circle").attr("stroke-width", pointer.strokeWidth! * pointerRadius / 10);
+        var strokeWidth = pointer.strokeWidth! * pointerRadius / 10;
+        gauge.pointer.current.element.select("circle").attr("stroke-width", strokeWidth);
         gauge.pointer.current.context.prevColor = currentColor;
     }
 }
