@@ -70,4 +70,5 @@ export const defaultPointer: PointerProps = {
     hide: false,
     animationDuration: 3000,
     animationDelay: 100,
+    strokeWidth: 8
 }

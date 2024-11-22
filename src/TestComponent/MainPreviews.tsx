@@ -275,7 +275,7 @@ const MainPreviews = () => {
                                             {}
                                         ]
                                 }}
-                                pointer={{ type: "blob", animationDelay: 0, elastic: true }}
+                                pointer={{ type: "blob", animationDelay: 0, elastic: true, strokeWidth: 7 }}
                                 value={currentValue}
                             />
                         </Col>
