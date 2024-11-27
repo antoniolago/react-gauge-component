@@ -2,7 +2,9 @@
 React Gauge Chart Component for data visualization.
 
 This is forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/react-gauge-chart) [0b24a45](https://github.com/Martin36/react-gauge-chart/pull/131).
-Key differences:
+<details> 
+<summary>🔑Key differences</summary>
+
 <ul>
   <li>Added min/max values</li>
   <li>Added grafana based gauge</li>
@@ -21,6 +23,7 @@ Key differences:
   <li>Fixed needing to set height bug</li>
   <li>Fixed needing to set id bug</li>
 </ul>
+</details>
 
 # Demo
 https://antoniolago.github.io/react-gauge-component/
