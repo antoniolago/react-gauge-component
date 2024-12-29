@@ -20,10 +20,10 @@ export interface Dimensions {
     fixedHeight: number;
 }
 export const defaultMargins: Margin = {
-    top: 0,
+    top: 10,
     right: 0,
     bottom: 0,
-    left: 0
+    left: 10
 }
 export const defaultAngles: Angles = {
     startAngle: 0,

@@ -47,19 +47,34 @@ export const calculateAngles = (gauge: Gauge) => {
 //Renders the chart, should be called every time the window is resized
 export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     const { dimensions } = gauge;
+    let gaugeTypeHeightCorrection: Record<string, number> = {
+        [GaugeType.Semicircle]: 50,
+        [GaugeType.Radial]: 55,
+        [GaugeType.Grafana]: 55
+    }
     let arc = gauge.props.arc as Arc;
     let labels = gauge.props.labels as Labels;
     //if resize recalculate dimensions, clear chart and redraw
     //if not resize, treat each prop separately
     if (resize) {
-        updateDimensions(gauge);
+        // updateDimensions(gauge);
+        var outerRadius = dimensions.current.outerRadius;
+        var parentNode = gauge.container.current.node().parentNode;
+        gauge.svg.current
+            .attr("width", parentNode.getBoundingClientRect().width)
+            .attr("height", parentNode.getBoundingClientRect().height);
+        gauge.g.current
+            .data([
+                {
+                    x: (parentNode.getBoundingClientRect().width / 2) - outerRadius,
+                    y: dimensions.current.margin.top
+                }
+            ])
+            .attr("transform", (d: any) => `translate(${d.x}, ${d.y})`);
         //Set dimensions of svg element and translations
-        gauge.g.current.attr(
-            "transform",
-            "translate(" + dimensions.current.margin.left + ", " + 35 + ")"
-        );
         //Set the radius to lesser of width or height and remove the margins
         //Calculate the new radius
+        // centerGraph(gauge)
         calculateRadius(gauge);
         gauge.doughnut.current.attr(
             "transform",
@@ -77,17 +92,6 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         labelsHooks.setupLabels(gauge);
         if (!gauge.props?.pointer?.hide)
             pointerHooks.drawPointer(gauge, resize);
-        let gaugeTypeHeightCorrection: Record<string, number> = {
-            [GaugeType.Semicircle]: 50,
-            [GaugeType.Radial]: 55,
-            [GaugeType.Grafana]: 55
-        }
-        let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height;
-        let boundWidth = gauge.container.current.node().getBoundingClientRect().width;
-        let gaugeType = gauge.props.type as string;
-        gauge.svg.current
-            .attr("width", boundWidth)
-            .attr("height", boundHeight + gaugeTypeHeightCorrection[gaugeType]);
     } else {
         let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
         let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
@@ -114,58 +118,88 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         }
     }
 };
-export const updateDimensions = (gauge: Gauge) => {
-    const { marginInPercent } = gauge.props;
-    const { dimensions } = gauge;
-    var divDimensions = gauge.container.current.node().getBoundingClientRect(),
-        divWidth = divDimensions.width,
-        divHeight = divDimensions.height;
-    if (dimensions.current.fixedHeight == 0) dimensions.current.fixedHeight = divHeight + 200;
-    //Set the new width and horizontal margins
-    let isMarginBox = typeof marginInPercent == 'number';
-    let marginLeft: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).left;
-    let marginRight: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).right;
-    let marginTop: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).top;
-    let marginBottom: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).bottom;
-    dimensions.current.margin.left = divWidth * marginLeft;
-    dimensions.current.margin.right = divWidth * marginRight;
-    dimensions.current.width = divWidth - dimensions.current.margin.left - dimensions.current.margin.right;
+// export const updateDimensions = (gauge: Gauge) => {
+//     const { marginInPercent } = gauge.props;
+//     const { dimensions } = gauge;
+//     var parentNode = gauge.container.current.node().parentNode;
+//     var divDimensions = gauge.container.current.node().getBoundingClientRect(),
+//         divWidth = parentNode.getBoundingClientRect().width,
+//         divHeight = parentNode.getBoundingClientRect().height;
+//     // if (dimensions.current.fixedHeight == 0) dimensions.current.fixedHeight = divHeight + 200;
+//     //Set the new width and horizontal margins
+//     let isMarginBox = typeof marginInPercent == 'number';
+//     let marginLeft: number = isMarginBox ? marginInPercent as number : 
+//     (marginInPercent as GaugeInnerMarginInPercent).left;
+//     let marginRight: number = isMarginBox ? marginInPercent as number : 
+//     (marginInPercent as GaugeInnerMarginInPercent).right;
+//     let marginTop: number = isMarginBox ? marginInPercent as number : 
+//     (marginInPercent as GaugeInnerMarginInPercent).top;
+//     let marginBottom: number = isMarginBox ? marginInPercent as number : 
+//     (marginInPercent as GaugeInnerMarginInPercent).bottom;
+//     // dimensions.current.margin.left = gauge.dimensions.current.margin.left;
+//     // dimensions.current.margin.right = divWidth * marginRight;
+//     // dimensions.current.margin.top = divHeight - marginTop;
+//     // dimensions.current.margin.bottom = divHeight * marginBottom;
+//     console.log("divHeight", divHeight);
+//     console.log("divWidth", divWidth);
+//     // (dimensions.current.margin.left - dimensions.current.margin.right);
 
-    dimensions.current.margin.top = dimensions.current.fixedHeight * marginTop;
-    dimensions.current.margin.bottom = dimensions.current.fixedHeight * marginBottom;
-    dimensions.current.height = dimensions.current.width / 2 - dimensions.current.margin.top - dimensions.current.margin.bottom;
-    //gauge.height.current = divHeight - dimensions.current.margin.top - dimensions.current.margin.bottom;
-};
+//     // dimensions.current.margin.top = gauge.dimensions.current.margin.top;
+//     // dimensions.current.margin.bottom = dimensions.current.fixedHeight * marginBottom;
+//     // dimensions.current.margin.left = gauge.dimensions.current.margin.left;
+//     // // dimensions.current.margin.right = divWidth * marginRight;
+//     // dimensions.current.height = parentNode.getBoundingClientRect().height;
+//     // dimensions.current.width = parentNode.getBoundingClientRect().width;
+//     // dimensions.current.width / 2 - dimensions.current.margin.top - dimensions.current.margin.bottom;
+//     //gauge.height.current = divHeight - dimensions.current.margin.top - dimensions.current.margin.bottom;
+// };
 export const calculateRadius = (gauge: Gauge) => {
     const { dimensions } = gauge;
-    //The radius needs to be constrained by the containing div
-    //Since it is a half circle we are dealing with the height of the div
-    //Only needs to be half of the width, because the width needs to be 2 * radius
-    //For the whole arc to fit
+    const parentNode = gauge.container.current.node().parentNode as HTMLElement;
+    const parentWidth = parentNode.getBoundingClientRect().width;
+    const parentHeight = parentNode.getBoundingClientRect().height;
 
-    //First check if it is the width or the height that is the "limiting" dimension
-    if (dimensions.current.width < 2 * dimensions.current.height) {
-        //Then the width limits the size of the chart
-        //Set the radius to the width - the horizontal margins
-        dimensions.current.outerRadius = (dimensions.current.width - dimensions.current.margin.left - dimensions.current.margin.right) / 2;
+    const availableWidth = parentWidth - dimensions.current.margin.left - dimensions.current.margin.right;
+    const availableHeight = parentHeight - dimensions.current.margin.top - dimensions.current.margin.bottom;
+
+    // if (gauge.props.type === GaugeType.Semicircle) {
+    //     dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight / 2);
+    // } else {
+    //     dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight);
+    // }
+
+    if (availableWidth < availableHeight) {
+        dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight / 2);
     } else {
-        dimensions.current.outerRadius =
-            dimensions.current.height - dimensions.current.margin.top - dimensions.current.margin.bottom + 35;
+        dimensions.current.outerRadius = availableHeight / 2;
     }
     centerGraph(gauge);
 };
 
 //Calculates new margins to make the graph centered
+// export const centerGraph = (gauge: Gauge) => {
+//     const { dimensions } = gauge;
+//     dimensions.current.margin.left =
+//         dimensions.current.width / 2 - dimensions.current.outerRadius + dimensions.current.margin.right;
+//     gauge.g.current.attr(
+//         "transform",
+//         "translate(" + dimensions.current.margin.left + ", " + (dimensions.current.margin.top) + ")"
+//     );
+// };
+
 export const centerGraph = (gauge: Gauge) => {
     const { dimensions } = gauge;
-    dimensions.current.margin.left =
-        dimensions.current.width / 2 - dimensions.current.outerRadius + dimensions.current.margin.right;
-    gauge.g.current.attr(
-        "transform",
-        "translate(" + dimensions.current.margin.left + ", " + (dimensions.current.margin.top) + ")"
-    );
+    const xOffset = dimensions.current.width / 2;
+    const yOffset =
+        gauge.props.type === GaugeType.Semicircle
+            ? dimensions.current.height
+            : dimensions.current.height / 2;
+    var marginTop = dimensions.current.margin.top;
+    var marginBottom = dimensions.current.margin.bottom;
+    var marginLeft = dimensions.current.margin.left;
+    var marginRight = dimensions.current.margin.right;
+    // gauge.g.current.attr("transform", `translate(${marginLeft}, ${marginTop})`);
 };
-
 
 export const clearChart = (gauge: Gauge) => {
     //Remove the old stuff

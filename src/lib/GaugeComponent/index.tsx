@@ -26,11 +26,12 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const pointer = useRef<PointerRef>({ ...defaultPointerRef });
   const container = useRef<any>({});
   const arcData = useRef<any>([]);
+  const parentNode = useRef<Element>();
   const pieChart = useRef<any>(pie());
   const dimensions = useRef<Dimensions>({ ...defaultDimensions });
   const mergedProps = useRef<GaugeComponentProps>(props as GaugeComponentProps);
   const prevProps = useRef<any>({});
-  let selectedRef = useRef<any>(null);
+  let svgRef = useRef<any>(null);
 
   var gauge: Gauge = {
     props: mergedProps.current,
@@ -71,7 +72,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   useLayoutEffect(() => {
     updateMergedProps();
     isFirstRun.current = isEmptyObject(container.current)
-    if (isFirstRun.current) container.current = select(selectedRef.current);
+    if (isFirstRun.current) container.current = select(svgRef.current);
     if (shouldInitChart()) chartHooks.initChart(gauge);
     gauge.prevProps.current = mergedProps.current;
   }, [props]);
@@ -79,14 +80,14 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   useEffect(() => {
     const observer = new MutationObserver(function () {
       setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
-      if (!selectedRef.current?.offsetParent) return;
-      
+      if (!svgRef.current?.offsetParent) return;
+
       chartHooks.renderChart(gauge, true);
       observer.disconnect()
     });
-    observer.observe(selectedRef.current?.parentNode, {attributes: true, subtree: false});
+    observer.observe(svgRef.current?.parentNode, { attributes: true, subtree: false });
     return () => observer.disconnect();
-  }, [selectedRef.current?.parentNode?.offsetWidth, selectedRef.current?.parentNode?.offsetHeight]);
+  }, [svgRef.current?.parentNode?.offsetWidth, svgRef.current?.parentNode?.offsetHeight]);
 
   useEffect(() => {
     const handleResize = () => chartHooks.renderChart(gauge, true);
@@ -96,13 +97,13 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   }, [props]);
 
   // useEffect(() => {
-  //   console.log(selectedRef.current?.offsetWidth)
+  //   console.log(svgRef.current?.offsetWidth)
   //   // workaround to trigger recomputing of gauge size on first load (e.g. F5)
   //   setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
-  // }, [selectedRef.current?.parentNode]);
+  // }, [svgRef.current?.parentNode]);
 
   useEffect(() => {
-    const element = selectedRef.current;
+    const element = svgRef.current;
     if (!element) return;
 
     const handleResize = () => {
@@ -128,14 +129,22 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
       }
     };
   }, []);
-  
+
   const { id, style, className, type } = props;
+  // add     height: -webkit-fill-available;
+  //  width: -webkit-fill-available;
+  // to the style prop to make the gauge responsive
+  var styled = {
+    ...style,
+    height: "-webkit-fill-available",
+    width: "-webkit-fill-available"
+  };
   return (
     <div
       id={id}
-      className={`${gauge.props.type}-gauge${className ? ' '+className : ''}`}
-      style={style}
-      ref={(svg) => (selectedRef.current = svg)}
+      className={`${gauge.props.type}-gauge${className ? ' ' + className : ''}`}
+      style={styled}
+      ref={(svg) => (svgRef.current = svg)}
     />
   );
 };

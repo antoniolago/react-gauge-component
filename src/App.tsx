@@ -9,9 +9,9 @@ import 'react-resizable/css/styles.css';
 const App = () => {
   return(
     <>
-    {/* <GridLayoutComponent /> */}
-      <MainPreviews />
-      <InputTest />
+    <GridLayoutComponent />
+      {/* <MainPreviews /> */}
+      {/* <InputTest /> */}
     </>
   )
 };
