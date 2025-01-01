@@ -14,7 +14,7 @@ export interface Gauge {
     dimensions: React.MutableRefObject<Dimensions>;
     //This holds the computed data for the arcs, computed only once and then reused without changing original props to avoid render problems
     arcData: React.MutableRefObject<SubArc[]>;
-    pieChart: React.MutableRefObject<any>;
+    pieChart: React.MutableRefObject<d3.Pie<any, any>>;
     //This holds the only tooltip element rendered for any given gauge chart to use
     tooltip: React.MutableRefObject<any>;
 }

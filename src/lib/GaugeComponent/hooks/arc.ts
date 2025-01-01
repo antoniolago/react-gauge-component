@@ -192,7 +192,7 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
     .padAngle(arcPadding);
   var arcPaths = gauge.doughnut.current
     .selectAll("anyString")
-    .data(gauge.pieChart.current(data))
+    .data(gauge.pieChart.current(data as any))
     .enter()
     .append("g")
     .attr("class", "subArc");

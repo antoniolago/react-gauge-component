@@ -54,36 +54,57 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     }
     let arc = gauge.props.arc as Arc;
     let labels = gauge.props.labels as Labels;
-    //if resize recalculate dimensions, clear chart and redraw
-    //if not resize, treat each prop separately
+
     if (resize) {
-        // updateDimensions(gauge);
-        var outerRadius = dimensions.current.outerRadius;
-        var parentNode = gauge.container.current.node().parentNode;
+        var parentNode = gauge.container.current.node().parentNode as HTMLElement;
+        var parentWidth = parentNode.getBoundingClientRect().width;
+        var parentHeight = parentNode.getBoundingClientRect().height;
+
         gauge.svg.current
-            .attr("width", parentNode.getBoundingClientRect().width)
-            .attr("height", parentNode.getBoundingClientRect().height);
+            .attr("width", parentWidth)
+            .attr("height", parentHeight)
+            .attr('preserveAspectRatio', 'xMinYMin')
+            // .attr("viewBox", `0 0 ${parentWidth} ${parentHeight}`);
+
+        var outerRadius = dimensions.current.outerRadius;
+        // Adjust outerRadius to fit within the parent node's height
+        if (outerRadius > parentHeight) {
+            // outerRadius = parentHeight
+            outerRadius = dimensions.current.outerRadius;
+        }
+        else {
+            outerRadius = dimensions.current.outerRadius;
+        }
+
+
+        // var xGauge = ((parentWidth / 2) - outerRadius)
+        //     + (dimensions.current.margin.left) - dimensions.current.margin.right;
+        // var yGauge = ((parentHeight / 2) - outerRadius)
+        //     + (dimensions.current.margin.top);
+        //Center the gauge horizontally
+        var xGauge = (parentWidth / 2) - outerRadius + dimensions.current.margin.left;
+        //Fix the position of the gauge vertically at the top of the frame
+        var yGauge = dimensions.current.margin.top;
+
         gauge.g.current
             .data([
                 {
-                    x: (parentNode.getBoundingClientRect().width / 2) - outerRadius,
-                    y: dimensions.current.margin.top
+                    x: xGauge,
+                    y: yGauge
                 }
             ])
             .attr("transform", (d: any) => `translate(${d.x}, ${d.y})`);
-        //Set dimensions of svg element and translations
-        //Set the radius to lesser of width or height and remove the margins
-        //Calculate the new radius
-        // centerGraph(gauge)
+
         calculateRadius(gauge);
         gauge.doughnut.current.attr(
             "transform",
             "translate(" + dimensions.current.outerRadius + ", " + dimensions.current.outerRadius + ")"
         );
-        //Hide tooltip failsafe (sometimes subarcs events are not fired)
+
         gauge.doughnut.current
             .on("mouseleave", () => arcHooks.hideTooltip(gauge))
-            .on("mouseout", () => arcHooks.hideTooltip(gauge))
+            .on("mouseout", () => arcHooks.hideTooltip(gauge));
+
         let arcWidth = arc.width as number;
         dimensions.current.innerRadius = dimensions.current.outerRadius * (1 - arcWidth);
         clearChart(gauge);
@@ -97,15 +118,14 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
         let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
         let ticksChanged = (JSON.stringify(gauge.prevProps.current.labels?.tickLabels) !== JSON.stringify(labels.tickLabels));
-        let shouldRedrawArcs = arcsPropsChanged
+        let shouldRedrawArcs = arcsPropsChanged;
         if (shouldRedrawArcs) {
             arcHooks.clearArcs(gauge);
             arcHooks.setArcData(gauge);
             arcHooks.setupArcs(gauge, resize);
         }
-        //If pointer is hidden there's no need to redraw it when only value changes
         var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
-        if ((shouldRedrawPointer)) {
+        if (shouldRedrawPointer) {
             pointerHooks.drawPointer(gauge);
         }
         if (arcsPropsChanged || ticksChanged) {
@@ -156,8 +176,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
 export const calculateRadius = (gauge: Gauge) => {
     const { dimensions } = gauge;
     const parentNode = gauge.container.current.node().parentNode as HTMLElement;
+    const parentNodeOfTheParentNode = parentNode.parentNode as HTMLElement;
     const parentWidth = parentNode.getBoundingClientRect().width;
-    const parentHeight = parentNode.getBoundingClientRect().height;
+    const parentHeight = parentNodeOfTheParentNode.getBoundingClientRect().height ?? 0;
 
     const availableWidth = parentWidth - dimensions.current.margin.left - dimensions.current.margin.right;
     const availableHeight = parentHeight - dimensions.current.margin.top - dimensions.current.margin.bottom;
@@ -167,12 +188,17 @@ export const calculateRadius = (gauge: Gauge) => {
     // } else {
     //     dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight);
     // }
-
-    if (availableWidth < availableHeight) {
-        dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight / 2);
-    } else {
-        dimensions.current.outerRadius = availableHeight / 2;
-    }
+    // if(availableHeight < availableWidth) {
+    // dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight / 2);
+    // }
+    // else {
+    dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight / 2);
+    // dimensions.current.outerRadius = availableHeight;
+    // }
+    console.log(dimensions.current.outerRadius > availableHeight)
+    // if (dimensions.current.outerRadius > parentHeight)
+    console.log("outerRadius", dimensions.current.outerRadius)
+    console.log("parentHeight", parentHeight)
     centerGraph(gauge);
 };
 
