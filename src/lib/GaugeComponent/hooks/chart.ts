@@ -56,6 +56,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     let labels = gauge.props.labels as Labels;
 
     if (resize) {
+        calculateRadius(gauge);
         var parentNode = gauge.container.current.node().parentNode as HTMLElement;
         var parentWidth = parentNode.getBoundingClientRect().width;
         var parentHeight = parentNode.getBoundingClientRect().height;
@@ -63,8 +64,10 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         gauge.svg.current
             .attr("width", parentWidth)
             .attr("height", parentHeight)
-            .attr('preserveAspectRatio', 'xMinYMin')
-            // .attr("viewBox", `0 0 ${parentWidth} ${parentHeight}`);
+            .attr('preserveAspectRatio', 'xMaxYMax')
+            // .attr("viewBox", `0 0 100 100`);
+
+        // gauge.g.current.attr('transform', `translate(${parentWidth}, ${parentHeight})`);
 
         var outerRadius = dimensions.current.outerRadius;
         // Adjust outerRadius to fit within the parent node's height
@@ -82,9 +85,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         // var yGauge = ((parentHeight / 2) - outerRadius)
         //     + (dimensions.current.margin.top);
         //Center the gauge horizontally
-        var xGauge = (parentWidth / 2) - outerRadius + dimensions.current.margin.left;
+        var xGauge = (parentWidth / 2) - outerRadius// - dimensions.current.margin.left;
         //Fix the position of the gauge vertically at the top of the frame
-        var yGauge = dimensions.current.margin.top;
+        var yGauge = dimensions.current.margin.top+10;
 
         gauge.g.current
             .data([
@@ -95,10 +98,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             ])
             .attr("transform", (d: any) => `translate(${d.x}, ${d.y})`);
 
-        calculateRadius(gauge);
         gauge.doughnut.current.attr(
             "transform",
-            "translate(" + dimensions.current.outerRadius + ", " + dimensions.current.outerRadius + ")"
+            "translate(" + (dimensions.current.outerRadius) + ", " + (dimensions.current.outerRadius) + ")"
         );
 
         gauge.doughnut.current
@@ -178,8 +180,7 @@ export const calculateRadius = (gauge: Gauge) => {
     const parentNode = gauge.container.current.node().parentNode as HTMLElement;
     const parentNodeOfTheParentNode = parentNode.parentNode as HTMLElement;
     const parentWidth = parentNode.getBoundingClientRect().width;
-    const parentHeight = parentNodeOfTheParentNode.getBoundingClientRect().height ?? 0;
-
+    const parentHeight = gauge.container.current.node().getBoundingClientRect().height ?? 0;
     const availableWidth = parentWidth - dimensions.current.margin.left - dimensions.current.margin.right;
     const availableHeight = parentHeight - dimensions.current.margin.top - dimensions.current.margin.bottom;
 
@@ -189,10 +190,10 @@ export const calculateRadius = (gauge: Gauge) => {
     //     dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight);
     // }
     // if(availableHeight < availableWidth) {
-    // dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight / 2);
+    dimensions.current.outerRadius = Math.min(availableWidth - 100, availableHeight) / 2;
     // }
     // else {
-    dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight / 2);
+    // dimensions.current.outerRadius = Math.min(parentHeight, availableWidth);
     // dimensions.current.outerRadius = availableHeight;
     // }
     console.log(dimensions.current.outerRadius > availableHeight)
