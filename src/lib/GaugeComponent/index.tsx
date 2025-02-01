@@ -81,17 +81,17 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     gauge.prevProps.current = mergedProps.current;
   }, [props]);
 
-  useEffect(() => {
-    const observer = new MutationObserver(function () {
-      setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
-      if (!selectedRef.current?.offsetParent) return;
+  // useEffect(() => {
+  //   const observer = new MutationObserver(function () {
+  //     setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
+  //     if (!selectedRef.current?.offsetParent) return;
 
-      chartHooks.renderChart(gauge, true);
-      observer.disconnect()
-    });
-    observer.observe(selectedRef.current?.parentNode, {attributes: true, subtree: false});
-    return () => observer.disconnect();
-  }, [selectedRef.current?.parentNode?.offsetWidth, selectedRef.current?.parentNode?.offsetHeight]);
+  //     chartHooks.renderChart(gauge, true);
+  //     observer.disconnect()
+  //   });
+  //   observer.observe(selectedRef.current?.parentNode, {attributes: true, subtree: false});
+  //   return () => observer.disconnect();
+  // }, [selectedRef.current?.parentNode?.offsetWidth, selectedRef.current?.parentNode?.offsetHeight]);
 
   useEffect(() => {
     const handleResize = () => chartHooks.renderChart(gauge, true);
@@ -100,17 +100,18 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     return () => window.removeEventListener("resize", handleResize);
   }, [props]);
 
-  useEffect(() => {
-    console.log(svgRef.current?.offsetWidth)
-    // workaround to trigger recomputing of gauge size on first load (e.g. F5)
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
-  }, [selectedRef.current?.parentNode]);
+  // useEffect(() => {
+  //   console.log(svgRef.current?.offsetWidth)
+  //   // workaround to trigger recomputing of gauge size on first load (e.g. F5)
+  //   setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
+  // }, [selectedRef.current?.parentNode]);
   useEffect(() => {
     const element = svgRef.current;
     if (!element) return;
 
     // Create observer instance
     const observer = new ResizeObserver(() => {
+      // chartHooks.initChart(gauge, isFirstRun.current);
       chartHooks.renderChart(gauge, true);
     });
 
