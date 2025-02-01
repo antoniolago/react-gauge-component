@@ -7,6 +7,7 @@ export interface Gauge {
     svg: React.MutableRefObject<any>;
     g: React.MutableRefObject<any>;
     doughnut: React.MutableRefObject<any>;
+    resizeObserver : React.MutableRefObject<any>;
     pointer: React.MutableRefObject<any>;
     container: React.MutableRefObject<any>;
     isFirstRun: React.MutableRefObject<boolean>;

@@ -7,11 +7,13 @@ import * as arcHooks from "./arc";
 import * as labelsHooks from "./labels";
 import * as pointerHooks from "./pointer";
 import * as utilHooks from "./utils";
-export const initChart = (gauge: Gauge) => {
+export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     const { angles } = gauge.dimensions.current;
+    if (gauge.resizeObserver?.current?.disconnect) {
+        gauge.resizeObserver?.current?.disconnect();
+    }
     let updatedValue = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
-    let isFirstTime = utilHooks.isEmptyObject(gauge.svg.current);
-    if (updatedValue && !isFirstTime) {
+    if (updatedValue && !isFirstRender) {
         renderChart(gauge, false);
         return;
     }

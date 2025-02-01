@@ -8,6 +8,7 @@ import { isEmptyObject, mergeObjects } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
 import { PointerRef, defaultPointerRef } from "./types/Pointer";
 import { Arc, getArcWidthByType } from "./types/Arc";
+import { debounce } from "lodash";
 /*
 GaugeComponent creates a gauge chart using D3
 The chart is responsive and will have the same width as the "container"
@@ -32,9 +33,12 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const mergedProps = useRef<GaugeComponentProps>(props as GaugeComponentProps);
   const prevProps = useRef<any>({});
   let svgRef = useRef<any>(null);
+  const resizeObserver = useRef<any>({});
+  let selectedRef = useRef<any>(null);
 
   var gauge: Gauge = {
     props: mergedProps.current,
+    resizeObserver,
     prevProps,
     svg,
     g,
@@ -72,22 +76,22 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   useLayoutEffect(() => {
     updateMergedProps();
     isFirstRun.current = isEmptyObject(container.current)
-    if (isFirstRun.current) container.current = select(svgRef.current);
-    if (shouldInitChart()) chartHooks.initChart(gauge);
+    if (isFirstRun.current) container.current = select(selectedRef.current);
+    if (shouldInitChart()) chartHooks.initChart(gauge, isFirstRun.current);
     gauge.prevProps.current = mergedProps.current;
   }, [props]);
 
   useEffect(() => {
     const observer = new MutationObserver(function () {
       setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
-      if (!svgRef.current?.offsetParent) return;
+      if (!selectedRef.current?.offsetParent) return;
 
       chartHooks.renderChart(gauge, true);
       observer.disconnect()
     });
-    observer.observe(svgRef.current?.parentNode, { attributes: true, subtree: false });
+    observer.observe(selectedRef.current?.parentNode, {attributes: true, subtree: false});
     return () => observer.disconnect();
-  }, [svgRef.current?.parentNode?.offsetWidth, svgRef.current?.parentNode?.offsetHeight]);
+  }, [selectedRef.current?.parentNode?.offsetWidth, selectedRef.current?.parentNode?.offsetHeight]);
 
   useEffect(() => {
     const handleResize = () => chartHooks.renderChart(gauge, true);
@@ -96,36 +100,33 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     return () => window.removeEventListener("resize", handleResize);
   }, [props]);
 
-  // useEffect(() => {
-  //   console.log(svgRef.current?.offsetWidth)
-  //   // workaround to trigger recomputing of gauge size on first load (e.g. F5)
-  //   setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
-  // }, [svgRef.current?.parentNode]);
-
+  useEffect(() => {
+    console.log(svgRef.current?.offsetWidth)
+    // workaround to trigger recomputing of gauge size on first load (e.g. F5)
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
+  }, [selectedRef.current?.parentNode]);
   useEffect(() => {
     const element = svgRef.current;
     if (!element) return;
 
-    const handleResize = () => {
-      const parentNode = element.parentNode;
-      if (parentNode) {
-        chartHooks.renderChart(gauge, true);
-        // console.log("Parent node width:", width);
-      }
-    };
+    // Create observer instance
+    const observer = new ResizeObserver(() => {
+      chartHooks.renderChart(gauge, true);
+    });
 
-    // Create a ResizeObserver to watch the parent node
-    const observer = new ResizeObserver(handleResize);
+    // Store observer reference
+    gauge.resizeObserver.current = observer;
 
-    // Observe the parent node
+    // Observe parent node
     if (element.parentNode) {
       observer.observe(element.parentNode);
     }
 
-    // Cleanup observer when component unmounts
+    // Cleanup
     return () => {
-      if (element.parentNode) {
-        observer.unobserve(element.parentNode);
+      if (gauge.resizeObserver) {
+        gauge.resizeObserver.current?.disconnect();
+        delete gauge.resizeObserver.current;
       }
     };
   }, []);
@@ -143,8 +144,8 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     <div
       id={id}
       className={`${gauge.props.type}-gauge${className ? ' ' + className : ''}`}
-      style={styled}
-      ref={(svg) => (svgRef.current = svg)}
+      style={style}
+      ref={(svg) => (selectedRef.current = svg)}
     />
   );
 };
