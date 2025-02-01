@@ -1,8 +1,6 @@
 import React from 'react';
 import GridLayout from 'react-grid-layout';
 import GaugeComponent from '../lib';
-import WidthProvider from 'react-grid-layout';
-import Responsive from 'react-grid-layout';
 
 // const ResponsiveReactGridLayout = WidthProvider(Responsive);
 const layout = [
