@@ -8,7 +8,6 @@ import { isEmptyObject, mergeObjects } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
 import { PointerRef, defaultPointerRef } from "./types/Pointer";
 import { Arc, getArcWidthByType } from "./types/Arc";
-import { debounce } from "lodash";
 /*
 GaugeComponent creates a gauge chart using D3
 The chart is responsive and will have the same width as the "container"
@@ -33,13 +32,11 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const mergedProps = useRef<GaugeComponentProps>(props as GaugeComponentProps);
   const prevProps = useRef<any>({});
   let svgRef = useRef<any>(null);
-  const resizeObserver = useRef<any>({});
-  let selectedRef = useRef<any>(null);
 
   var gauge: Gauge = {
     props: mergedProps.current,
-    resizeObserver,
     prevProps,
+    resizeObserver: useRef<any>(),
     svg,
     g,
     dimensions,
@@ -52,90 +49,90 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     pieChart,
     tooltip
   };
-  const setupRender = () => {
-    //Merged properties will get the default props and overwrite by the user's defined props
-    //To keep the original default props in the object
-    const updateMergedProps = () => {
-      let defaultValues = { ...defaultGaugeProps };
-      gauge.props = mergedProps.current = mergeObjects(defaultValues, props);
-      if (gauge.props.arc?.width == defaultGaugeProps.arc?.width) {
-        let mergedArc = mergedProps.current.arc as Arc;
-        mergedArc.width = getArcWidthByType(gauge.props.type as GaugeType);
-      }
-      if (gauge.props.marginInPercent == defaultGaugeProps.marginInPercent) mergedProps.current.marginInPercent = getGaugeMarginByType(gauge.props.type as GaugeType);
-      arcHooks.validateArcs(gauge);
+  //Merged properties will get the default props and overwrite by the user's defined props
+  //To keep the original default props in the object
+  const updateMergedProps = () => {
+    let defaultValues = { ...defaultGaugeProps };
+    gauge.props = mergedProps.current = mergeObjects(defaultValues, props);
+    if (gauge.props.arc?.width == defaultGaugeProps.arc?.width) {
+      let mergedArc = mergedProps.current.arc as Arc;
+      mergedArc.width = getArcWidthByType(gauge.props.type as GaugeType);
     }
-
-    const shouldInitChart = () => {
-      let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc));
-      let pointerPropsChanged = (JSON.stringify(prevProps.current.pointer) !== JSON.stringify(mergedProps.current.pointer));
-      let valueChanged = (JSON.stringify(prevProps.current.value) !== JSON.stringify(mergedProps.current.value));
-      let minValueChanged = (JSON.stringify(prevProps.current.minValue) !== JSON.stringify(mergedProps.current.minValue));
-      let maxValueChanged = (JSON.stringify(prevProps.current.maxValue) !== JSON.stringify(mergedProps.current.maxValue));
-      return arcsPropsChanged || pointerPropsChanged || valueChanged || minValueChanged || maxValueChanged;
-    }
-    useLayoutEffect(() => {
-      updateMergedProps();
-      isFirstRun.current = isEmptyObject(container.current)
-      if (isFirstRun.current) container.current = select(selectedRef.current);
-      if (shouldInitChart()) chartHooks.initChart(gauge, isFirstRun.current);
-      gauge.prevProps.current = mergedProps.current;
-    }, [props]);
-
-    // useEffect(() => {
-    //   const observer = new MutationObserver(function () {
-    //     setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
-    //     if (!selectedRef.current?.offsetParent) return;
-
-    //     chartHooks.renderChart(gauge, true);
-    //     observer.disconnect()
-    //   });
-    //   observer.observe(selectedRef.current?.parentNode, {attributes: true, subtree: false});
-    //   return () => observer.disconnect();
-    // }, [selectedRef.current?.parentNode?.offsetWidth, selectedRef.current?.parentNode?.offsetHeight]);
-
-    // useEffect(() => {
-    //   const handleResize = () => chartHooks.renderChart(gauge, true);
-    //   //Set up resize event listener to re-render the chart everytime the window is resized
-    //   window.addEventListener("resize", handleResize);
-    //   return () => window.removeEventListener("resize", handleResize);
-    // }, [props]);
-
-    // useEffect(() => {
-    //   console.log(svgRef.current?.offsetWidth)
-    //   // workaround to trigger recomputing of gauge size on first load (e.g. F5)
-    //   setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
-    // }, [selectedRef.current?.parentNode]);
-
-    useEffect(() => {
-      const element = svgRef.current;
-      if (!element) return;
-
-      // Create observer instance
-      const observer = new ResizeObserver(() => {
-        // chartHooks.initChart(gauge, isFirstRun.current);
-        chartHooks.renderChart(gauge, true);
-      });
-
-      // Store observer reference
-      gauge.resizeObserver.current = observer;
-
-      // Observe parent node
-      if (element.parentNode) {
-        observer.observe(element.parentNode);
-      }
-
-      // Cleanup
-      return () => {
-        if (gauge.resizeObserver) {
-          gauge.resizeObserver.current?.disconnect();
-          // delete gauge.resizeObserver.current;
-        }
-      };
-    }, []);
+    if (gauge.props.marginInPercent == defaultGaugeProps.marginInPercent) mergedProps.current.marginInPercent = getGaugeMarginByType(gauge.props.type as GaugeType);
+    arcHooks.validateArcs(gauge);
   }
 
-  setupRender();
+  const shouldInitChart = () => {
+    let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc));
+    let pointerPropsChanged = (JSON.stringify(prevProps.current.pointer) !== JSON.stringify(mergedProps.current.pointer));
+    let valueChanged = (JSON.stringify(prevProps.current.value) !== JSON.stringify(mergedProps.current.value));
+    let minValueChanged = (JSON.stringify(prevProps.current.minValue) !== JSON.stringify(mergedProps.current.minValue));
+    let maxValueChanged = (JSON.stringify(prevProps.current.maxValue) !== JSON.stringify(mergedProps.current.maxValue));
+    return arcsPropsChanged || pointerPropsChanged || valueChanged || minValueChanged || maxValueChanged;
+  }
+  useLayoutEffect(() => {
+    updateMergedProps();
+    isFirstRun.current = isEmptyObject(container.current)
+    if (isFirstRun.current) container.current = select(svgRef.current);
+    if (shouldInitChart()) chartHooks.initChart(gauge, isFirstRun.current);
+    gauge.prevProps.current = mergedProps.current;
+  }, [props]);
+
+  useEffect(() => {
+    const observer = new MutationObserver(function () {
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
+      if (!svgRef.current?.offsetParent) return;
+
+      chartHooks.renderChart(gauge, true);
+      observer.disconnect()
+    });
+    observer.observe(svgRef.current?.parentNode, { attributes: true, subtree: false });
+    return () => observer.disconnect();
+  }, [svgRef.current?.parentNode?.offsetWidth, svgRef.current?.parentNode?.offsetHeight]);
+
+  useEffect(() => {
+    const handleResize = () => chartHooks.renderChart(gauge, true);
+    //Set up resize event listener to re-render the chart everytime the window is resized
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [props]);
+
+  // useEffect(() => {
+  //   console.log(svgRef.current?.offsetWidth)
+  //   // workaround to trigger recomputing of gauge size on first load (e.g. F5)
+  //   setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
+  // }, [svgRef.current?.parentNode]);
+
+  useEffect(() => {
+    const element = svgRef.current;
+    if (!element) return;
+
+    const handleResize = () => {
+      const parentNode = element.parentNode;
+      if (parentNode) {
+        requestAnimationFrame(() => {
+          chartHooks.renderChart(gauge, true);
+        });
+        // console.log("Parent node width:", width);
+      }
+    };
+
+    // Create a ResizeObserver to watch the parent node
+    const observer = new ResizeObserver(handleResize);
+
+    // Observe the parent node
+    if (element.parentNode) {
+      observer.observe(element.parentNode);
+    }
+
+    // Cleanup observer when component unmounts
+    return () => {
+      if (element.parentNode) {
+        observer.unobserve(element.parentNode);
+      }
+    };
+  }, []);
+
   const { id, style, className, type } = props;
   // add     height: -webkit-fill-available;
   //  width: -webkit-fill-available;
@@ -149,10 +146,9 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     <div
       id={id}
       className={`${gauge.props.type}-gauge${className ? ' ' + className : ''}`}
-      style={style}
-      ref={(svg) => (selectedRef.current = svg)}
+      style={styled}
+      ref={(svg) => (svgRef.current = svg)}
     />
   );
 };
-export { GaugeComponent };
 export default GaugeComponent;
