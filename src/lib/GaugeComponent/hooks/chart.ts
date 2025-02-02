@@ -7,11 +7,13 @@ import * as arcHooks from "./arc";
 import * as labelsHooks from "./labels";
 import * as pointerHooks from "./pointer";
 import * as utilHooks from "./utils";
-export const initChart = (gauge: Gauge) => {
+export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     const { angles } = gauge.dimensions.current;
+    if (gauge.resizeObserver?.current?.disconnect) {
+        gauge.resizeObserver?.current?.disconnect();
+    }
     let updatedValue = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
-    let isFirstTime = utilHooks.isEmptyObject(gauge.svg.current);
-    if (updatedValue && !isFirstTime) {
+    if (updatedValue && !isFirstRender) {
         renderChart(gauge, false);
         return;
     }
@@ -57,15 +59,11 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
 
     if (resize) {
         calculateRadius(gauge);
-        var parentNode = gauge.container.current.node().parentNode as HTMLElement;
+        var parentNode = gauge.container.current.node() as HTMLElement;
         var parentWidth = parentNode.getBoundingClientRect().width;
         var parentHeight = parentNode.getBoundingClientRect().height;
 
-        gauge.svg.current
-            .attr("width", parentWidth)
-            .attr("height", parentHeight)
-            .attr('preserveAspectRatio', 'xMaxYMax')
-            // .attr("viewBox", `0 0 100 100`);
+        // .attr("viewBox", `0 0 100 100`);
 
         // gauge.g.current.attr('transform', `translate(${parentWidth}, ${parentHeight})`);
 
@@ -79,6 +77,15 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             outerRadius = dimensions.current.outerRadius;
         }
 
+        let gaugeTypeHeightCorrection: Record<string, number> = {
+            [GaugeType.Semicircle]: 0.6,
+            [GaugeType.Radial]: 1,
+            [GaugeType.Grafana]: 0.89
+        }
+        gauge.svg.current
+            .attr("width", parentWidth)
+            .attr("height", parentHeight*gaugeTypeHeightCorrection[gauge.props.type as string])
+            .attr('preserveAspectRatio', 'xMaxYMax')
 
         // var xGauge = ((parentWidth / 2) - outerRadius)
         //     + (dimensions.current.margin.left) - dimensions.current.margin.right;
@@ -87,7 +94,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         //Center the gauge horizontally
         var xGauge = (parentWidth / 2) - outerRadius// - dimensions.current.margin.left;
         //Fix the position of the gauge vertically at the top of the frame
-        var yGauge = dimensions.current.margin.top+10;
+        var yGauge = dimensions.current.margin.top + 10;
 
         gauge.g.current
             .data([
