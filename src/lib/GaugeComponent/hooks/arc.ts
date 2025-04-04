@@ -172,7 +172,7 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
 export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) => {
   const { padding, cornerRadius } = gauge.props.arc as Arc;
   const { innerRadius, outerRadius } = gauge.dimensions.current;
-  // chartHooks.clearChart(gauge);
+
   let data = {}
   //When gradient enabled, it'll have only 1 arc
   if (gauge.props?.arc?.gradient) {

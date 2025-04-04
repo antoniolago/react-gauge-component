@@ -5,12 +5,15 @@ import InputTest from './TestComponent/InputTest';
 import GridLayoutComponent from './TestComponent/GridLayout';
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css';
+import GaugeComponent from './lib';
 
 const App = () => {
-  return(
+  return (
     <>
-    <GridLayoutComponent />
+      <GridLayoutComponent />
       <MainPreviews />
+      {/* <GaugeComponent /> */}
+      
       {/* <InputTest /> */}
     </>
   )

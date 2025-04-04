@@ -9,9 +9,9 @@ import * as pointerHooks from "./pointer";
 import * as utilHooks from "./utils";
 export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     const { angles } = gauge.dimensions.current;
-    if (gauge.resizeObserver?.current?.disconnect) {
-        gauge.resizeObserver?.current?.disconnect();
-    }
+    // if (gauge.resizeObserver?.current?.disconnect) {
+    //     gauge.resizeObserver?.current?.disconnect();
+    // }
     let updatedValue = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
     if (updatedValue && !isFirstRender) {
         renderChart(gauge, false);
@@ -57,12 +57,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     let arc = gauge.props.arc as Arc;
     let labels = gauge.props.labels as Labels;
 
+    calculateRadius(gauge);
     if (resize) {
-        calculateRadius(gauge);
         var parentNode = gauge.container.current.node() as HTMLElement;
+        if (!parentNode) return;
+        var parentNodeEl = document.getElementById(gauge.props.id as string);
         var parentWidth = parentNode.getBoundingClientRect().width;
         var parentHeight = parentNode.getBoundingClientRect().height;
-
         // .attr("viewBox", `0 0 100 100`);
 
         // gauge.g.current.attr('transform', `translate(${parentWidth}, ${parentHeight})`);
@@ -78,24 +79,39 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         }
 
         let gaugeTypeHeightCorrection: Record<string, number> = {
-            [GaugeType.Semicircle]: 0.6,
-            [GaugeType.Radial]: 1,
-            [GaugeType.Grafana]: 0.89
+            [GaugeType.Semicircle]: 0,
+            [GaugeType.Radial]: 10,
+            [GaugeType.Grafana]: 25
         }
-        gauge.svg.current
-            .attr("width", parentWidth)
-            .attr("height", parentHeight*gaugeTypeHeightCorrection[gauge.props.type as string])
-            .attr('preserveAspectRatio', 'xMaxYMax')
+        let heightRatio = gaugeTypeHeightCorrection[gauge.props.type as GaugeType] || 1;
+        let calculatedHeight = (parentWidth * heightRatio) - gaugeTypeHeightCorrection[gauge.props.type as GaugeType];
+
+        // gauge.svg.current
+        //     .attr("width", parentWidth)
+        //THIS IS WHERE THINGS GO HAYWIRE, HOW DO I DECIDE WHAT WILL BE THE
+        //HEIGHT OF THE SVG ELEMENT IF THE PARENT DIVs DOES NOT PROVIDE A HEIGHT
+        //AND THE HEIGHT OF THE GAUGE IS DYNAMICALLY CALCULATED
+        //WE NEED A MINHEIGHT FOR THE CONTAINER DIV
+        //BUT KEEP OTHER FUNCTIONALITIES WORKING LIKE RESIZING
+        // .attr("height", parentWidth)
+        // .attr("height", gHeight) // Set a minimum height of 200
+        // .attr('preserveAspectRatio', 'xMaxYMax');
+        // .attr('preserveAspectRatio', 'xMaxYMin')
 
         // var xGauge = ((parentWidth / 2) - outerRadius)
         //     + (dimensions.current.margin.left) - dimensions.current.margin.right;
         // var yGauge = ((parentHeight / 2) - outerRadius)
         //     + (dimensions.current.margin.top);
         //Center the gauge horizontally
-        var xGauge = (parentWidth / 2) - outerRadius// - dimensions.current.margin.left;
+        var xGauge = (parentWidth / 2) - outerRadius;// - dimensions.current.margin.left;
         //Fix the position of the gauge vertically at the top of the frame
-        var yGauge = dimensions.current.margin.top + 10;
+        var yGauge = 10
 
+        gauge.svg.current
+            .attr("width", "100%")
+            .attr("viewBox", "0 0 100% 100%") // clipping [origin,size]
+            .attr("height","100%") // this was the secret sauce
+            .attr('preserveAspectRatio','xMinYMin')
         gauge.g.current
             .data([
                 {
@@ -103,7 +119,8 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                     y: yGauge
                 }
             ])
-            .attr("transform", (d: any) => `translate(${d.x}, ${d.y})`);
+            .attr("transform", (d: any) => `translate(${d.x}, ${d.y})`)
+            .attr("will-change", "transform");
 
         gauge.doughnut.current.attr(
             "transform",
@@ -114,6 +131,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             .on("mouseleave", () => arcHooks.hideTooltip(gauge))
             .on("mouseout", () => arcHooks.hideTooltip(gauge));
 
+        var gHeight = gauge.g.current.node().getBBox().height;
+        
+            // .attr("height", parentHeight)
         let arcWidth = arc.width as number;
         dimensions.current.innerRadius = dimensions.current.outerRadius * (1 - arcWidth);
         clearChart(gauge);
@@ -146,6 +166,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             labelsHooks.setupValueLabel(gauge);
         }
     }
+    var gHeight = gauge.g.current.node().getBBox().height;
+    var gWidth = gauge.g.current.node().getBBox().width;
+    var h = Math.max(gHeight, 150)
+    // gauge.svg.current
+    //     .attr("height", h)
+    // gauge.props.style = { ...gauge.props.style, height: gHeight  };
+
 };
 // export const updateDimensions = (gauge: Gauge) => {
 //     const { marginInPercent } = gauge.props;

@@ -44,15 +44,15 @@ const GridLayoutComponent = () => (
         rowHeight={70}
         width={1200}
     >
-        <div key="a" style={{ backgroundColor: '#F58B19' }}>
+        {/* <div key="a" style={{ backgroundColor: '#F58B19' }}>
             <GaugeComponent />
-        </div>
+        </div> */}
         <div key="b" style={{ backgroundColor: '#F5CD19' }}>
             <GaugeComponent />
         </div>
-        <div key="c" style={{ backgroundColor: '#5BE12C' }}>
+        {/* <div key="c" style={{ backgroundColor: '#5BE12C' }}>
             <GaugeComponent />
-        </div>
+        </div> */}
     </GridLayout>
 );
 

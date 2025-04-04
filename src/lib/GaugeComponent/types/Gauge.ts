@@ -18,4 +18,6 @@ export interface Gauge {
     pieChart: React.MutableRefObject<d3.Pie<any, any>>;
     //This holds the only tooltip element rendered for any given gauge chart to use
     tooltip: React.MutableRefObject<any>;
+    prevGSize: React.MutableRefObject<any>;
+    maxGHeight: React.MutableRefObject<any>;
 }

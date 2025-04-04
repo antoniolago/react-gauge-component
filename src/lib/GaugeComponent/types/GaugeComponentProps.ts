@@ -1,3 +1,4 @@
+import { random } from "lodash";
 import { Arc, defaultArc } from "./Arc";
 import { Labels, defaultLabels } from './Labels';
 import { PointerProps, defaultPointer } from "./Pointer";
@@ -43,7 +44,7 @@ export interface GaugeComponentProps {
 }
 
 export const defaultGaugeProps: GaugeComponentProps = {
-    id: "",
+    id: random(0, 100000).toString(),
     className: "gauge-component-class",
     style: { width: "100%"},
     marginInPercent: 0.07,
