@@ -1,6 +1,6 @@
 {
-  "name": "react-gauge-component",
-  "version": "1.1.30",
+  "name": "@aqt/react-gauge-component",
+  "version": "1.2.64",
   "main": "dist/lib/index.js",
   "module": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
@@ -92,7 +92,7 @@
     "react-dom": "^16.8.2 || ^17.0 || ^18.x || ^19.x"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "@aqt:registry": "gitlab.aqt.eu/api/v4/projects/67/packages/npm/"
   },
   "description": "Gauge component for React",
   "bugs": {
