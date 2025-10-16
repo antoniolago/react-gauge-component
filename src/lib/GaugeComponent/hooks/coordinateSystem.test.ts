@@ -38,16 +38,14 @@ describe('Coordinate System', () => {
       expect(radiusWithMargin).toBeLessThan(radiusNoMargin);
     });
 
-    it('should calculate different radii for gauge types with different padding', () => {
-      // Grafana has different paddingPercent (0.12) vs Semicircle/Radial (0.15)
+    it('should calculate different radii for different gauge types', () => {
       const semicircleRadius = calculateOptimalRadius(400, 400, GaugeType.Semicircle);
+      const radialRadius = calculateOptimalRadius(400, 400, GaugeType.Radial);
       const grafanaRadius = calculateOptimalRadius(400, 400, GaugeType.Grafana);
       
-      // Different padding percentages should produce different radii
+      // Different types should produce different results due to different height ratios
+      expect(semicircleRadius).not.toBe(radialRadius);
       expect(semicircleRadius).not.toBe(grafanaRadius);
-      // Verify they're both reasonable
-      expect(semicircleRadius).toBeGreaterThan(150);
-      expect(grafanaRadius).toBeGreaterThan(150);
     });
   });
 

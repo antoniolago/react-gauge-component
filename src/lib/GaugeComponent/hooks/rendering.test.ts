@@ -158,14 +158,14 @@ describe('Rendering Behavior Tests', () => {
     it('should provide adequate space for labels outside the arc', () => {
       const layout = calculateGaugeLayout(400, 300, GaugeType.Semicircle, 0.2);
       
-      // With minimal padding approach, expect exactly 10px
-      const minPadding = 10;
+      // Padding should be at least 10% of radius for labels
+      const expectedPadding = layout.outerRadius * 0.1;
       
       const leftPadding = layout.gaugeCenter.x - layout.outerRadius - layout.viewBox.x;
       const topPadding = layout.gaugeCenter.y - layout.outerRadius - layout.viewBox.y;
       
-      expect(leftPadding).toBeGreaterThanOrEqual(minPadding);
-      expect(topPadding).toBeGreaterThanOrEqual(minPadding);
+      expect(leftPadding).toBeGreaterThanOrEqual(expectedPadding);
+      expect(topPadding).toBeGreaterThanOrEqual(expectedPadding);
     });
 
     it('should scale viewBox proportionally with parent size', () => {
@@ -249,6 +249,168 @@ describe('Rendering Behavior Tests', () => {
         const interval = timestamps[i] - timestamps[i - 1];
         expect(interval).toBeGreaterThanOrEqual(100);
       }
+    });
+  });
+
+  describe('SVG to G Element Size Matching (20px tolerance)', () => {
+    it('should ensure SVG height closely matches g element bounds for Semicircle', () => {
+      const layout = calculateGaugeLayout(400, 300, GaugeType.Semicircle, 0.2);
+      
+      // G element bounds (from center ± radius)
+      const gTop = layout.gaugeCenter.y - layout.outerRadius;
+      const gBottom = layout.gaugeCenter.y + layout.outerRadius;
+      const gHeight = gBottom - gTop;
+      
+      // ViewBox defines SVG coordinate space height
+      const svgHeight = layout.viewBox.height;
+      
+      // Actual used space by g element
+      const usedSpace = gHeight;
+      const tolerance = 20;
+      
+      // SVG should not be significantly taller than g element
+      const wastedSpace = svgHeight - usedSpace;
+      expect(wastedSpace).toBeLessThanOrEqual(tolerance * 2); // Top and bottom padding
+    });
+
+    it('should ensure SVG height closely matches g element bounds for Radial', () => {
+      const layout = calculateGaugeLayout(400, 300, GaugeType.Radial, 0.2);
+      
+      const gTop = layout.gaugeCenter.y - layout.outerRadius;
+      const gBottom = layout.gaugeCenter.y + layout.outerRadius;
+      const gHeight = gBottom - gTop;
+      
+      const svgHeight = layout.viewBox.height;
+      const wastedSpace = svgHeight - gHeight;
+      const tolerance = 20;
+      
+      expect(wastedSpace).toBeLessThanOrEqual(tolerance * 2);
+    });
+
+    it('should ensure SVG height closely matches g element bounds for Grafana', () => {
+      const layout = calculateGaugeLayout(400, 300, GaugeType.Grafana, 0.2);
+      
+      const gTop = layout.gaugeCenter.y - layout.outerRadius;
+      const gBottom = layout.gaugeCenter.y + layout.outerRadius;
+      const gHeight = gBottom - gTop;
+      
+      const svgHeight = layout.viewBox.height;
+      const wastedSpace = svgHeight - gHeight;
+      const tolerance = 20;
+      
+      expect(wastedSpace).toBeLessThanOrEqual(tolerance * 2);
+    });
+
+    it('should maintain tight bounds across different container sizes', () => {
+      const sizes = [
+        [200, 150],
+        [400, 300],
+        [800, 600],
+        [1200, 900]
+      ];
+      
+      const tolerance = 20;
+      
+      sizes.forEach(([width, height]) => {
+        const layout = calculateGaugeLayout(width, height, GaugeType.Semicircle, 0.2);
+        
+        const gHeight = layout.outerRadius * 2; // Diameter
+        const svgHeight = layout.viewBox.height;
+        const wastedSpace = svgHeight - gHeight;
+        
+        // Wasted space should be minimal (just padding)
+        expect(wastedSpace).toBeLessThanOrEqual(tolerance * 2);
+      });
+    });
+
+    it('should ensure viewBox height is not excessively larger than gauge diameter', () => {
+      const gaugeTypes = [GaugeType.Semicircle, GaugeType.Radial, GaugeType.Grafana];
+      
+      gaugeTypes.forEach(type => {
+        const layout = calculateGaugeLayout(400, 300, type, 0.2);
+        
+        const gaugeDiameter = layout.outerRadius * 2;
+        const viewBoxHeight = layout.viewBox.height;
+        
+        // ViewBox should not be more than 1.5x the gauge diameter
+        // (accounting for padding and label space)
+        const ratio = viewBoxHeight / gaugeDiameter;
+        expect(ratio).toBeLessThanOrEqual(1.5);
+      });
+    });
+
+    it('should calculate optimal viewBox height for Semicircle specifically', () => {
+      const layout = calculateGaugeLayout(400, 300, GaugeType.Semicircle, 0.2);
+      
+      // For semicircle, viewBox height should be approximately:
+      // outerRadius (top half) + space for center + space for bottom labels
+      // Should be around 1.2-1.4x the outerRadius
+      const ratio = layout.viewBox.height / layout.outerRadius;
+      
+      expect(ratio).toBeGreaterThan(1.0); // More than just radius
+      expect(ratio).toBeLessThan(2.0); // Less than full diameter
+    });
+
+    it('should ensure g element top is not cut off (has padding)', () => {
+      const gaugeTypes = [GaugeType.Semicircle, GaugeType.Radial, GaugeType.Grafana];
+      
+      gaugeTypes.forEach(type => {
+        const layout = calculateGaugeLayout(400, 300, type, 0.2);
+        
+        const gTop = layout.gaugeCenter.y - layout.outerRadius;
+        const viewBoxTop = layout.viewBox.y;
+        
+        // G element top should have some padding from viewBox top
+        const topPadding = gTop - viewBoxTop;
+        expect(topPadding).toBeGreaterThan(0);
+        expect(topPadding).toBeLessThanOrEqual(20); // Within tolerance
+      });
+    });
+
+    it('should ensure g element bottom fits within viewBox with minimal waste', () => {
+      const layout = calculateGaugeLayout(400, 300, GaugeType.Semicircle, 0.2);
+      
+      const gBottom = layout.gaugeCenter.y + layout.outerRadius;
+      const viewBoxBottom = layout.viewBox.y + layout.viewBox.height;
+      
+      // G element should fit within viewBox
+      expect(gBottom).toBeLessThanOrEqual(viewBoxBottom);
+      
+      // Bottom padding should be reasonable (not excessive)
+      const bottomPadding = viewBoxBottom - gBottom;
+      expect(bottomPadding).toBeLessThanOrEqual(50); // Allow for value label
+    });
+
+    it('should verify aspect ratio calculation matches viewBox proportions', () => {
+      const layout = calculateGaugeLayout(400, 300, GaugeType.Semicircle, 0.2);
+      
+      const aspectRatio = layout.viewBox.height / layout.viewBox.width;
+      
+      // For semicircle, aspect ratio should be less than 1 (wider than tall)
+      expect(aspectRatio).toBeLessThan(1.0);
+      
+      // Should be reasonable (not too flat)
+      expect(aspectRatio).toBeGreaterThan(0.4);
+    });
+
+    it('should ensure SVG-to-g size efficiency for all gauge types', () => {
+      const gaugeTypes = [
+        { type: GaugeType.Semicircle, expectedEfficiency: 0.7 }, // ~70% of viewBox used
+        { type: GaugeType.Radial, expectedEfficiency: 0.75 },    // ~75% of viewBox used
+        { type: GaugeType.Grafana, expectedEfficiency: 0.8 }     // ~80% of viewBox used
+      ];
+      
+      gaugeTypes.forEach(({ type, expectedEfficiency }) => {
+        const layout = calculateGaugeLayout(400, 300, type, 0.2);
+        
+        const gHeight = layout.outerRadius * 2;
+        const svgHeight = layout.viewBox.height;
+        const efficiency = gHeight / svgHeight;
+        
+        // Efficiency should be close to expected (within 20%)
+        expect(efficiency).toBeGreaterThan(expectedEfficiency - 0.2);
+        expect(efficiency).toBeLessThan(expectedEfficiency + 0.2);
+      });
     });
   });
 });
