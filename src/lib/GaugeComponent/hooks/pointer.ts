@@ -118,8 +118,8 @@ const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gaug
     let value = utils.getCurrentGaugeValueByPercentage(progress, gauge);
     let pointers: { [key: string]: () => void } = {
         [PointerType.Needle]: () => {
-            // Set needle position to center
-            translatePointer(dimensions.current.outerRadius,dimensions.current.outerRadius, gauge);
+            // Set needle position to center (origin, since g is already centered)
+            translatePointer(0, 0, gauge);
         },
         [PointerType.Arrow]: () => {
             let { x, y } = getCoordByValue(value, gauge, "inner", 0, 0.70);

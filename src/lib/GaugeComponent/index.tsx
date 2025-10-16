@@ -160,13 +160,12 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   }, []);
 
   const { id, style, className, type } = props;
-  // add     height: -webkit-fill-available;
-  //  width: -webkit-fill-available;
-  // to the style prop to make the gauge responsive
+  // Make the gauge responsive - width fills available space,
+  // but height is auto to match SVG aspect ratio (no more wasted space)
   var styled = {
     ...style,
-    height: "-webkit-fill-available",
     width: "-webkit-fill-available"
+    // Height removed - let it match the SVG's aspect-ratio naturally
   };
   return (
     <div

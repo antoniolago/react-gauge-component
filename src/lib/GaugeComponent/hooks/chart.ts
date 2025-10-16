@@ -7,6 +7,8 @@ import * as arcHooks from "./arc";
 import * as labelsHooks from "./labels";
 import * as pointerHooks from "./pointer";
 import * as utilHooks from "./utils";
+import * as coordinateSystem from "./coordinateSystem";
+import { GaugeLayout } from "./coordinateSystem";
 export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     const { angles } = gauge.dimensions.current;
     // if (gauge.resizeObserver?.current?.disconnect) {
@@ -49,93 +51,70 @@ export const calculateAngles = (gauge: Gauge) => {
 //Renders the chart, should be called every time the window is resized
 export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     const { dimensions } = gauge;
-    let gaugeTypeHeightCorrection: Record<string, number> = {
-        [GaugeType.Semicircle]: 50,
-        [GaugeType.Radial]: 55,
-        [GaugeType.Grafana]: 55
-    }
     let arc = gauge.props.arc as Arc;
     let labels = gauge.props.labels as Labels;
 
-    calculateRadius(gauge);
     if (resize) {
         var parentNode = gauge.container.current.node() as HTMLElement;
         if (!parentNode) return;
-        var parentNodeEl = document.getElementById(gauge.props.id as string);
+        
         var parentWidth = parentNode.getBoundingClientRect().width;
         var parentHeight = parentNode.getBoundingClientRect().height;
-        // .attr("viewBox", `0 0 100 100`);
-
-        // gauge.g.current.attr('transform', `translate(${parentWidth}, ${parentHeight})`);
-
-        var outerRadius = dimensions.current.outerRadius;
-        // Adjust outerRadius to fit within the parent node's height
-        if (outerRadius > parentHeight) {
-            // outerRadius = parentHeight
-            outerRadius = dimensions.current.outerRadius;
+        
+        // Use the new coordinate system to calculate layout
+        const layout = coordinateSystem.calculateGaugeLayout(
+            parentWidth,
+            parentHeight,
+            gauge.props.type as GaugeType,
+            arc.width as number,
+            typeof gauge.props.marginInPercent === 'number' 
+                ? gauge.props.marginInPercent 
+                : 0
+        );
+        
+        // Check for layout stability to prevent infinite resize loops
+        if (gauge.prevGSize.current) {
+            const stable = coordinateSystem.isLayoutStable(
+                gauge.prevGSize.current,
+                layout,
+                0.005 // 0.5% tolerance
+            );
+            if (stable) {
+                // Layout hasn't changed significantly, skip re-render
+                return;
+            }
         }
-        else {
-            outerRadius = dimensions.current.outerRadius;
-        }
-
-        let gaugeTypeHeightCorrection: Record<string, number> = {
-            [GaugeType.Semicircle]: 0,
-            [GaugeType.Radial]: 10,
-            [GaugeType.Grafana]: 25
-        }
-        let heightRatio = gaugeTypeHeightCorrection[gauge.props.type as GaugeType] || 1;
-        let calculatedHeight = (parentWidth * heightRatio) - gaugeTypeHeightCorrection[gauge.props.type as GaugeType];
-
-        // gauge.svg.current
-        //     .attr("width", parentWidth)
-        //THIS IS WHERE THINGS GO HAYWIRE, HOW DO I DECIDE WHAT WILL BE THE
-        //HEIGHT OF THE SVG ELEMENT IF THE PARENT DIVs DOES NOT PROVIDE A HEIGHT
-        //AND THE HEIGHT OF THE GAUGE IS DYNAMICALLY CALCULATED
-        //WE NEED A MINHEIGHT FOR THE CONTAINER DIV
-        //BUT KEEP OTHER FUNCTIONALITIES WORKING LIKE RESIZING
-        // .attr("height", parentWidth)
-        // .attr("height", gHeight) // Set a minimum height of 200
-        // .attr('preserveAspectRatio', 'xMaxYMax');
-        // .attr('preserveAspectRatio', 'xMaxYMin')
-
-        // var xGauge = ((parentWidth / 2) - outerRadius)
-        //     + (dimensions.current.margin.left) - dimensions.current.margin.right;
-        // var yGauge = ((parentHeight / 2) - outerRadius)
-        //     + (dimensions.current.margin.top);
-        //Center the gauge horizontally
-        var xGauge = (parentWidth / 2) - outerRadius;// - dimensions.current.margin.left;
-        //Fix the position of the gauge vertically at the top of the frame
-        var yGauge = 10
-
+        gauge.prevGSize.current = layout;
+        
+        // Update dimensions from the new layout
+        coordinateSystem.updateDimensionsFromLayout(dimensions.current, layout);
+        
+        // Configure SVG with proper viewBox and dimensions
+        // Calculate aspect ratio from viewBox to set proper height
+        const aspectRatio = layout.viewBox.height / layout.viewBox.width;
+        
         gauge.svg.current
             .attr("width", "100%")
-            .attr("viewBox", "0 0 100% 100%") // clipping [origin,size]
-            .attr("height","100%") // this was the secret sauce
-            .attr('preserveAspectRatio','xMinYMin')
+            .attr("height", "auto")
+            .style("aspect-ratio", `${layout.viewBox.width} / ${layout.viewBox.height}`)
+            .attr("viewBox", layout.viewBox.toString())
+            .attr('preserveAspectRatio', 'xMidYMid meet');
+        
+        // Position the main gauge group at the calculated center
         gauge.g.current
-            .data([
-                {
-                    x: xGauge,
-                    y: yGauge
-                }
-            ])
-            .attr("transform", (d: any) => `translate(${d.x}, ${d.y})`)
-            .attr("will-change", "transform");
+            .attr("transform", `translate(${layout.gaugeCenter.x}, ${layout.gaugeCenter.y})`);
 
+        // Position the doughnut (arcs) at the origin relative to g
+        // Since g is already centered, doughnut just needs to be at origin
         gauge.doughnut.current.attr(
             "transform",
-            "translate(" + (dimensions.current.outerRadius) + ", " + (dimensions.current.outerRadius) + ")"
+            "translate(0, 0)"
         );
 
         gauge.doughnut.current
             .on("mouseleave", () => arcHooks.hideTooltip(gauge))
             .on("mouseout", () => arcHooks.hideTooltip(gauge));
-
-        var gHeight = gauge.g.current.node().getBBox().height;
         
-            // .attr("height", parentHeight)
-        let arcWidth = arc.width as number;
-        dimensions.current.innerRadius = dimensions.current.outerRadius * (1 - arcWidth);
         clearChart(gauge);
         arcHooks.setArcData(gauge);
         arcHooks.setupArcs(gauge, resize);
@@ -143,6 +122,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         if (!gauge.props?.pointer?.hide)
             pointerHooks.drawPointer(gauge, resize);
     } else {
+        // Non-resize updates (only data/props changed)
         let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
         let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
         let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
@@ -166,100 +146,24 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             labelsHooks.setupValueLabel(gauge);
         }
     }
-    var gHeight = gauge.g.current.node().getBBox().height;
-    var gWidth = gauge.g.current.node().getBBox().width;
-    var h = Math.max(gHeight, 150)
-    // gauge.svg.current
-    //     .attr("height", h)
-    // gauge.props.style = { ...gauge.props.style, height: gHeight  };
-
 };
-// export const updateDimensions = (gauge: Gauge) => {
-//     const { marginInPercent } = gauge.props;
-//     const { dimensions } = gauge;
-//     var parentNode = gauge.container.current.node().parentNode;
-//     var divDimensions = gauge.container.current.node().getBoundingClientRect(),
-//         divWidth = parentNode.getBoundingClientRect().width,
-//         divHeight = parentNode.getBoundingClientRect().height;
-//     // if (dimensions.current.fixedHeight == 0) dimensions.current.fixedHeight = divHeight + 200;
-//     //Set the new width and horizontal margins
-//     let isMarginBox = typeof marginInPercent == 'number';
-//     let marginLeft: number = isMarginBox ? marginInPercent as number : 
-//     (marginInPercent as GaugeInnerMarginInPercent).left;
-//     let marginRight: number = isMarginBox ? marginInPercent as number : 
-//     (marginInPercent as GaugeInnerMarginInPercent).right;
-//     let marginTop: number = isMarginBox ? marginInPercent as number : 
-//     (marginInPercent as GaugeInnerMarginInPercent).top;
-//     let marginBottom: number = isMarginBox ? marginInPercent as number : 
-//     (marginInPercent as GaugeInnerMarginInPercent).bottom;
-//     // dimensions.current.margin.left = gauge.dimensions.current.margin.left;
-//     // dimensions.current.margin.right = divWidth * marginRight;
-//     // dimensions.current.margin.top = divHeight - marginTop;
-//     // dimensions.current.margin.bottom = divHeight * marginBottom;
-//     console.log("divHeight", divHeight);
-//     console.log("divWidth", divWidth);
-//     // (dimensions.current.margin.left - dimensions.current.margin.right);
-
-//     // dimensions.current.margin.top = gauge.dimensions.current.margin.top;
-//     // dimensions.current.margin.bottom = dimensions.current.fixedHeight * marginBottom;
-//     // dimensions.current.margin.left = gauge.dimensions.current.margin.left;
-//     // // dimensions.current.margin.right = divWidth * marginRight;
-//     // dimensions.current.height = parentNode.getBoundingClientRect().height;
-//     // dimensions.current.width = parentNode.getBoundingClientRect().width;
-//     // dimensions.current.width / 2 - dimensions.current.margin.top - dimensions.current.margin.bottom;
-//     //gauge.height.current = divHeight - dimensions.current.margin.top - dimensions.current.margin.bottom;
-// };
+/**
+ * Legacy function kept for backward compatibility during transition
+ * This should eventually be removed as all code migrates to the new coordinate system
+ * @deprecated Use coordinateSystem.calculateGaugeLayout instead
+ */
 export const calculateRadius = (gauge: Gauge) => {
-    const { dimensions } = gauge;
-    const parentNode = gauge.container.current.node().parentNode as HTMLElement;
-    const parentNodeOfTheParentNode = parentNode.parentNode as HTMLElement;
-    const parentWidth = parentNode.getBoundingClientRect().width;
-    const parentHeight = gauge.container.current.node().getBoundingClientRect().height ?? 0;
-    const availableWidth = parentWidth - dimensions.current.margin.left - dimensions.current.margin.right;
-    const availableHeight = parentHeight - dimensions.current.margin.top - dimensions.current.margin.bottom;
-
-    // if (gauge.props.type === GaugeType.Semicircle) {
-    //     dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight / 2);
-    // } else {
-    //     dimensions.current.outerRadius = Math.min(availableWidth / 2, availableHeight);
-    // }
-    // if(availableHeight < availableWidth) {
-    dimensions.current.outerRadius = Math.min(availableWidth - 100, availableHeight) / 2;
-    // }
-    // else {
-    // dimensions.current.outerRadius = Math.min(parentHeight, availableWidth);
-    // dimensions.current.outerRadius = availableHeight;
-    // }
-    console.log(dimensions.current.outerRadius > availableHeight)
-    // if (dimensions.current.outerRadius > parentHeight)
-    console.log("outerRadius", dimensions.current.outerRadius)
-    console.log("parentHeight", parentHeight)
-    centerGraph(gauge);
+    // This function is now handled by the coordinate system module
+    // Kept for backward compatibility only
 };
 
-//Calculates new margins to make the graph centered
-// export const centerGraph = (gauge: Gauge) => {
-//     const { dimensions } = gauge;
-//     dimensions.current.margin.left =
-//         dimensions.current.width / 2 - dimensions.current.outerRadius + dimensions.current.margin.right;
-//     gauge.g.current.attr(
-//         "transform",
-//         "translate(" + dimensions.current.margin.left + ", " + (dimensions.current.margin.top) + ")"
-//     );
-// };
-
+/**
+ * Legacy function kept for backward compatibility during transition
+ * @deprecated Centering is now handled by coordinateSystem.calculateGaugeCenter
+ */
 export const centerGraph = (gauge: Gauge) => {
-    const { dimensions } = gauge;
-    const xOffset = dimensions.current.width / 2;
-    const yOffset =
-        gauge.props.type === GaugeType.Semicircle
-            ? dimensions.current.height
-            : dimensions.current.height / 2;
-    var marginTop = dimensions.current.margin.top;
-    var marginBottom = dimensions.current.margin.bottom;
-    var marginLeft = dimensions.current.margin.left;
-    var marginRight = dimensions.current.margin.right;
-    // gauge.g.current.attr("transform", `translate(${marginLeft}, ${marginTop})`);
+    // This function is now handled by the coordinate system module
+    // Kept for backward compatibility only
 };
 
 export const clearChart = (gauge: Gauge) => {

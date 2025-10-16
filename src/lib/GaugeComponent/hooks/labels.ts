@@ -231,19 +231,24 @@ export const addValueText = (gauge: Gauge) => {
   let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1; // Compute the font size ratio
   let valueFontSize = valueLabel?.style?.fontSize as string;
   let valueTextStyle = { ...valueLabel.style };
-  let x = gauge.dimensions.current.outerRadius;
+  // Since g is centered at gauge center (0, 0), position label relative to that
+  let x = 0;
   let y = 0;
   valueTextStyle.textAnchor = "middle";
+  
+  // Position label in the center/visible area of the gauge
   if (gauge.props.type == GaugeType.Semicircle) {
-    y = gauge.dimensions.current.outerRadius / 1.5 + textPadding;
+    // For semicircle, place label slightly below center
+    // Since center is at (0,0), positive y moves down
+    y = gauge.dimensions.current.innerRadius * 0.3 + textPadding;
   } else if (gauge.props.type == GaugeType.Radial) {
-    y = gauge.dimensions.current.outerRadius * 1.45 + textPadding;
+    // For radial, place label more towards bottom
+    y = gauge.dimensions.current.innerRadius * 0.5 + textPadding;
   } else if (gauge.props.type == GaugeType.Grafana) {
-    y = gauge.dimensions.current.outerRadius * 1.0 + textPadding;
+    // For Grafana, center of gauge
+    y = textPadding;
   }
-  //if(gauge.props.pointer.type == PointerType.Arrow){
-  //  y = gauge.dimensions.current.outerRadius * 0.79 + textPadding;
-  //}
+  
   let widthFactor = gauge.props.type == GaugeType.Radial ? 0.003 : 0.003;
   fontRatio = gauge.dimensions.current.width * widthFactor * fontRatio;
   let fontSizeNumber = parseInt(valueFontSize, 10) * fontRatio;

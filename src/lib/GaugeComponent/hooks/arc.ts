@@ -301,7 +301,7 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
     "inner": () => gauge.dimensions.current.innerRadius * radiusFactor - centerToArcLengthSubtract + 9,
     "between": () => {
       let lengthBetweenOuterAndInner = (gauge.dimensions.current.outerRadius - gauge.dimensions.current.innerRadius);
-      let middlePosition = gauge.dimensions.current.innerRadius + lengthBetweenOuterAndInner - 5;
+      let middlePosition = gauge.dimensions.current.innerRadius + lengthBetweenOuterAndInner / 2;
       return middlePosition;
     }
   };
@@ -331,15 +331,10 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
   let { startAngle, endAngle } = gaugeTypesAngles[gauge.props.type as GaugeType];
   const angle = startAngle + (percent) * (endAngle - startAngle);
 
-  let coordsRadius = 1 * (gauge.dimensions.current.width / 500);
-  let coord = [0, -coordsRadius / 2];
-  let coordMinusCenter = [
-    coord[0] - centerToArcLength * Math.cos(angle),
-    coord[1] - centerToArcLength * Math.sin(angle),
-  ];
-  let centerCoords = [gauge.dimensions.current.outerRadius, gauge.dimensions.current.outerRadius];
-  let x = (centerCoords[0] + coordMinusCenter[0]);
-  let y = (centerCoords[1] + coordMinusCenter[1]);
+  // Calculate position relative to center (0, 0)
+  // Since g is now centered at gaugeCenter, coordinates are relative to origin
+  let x = -centerToArcLength * Math.cos(angle);
+  let y = -centerToArcLength * Math.sin(angle);
   return { x, y }
 }
 export const redrawArcs = (gauge: Gauge) => {
