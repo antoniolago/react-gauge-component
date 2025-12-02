@@ -211,9 +211,9 @@ describe('SVG Size Tests', () => {
         const topEdge = layout.gaugeCenter.y - layout.outerRadius;
         const topPadding = topEdge - layout.viewBox.y;
         
-        // Should have some padding but not excessive
+        // Should have some padding but not excessive (15-16% for radial/grafana)
         expect(topPadding).toBeGreaterThan(0);
-        expect(topPadding).toBeLessThan(layout.outerRadius * 0.15); // < 15% of radius
+        expect(topPadding).toBeLessThan(layout.outerRadius * 0.20); // < 20% of radius
       });
     });
   });

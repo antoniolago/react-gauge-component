@@ -264,7 +264,7 @@ const GaugeGallery: React.FC = () => {
   const [autoAnimate, setAutoAnimate] = useState(true);
   const [copiedIndex, setCopiedIndex] = useState<number | 'random' | null>(null);
   const [randomKey, setRandomKey] = useState(0); // Key to force re-render
-  const [showEditor, setShowEditor] = useState(false);
+  const [showEditor, setShowEditor] = useState(true); // Start with editor open
   const [editorValue, setEditorValue] = useState('');
 
   // Auto-animate values
@@ -279,22 +279,40 @@ const GaugeGallery: React.FC = () => {
     return () => clearInterval(interval);
   }, [autoAnimate]);
 
+  // Generate the full component code string
+  const generateComponentCode = useCallback((config: any, value: number) => {
+    const configStr = JSON.stringify(config, null, 2)
+      .replace(/"([^"]+)":/g, '$1:')  // Remove quotes from keys
+      .replace(/"/g, "'");  // Use single quotes for strings
+    
+    return `<GaugeComponent
+  value={${value}}
+  ${configStr.slice(1, -1).trim().split('\n').join('\n  ')}
+/>`;
+  }, []);
+
   const handleRandomize = useCallback(() => {
     try {
       const newConfig = generateRandomConfig();
+      const newValue = Math.floor(Math.random() * 100);
       setRandomConfig(newConfig);
-      setRandomValue(Math.floor(Math.random() * 100));
+      setRandomValue(newValue);
       setRandomKey(prev => prev + 1); // Force complete re-render
-      setEditorValue(JSON.stringify(newConfig, null, 2));
+      setEditorValue(generateComponentCode(newConfig, newValue));
     } catch (error) {
       console.error('Error generating config:', error);
     }
-  }, []);
+  }, [generateComponentCode]);
 
   // Initialize editor value
   useEffect(() => {
-    setEditorValue(JSON.stringify(randomConfig, null, 2));
+    setEditorValue(generateComponentCode(randomConfig, randomValue));
   }, []);
+
+  // Update editor when value changes via slider
+  useEffect(() => {
+    setEditorValue(generateComponentCode(randomConfig, randomValue));
+  }, [randomValue, randomConfig, generateComponentCode]);
 
   // Handle config changes from editor
   const handleEditorChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -303,12 +321,37 @@ const GaugeGallery: React.FC = () => {
 
   const applyEditorConfig = useCallback(() => {
     try {
-      const parsed = JSON.parse(editorValue);
-      setRandomConfig(parsed);
-      setRandomKey(prev => prev + 1); // Force re-render with new config
+      // Parse the component code to extract value and config
+      const code = editorValue;
+      
+      // Extract value
+      const valueMatch = code.match(/value=\{(\d+)\}/);
+      if (valueMatch) {
+        setRandomValue(parseInt(valueMatch[1], 10));
+      }
+      
+      // Extract config by finding content between first { after props and matching }
+      // This is a simplified parser - extracts the object literal
+      const configStart = code.indexOf('{', code.indexOf('value='));
+      if (configStart === -1) {
+        // Try to parse the whole thing as JSX-like config
+        const propsMatch = code.match(/value=\{(\d+)\}\s*([\s\S]*?)\s*\/>/);
+        if (propsMatch) {
+          const propsStr = propsMatch[2].trim();
+          // Convert JSX-like props to JSON
+          const jsonStr = '{' + propsStr
+            .replace(/(\w+):/g, '"$1":')
+            .replace(/'/g, '"')
+            .replace(/,\s*\}/g, '}')
+            .replace(/,\s*\]/g, ']') + '}';
+          const parsed = JSON.parse(jsonStr);
+          setRandomConfig(parsed);
+          setRandomKey(prev => prev + 1);
+        }
+      }
     } catch (error) {
-      console.error('Invalid JSON:', error);
-      alert('Invalid JSON configuration');
+      console.error('Invalid configuration:', error);
+      alert('Could not parse configuration. Please check the syntax.');
     }
   }, [editorValue]);
 
