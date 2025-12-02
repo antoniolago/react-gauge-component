@@ -371,9 +371,9 @@ describe('Rendering Behavior Tests', () => {
         // G element top should have some padding from viewBox top
         const topPadding = gTop - viewBoxTop;
         expect(topPadding).toBeGreaterThan(0);
-        // All types now use 18-20% top padding for tick labels
-        // Allow up to 25% of radius as padding
-        expect(topPadding).toBeLessThanOrEqual(layout.outerRadius * 0.25);
+        // All types now use 36-38% top padding for tick labels
+        // Allow up to 42% of radius as padding for maximum tick space
+        expect(topPadding).toBeLessThanOrEqual(layout.outerRadius * 0.42);
       });
     });
 
@@ -385,8 +385,8 @@ describe('Rendering Behavior Tests', () => {
       const gBottom = layout.gaugeCenter.y + layout.outerRadius;
       const viewBoxBottom = layout.viewBox.y + layout.viewBox.height;
       
-      // The visible portion (value label within bottomPadding) should fit
-      const visibleBottom = layout.gaugeCenter.y + layout.outerRadius * 0.25;
+      // The visible portion (value label within bottomPadding 10%) should fit
+      const visibleBottom = layout.gaugeCenter.y + layout.outerRadius * 0.10;
       expect(visibleBottom).toBeLessThanOrEqual(viewBoxBottom);
       
       // ViewBox should be optimized for semicircle (height < width)

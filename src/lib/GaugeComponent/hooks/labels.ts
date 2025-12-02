@@ -235,17 +235,18 @@ export const addValueText = (gauge: Gauge) => {
   let y = 0;
   valueTextStyle.textAnchor = "middle";
   
-  // Position label in the CENTER of the gauge arc (not at the bottom)
+  // Position label in the CENTER of the gauge arc
   // The center is at (0, 0), so we position based on inner radius
   const innerRadius = gauge.dimensions.current.innerRadius;
   
   if (gauge.props.type == GaugeType.Semicircle) {
-    // For semicircle, center the label within the inner arc space
-    // Position it at about 1/3 down from center for good visibility
-    y = innerRadius * 0.15;
+    // For semicircle, position label in the vertical center of the visible arc
+    // Negative y moves up (SVG coordinates), positive moves down
+    // Position slightly above center for better visual balance
+    y = -innerRadius * 0.1;
   } else if (gauge.props.type == GaugeType.Radial) {
     // For radial, place label in the center
-    y = innerRadius * 0.2;
+    y = innerRadius * 0.15;
   } else if (gauge.props.type == GaugeType.Grafana) {
     // For Grafana, center of gauge
     y = innerRadius * 0.1;

@@ -157,7 +157,7 @@ describe('Value Label Positioning Tests', () => {
       
       // Radial gauge center should be at topPadding + radius from top
       // This optimizes space by reducing blank area below the arc
-      const expectedY = layout.outerRadius * 0.18 + layout.outerRadius; // 18% top padding + radius
+      const expectedY = layout.outerRadius * 0.38 + layout.outerRadius; // 38% top padding + radius
       expect(layout.gaugeCenter.y).toBeCloseTo(expectedY, 0);
     });
   });

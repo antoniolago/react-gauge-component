@@ -63,9 +63,9 @@ describe('Gauge Containment Tests', () => {
       // ViewBox height must not exceed 150
       expect(layout.viewBox.height).toBeLessThanOrEqual(150 + 0.01);
       
-      // For semicircle: height = (0.18 + 1 + 0.25) * radius = 1.43r
-      // So radius <= 150/1.43 ≈ 105
-      expect(layout.outerRadius).toBeLessThanOrEqual(106);
+      // For semicircle: height = (0.22 + 1 + 0.18) * radius = 1.40r
+      // So radius <= 150/1.40 ≈ 107
+      expect(layout.outerRadius).toBeLessThanOrEqual(108);
     });
 
     it('should use width constraint when width is limiting (tall container)', () => {
