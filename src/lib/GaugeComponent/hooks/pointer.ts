@@ -19,7 +19,13 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
         initPointer(gauge);
     let shouldAnimate = (!resize || isFirstTime) && pointer.animate;
     if (shouldAnimate) {
-        gauge.doughnut.current
+        // For Grafana type, animate the doughnut (arc fill animation)
+        // For other types, animate only the pointer element (not the whole doughnut)
+        const animationTarget = gauge.props.type == GaugeType.Grafana 
+            ? gauge.doughnut.current 
+            : gauge.pointer.current.element;
+        
+        animationTarget
             .transition()
             .delay(pointer.animationDelay)
             .ease(pointer.elastic ? easeElastic : easeExpOut)
@@ -32,7 +38,6 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                         if(gauge.props.type == GaugeType.Grafana){
                             arcHooks.clearArcs(gauge);
                             arcHooks.drawArc(gauge, progress);
-                            //arcHooks.setupArcs(gauge);
                         } else {
                             updatePointer(progress, gauge);
                         }

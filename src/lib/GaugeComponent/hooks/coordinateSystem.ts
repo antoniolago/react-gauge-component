@@ -26,29 +26,38 @@ export interface GaugeLayout {
 
 /**
  * Configuration for gauge type specific dimensions
+ * 
+ * Padding accounts for:
+ * - Tick labels and value labels
+ * - Pointer elements that might extend beyond the arc
+ * - For Grafana: the outer decorative arc extends +7px beyond outerRadius
  */
 const GAUGE_TYPE_CONFIG = {
   [GaugeType.Semicircle]: {
-    // Semicircle occupies approximately 50% of the circle height + some padding
-    heightRatio: 0.55,
-    // Minimal padding around the gauge for labels and ticks (10px per 100px radius = 10%)
-    paddingPercent: 0.05,
+    // Semicircle: only the top half of the circle is visible
+    // Top padding needs extra space for tick labels above the arc
+    topPaddingPercent: 0.18,  // 18% for tick labels at top
+    // Bottom padding just needs space for value label
+    bottomPaddingPercent: 0.25, // 25% for value label below center
+    // Side padding for horizontal ticks
+    sidePaddingPercent: 0.10,
   },
   [GaugeType.Radial]: {
     // Radial needs more height (about 75% of full circle)
-    heightRatio: 0.78,
-    paddingPercent: 0.05,
+    paddingPercent: 0.10,
   },
   [GaugeType.Grafana]: {
     // Grafana style is similar to radial
-    heightRatio: 0.75,
-    paddingPercent: 0.05,
+    // Extra padding because Grafana has an outer arc that extends +7px beyond outerRadius
+    paddingPercent: 0.12,
   },
 };
 
 /**
  * Calculates optimal outer radius given available space and gauge type
  * This is the core function that determines how much space the gauge will use
+ * 
+ * CRITICAL: The resulting viewBox must fit within parentWidth x parentHeight
  */
 export const calculateOptimalRadius = (
   parentWidth: number,
@@ -62,14 +71,27 @@ export const calculateOptimalRadius = (
   const availableWidth = parentWidth * (1 - marginPercent);
   const availableHeight = parentHeight * (1 - marginPercent);
   
-  // Apply padding for labels and ticks
-  const paddedWidth = availableWidth * (1 - config.paddingPercent);
-  const paddedHeight = availableHeight * (1 - config.paddingPercent);
+  let widthMultiplier: number;
+  let heightMultiplier: number;
   
-  // For semicircle and radial, height constraint is different
-  // The gauge diameter should fit in available width, or available height / heightRatio
-  const radiusFromWidth = paddedWidth / 2;
-  const radiusFromHeight = paddedHeight / config.heightRatio / 2;
+  if (gaugeType === GaugeType.Semicircle) {
+    // Semicircle uses separate top/bottom/side padding
+    const semiConfig = config as typeof GAUGE_TYPE_CONFIG[GaugeType.Semicircle];
+    // width = diameter + 2*sidePadding
+    widthMultiplier = 2 + 2 * semiConfig.sidePaddingPercent;
+    // height = topPadding + radius + bottomPadding (semicircle only shows top half)
+    heightMultiplier = semiConfig.topPaddingPercent + 1 + semiConfig.bottomPaddingPercent;
+  } else {
+    // Radial and Grafana use uniform padding
+    const uniformConfig = config as { paddingPercent: number };
+    // width = diameter + 2*padding
+    widthMultiplier = 2 + 2 * uniformConfig.paddingPercent;
+    // height = diameter + 2*padding
+    heightMultiplier = 2 + 2 * uniformConfig.paddingPercent;
+  }
+  
+  const radiusFromWidth = availableWidth / widthMultiplier;
+  const radiusFromHeight = availableHeight / heightMultiplier;
   
   // Use the smaller radius to ensure gauge fits in both dimensions
   return Math.min(radiusFromWidth, radiusFromHeight);
@@ -86,21 +108,26 @@ export const calculateViewBox = (
   const config = GAUGE_TYPE_CONFIG[gaugeType];
   const diameter = outerRadius * 2;
   
-  // Add minimal padding for labels, ticks, and other elements
-  // Using single padding value (not *2) for tighter bounds
-  const padding = outerRadius * config.paddingPercent;
-  
-  let width = diameter + padding * 2;
+  let width: number;
   let height: number;
   let y = 0;
   
-  // Adjust height based on gauge type with tight bounds
   if (gaugeType === GaugeType.Semicircle) {
-    // Semicircle: tight calculation
-    // padding (top) + outerRadius (to center) + outerRadius * 0.6 (bottom arc + label space) + padding (bottom)
-    height = padding + outerRadius + outerRadius * 0.6 + padding;
+    // Semicircle uses separate padding values
+    const semiConfig = config as typeof GAUGE_TYPE_CONFIG[GaugeType.Semicircle];
+    const topPadding = outerRadius * semiConfig.topPaddingPercent;
+    const bottomPadding = outerRadius * semiConfig.bottomPaddingPercent;
+    const sidePadding = outerRadius * semiConfig.sidePaddingPercent;
+    
+    width = diameter + sidePadding * 2;
+    // Height = topPadding + radius (arc from top to center) + bottomPadding (for value label)
+    height = topPadding + outerRadius + bottomPadding;
   } else {
-    // Radial and Grafana need full circular space with minimal padding
+    // Radial and Grafana use uniform padding
+    const uniformConfig = config as { paddingPercent: number };
+    const padding = outerRadius * uniformConfig.paddingPercent;
+    
+    width = diameter + padding * 2;
     height = diameter + padding * 2;
   }
   
@@ -125,16 +152,16 @@ export const calculateGaugeCenter = (
   gaugeType: GaugeType
 ): { x: number; y: number } => {
   const config = GAUGE_TYPE_CONFIG[gaugeType];
-  const padding = outerRadius * config.paddingPercent;
   
   // Horizontal center is always in the middle
   const x = viewBox.width / 2;
   
   let y: number;
   if (gaugeType === GaugeType.Semicircle) {
-    // For semicircle, position the center so top has padding
-    // padding + outerRadius = center position from top
-    y = padding + outerRadius;
+    // For semicircle, center is at topPadding + radius from the top
+    const semiConfig = config as typeof GAUGE_TYPE_CONFIG[GaugeType.Semicircle];
+    const topPadding = outerRadius * semiConfig.topPaddingPercent;
+    y = topPadding + outerRadius;
   } else {
     // For radial and grafana, center vertically
     y = viewBox.height / 2;

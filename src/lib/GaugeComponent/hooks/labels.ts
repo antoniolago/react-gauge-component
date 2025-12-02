@@ -214,7 +214,6 @@ export const addValueText = (gauge: Gauge) => {
   const { labels } = gauge.props;
   let value = gauge.props.value as number;
   let valueLabel = labels?.valueLabel as ValueLabel;
-  var textPadding = 20;
   let text = '';
   let maxDecimalDigits = labels?.valueLabel?.maxDecimalDigits;
   let floatValue = utils.floatingNumber(value, maxDecimalDigits);
@@ -228,7 +227,7 @@ export const addValueText = (gauge: Gauge) => {
   }
   const maxLengthBeforeComputation = 4;
   const textLength = text?.length || 0;
-  let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1; // Compute the font size ratio
+  let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1;
   let valueFontSize = valueLabel?.style?.fontSize as string;
   let valueTextStyle = { ...valueLabel.style };
   // Since g is centered at gauge center (0, 0), position label relative to that
@@ -236,17 +235,20 @@ export const addValueText = (gauge: Gauge) => {
   let y = 0;
   valueTextStyle.textAnchor = "middle";
   
-  // Position label in the center/visible area of the gauge
+  // Position label in the CENTER of the gauge arc (not at the bottom)
+  // The center is at (0, 0), so we position based on inner radius
+  const innerRadius = gauge.dimensions.current.innerRadius;
+  
   if (gauge.props.type == GaugeType.Semicircle) {
-    // For semicircle, place label slightly below center
-    // Since center is at (0,0), positive y moves down
-    y = gauge.dimensions.current.innerRadius * 0.3 + textPadding;
+    // For semicircle, center the label within the inner arc space
+    // Position it at about 1/3 down from center for good visibility
+    y = innerRadius * 0.15;
   } else if (gauge.props.type == GaugeType.Radial) {
-    // For radial, place label more towards bottom
-    y = gauge.dimensions.current.innerRadius * 0.5 + textPadding;
+    // For radial, place label in the center
+    y = innerRadius * 0.2;
   } else if (gauge.props.type == GaugeType.Grafana) {
     // For Grafana, center of gauge
-    y = textPadding;
+    y = innerRadius * 0.1;
   }
   
   let widthFactor = gauge.props.type == GaugeType.Radial ? 0.003 : 0.003;

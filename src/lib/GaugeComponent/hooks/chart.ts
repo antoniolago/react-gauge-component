@@ -58,8 +58,21 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         var parentNode = gauge.container.current.node() as HTMLElement;
         if (!parentNode) return;
         
-        var parentWidth = parentNode.getBoundingClientRect().width;
-        var parentHeight = parentNode.getBoundingClientRect().height;
+        var rect = parentNode.getBoundingClientRect();
+        var parentWidth = rect.width;
+        var parentHeight = rect.height;
+        
+        // Skip render if dimensions are not available yet
+        if (parentWidth <= 0 || parentHeight <= 0) {
+            if (CONSTANTS.debugLogs) {
+                console.log('[renderChart] Skipping render - invalid dimensions:', { width: parentWidth, height: parentHeight });
+            }
+            return;
+        }
+        
+        if (CONSTANTS.debugLogs) {
+            console.log('[renderChart] Container dimensions:', { width: parentWidth, height: parentHeight });
+        }
         
         // Use the new coordinate system to calculate layout
         const layout = coordinateSystem.calculateGaugeLayout(
@@ -71,6 +84,14 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                 ? gauge.props.marginInPercent 
                 : 0
         );
+        
+        if (CONSTANTS.debugLogs) {
+            console.log('[renderChart] Layout calculated:', {
+                outerRadius: layout.outerRadius,
+                viewBox: layout.viewBox.toString(),
+                gaugeCenter: layout.gaugeCenter
+            });
+        }
         
         // Check for layout stability to prevent infinite resize loops
         if (gauge.prevGSize.current) {
@@ -90,13 +111,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         coordinateSystem.updateDimensionsFromLayout(dimensions.current, layout);
         
         // Configure SVG with proper viewBox and dimensions
-        // Calculate aspect ratio from viewBox to set proper height
-        const aspectRatio = layout.viewBox.height / layout.viewBox.width;
-        
+        // Use both width and height to constrain the SVG properly
         gauge.svg.current
             .attr("width", "100%")
-            .attr("height", "auto")
-            .style("aspect-ratio", `${layout.viewBox.width} / ${layout.viewBox.height}`)
+            .attr("height", "100%")
+            .style("max-width", "100%")
+            .style("max-height", "100%")
+            .style("display", "block")
             .attr("viewBox", layout.viewBox.toString())
             .attr('preserveAspectRatio', 'xMidYMid meet');
         
