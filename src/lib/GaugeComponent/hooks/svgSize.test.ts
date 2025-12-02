@@ -86,8 +86,8 @@ describe('SVG Size Tests', () => {
       const topPadding = layout.gaugeCenter.y - layout.outerRadius - layout.viewBox.y;
       const paddingRatio = topPadding / layout.outerRadius;
       
-      // New config uses 18% top padding for tick labels
-      expect(paddingRatio).toBeLessThan(0.20); // Allow up to 20%
+      // Config uses 20% top padding for tick labels
+      expect(paddingRatio).toBeLessThan(0.25); // Allow up to 25%
       expect(topPadding).toBeGreaterThan(0); // But still some padding
     });
 
@@ -161,8 +161,8 @@ describe('SVG Size Tests', () => {
       const layout = calculateGaugeLayout(400, 300, GaugeType.Semicircle, 0.2);
       
       // For semicircle: topPadding + outerRadius + bottomPadding
-      // topPadding = 18% of radius, bottomPadding = 25% of radius
-      const topPadding = layout.outerRadius * 0.18;
+      // topPadding = 20% of radius, bottomPadding = 25% of radius
+      const topPadding = layout.outerRadius * 0.20;
       const bottomPadding = layout.outerRadius * 0.25;
       const expectedHeight = topPadding + layout.outerRadius + bottomPadding;
       
@@ -196,10 +196,10 @@ describe('SVG Size Tests', () => {
       expect(minY).toBeGreaterThanOrEqual(layout.viewBox.y);
       expect(maxVisibleY).toBeLessThanOrEqual(layout.viewBox.y + layout.viewBox.height);
       
-      // Top padding should be around 18% of radius for tick labels
+      // Top padding should be around 20% of radius for tick labels
       const topPadding = minY - layout.viewBox.y;
       expect(topPadding).toBeGreaterThan(0);
-      expect(topPadding).toBeLessThanOrEqual(layout.outerRadius * 0.20);
+      expect(topPadding).toBeLessThanOrEqual(layout.outerRadius * 0.25);
     });
 
     it('should have balanced padding for all gauge types', () => {

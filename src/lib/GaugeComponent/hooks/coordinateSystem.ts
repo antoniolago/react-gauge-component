@@ -37,24 +37,24 @@ export interface GaugeLayout {
 const GAUGE_TYPE_CONFIG = {
   [GaugeType.Semicircle]: {
     // Semicircle: only the top half of the circle is visible
-    topPaddingPercent: 0.18,  // 18% for tick labels at top
+    topPaddingPercent: 0.20,  // 20% for tick labels at top
     bottomPaddingPercent: 0.25, // 25% for value label below center
-    sidePaddingPercent: 0.10,
+    sidePaddingPercent: 0.15,  // 15% for side tick labels (0 and 100)
   },
   [GaugeType.Radial]: {
     // Radial: shows about 75% of circle (-130° to +130°)
     // Top has tick labels, bottom has more arc visible
-    topPaddingPercent: 0.15,  // 15% for tick labels at top
+    topPaddingPercent: 0.18,  // 18% for tick labels at top
     bottomPaddingPercent: 0.08, // 8% - less needed at bottom since arc is smaller there
-    sidePaddingPercent: 0.10,
+    sidePaddingPercent: 0.12,  // 12% for side tick labels
     // Radial arc extends about 73% down from center (cos(50°) ≈ 0.64, so ~64% + some margin)
     arcBottomExtent: 0.72, // How far below center the arc extends (as fraction of radius)
   },
   [GaugeType.Grafana]: {
     // Grafana: similar to radial but with outer decorative arc (+7px)
-    topPaddingPercent: 0.16,  // 16% for tick labels
+    topPaddingPercent: 0.18,  // 18% for tick labels
     bottomPaddingPercent: 0.10, // 10% - slightly more for outer arc
-    sidePaddingPercent: 0.12,  // 12% - extra for outer decorative arc
+    sidePaddingPercent: 0.15,  // 15% - extra for outer decorative arc + ticks
     arcBottomExtent: 0.70,
   },
 };

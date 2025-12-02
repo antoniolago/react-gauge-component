@@ -371,9 +371,9 @@ describe('Rendering Behavior Tests', () => {
         // G element top should have some padding from viewBox top
         const topPadding = gTop - viewBoxTop;
         expect(topPadding).toBeGreaterThan(0);
-        // Semicircle uses 18% top padding for tick labels, others use 10-12%
-        // Allow up to 20% of radius as padding
-        expect(topPadding).toBeLessThanOrEqual(layout.outerRadius * 0.20);
+        // All types now use 18-20% top padding for tick labels
+        // Allow up to 25% of radius as padding
+        expect(topPadding).toBeLessThanOrEqual(layout.outerRadius * 0.25);
       });
     });
 

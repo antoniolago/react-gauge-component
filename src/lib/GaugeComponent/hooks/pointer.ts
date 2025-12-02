@@ -133,9 +133,9 @@ const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gaug
             translatePointer(x, y, gauge);
         },
         [PointerType.Blob]: () => {
-            let { x, y } = getCoordByValue(value, gauge, "between", 0, 0.75);
-            x -= 1;
-            y += pointerRadius;
+            // Position blob at the center of the arc width
+            let { x, y } = getCoordByValue(value, gauge, "between", 0, 1);
+            // No offset needed - blob should be centered on the arc
             translatePointer(x, y, gauge);
         },
     };

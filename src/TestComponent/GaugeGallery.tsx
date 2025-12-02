@@ -182,6 +182,126 @@ const GAUGE_PRESETS = [
       },
     },
   },
+  {
+    name: 'Neon Glow',
+    description: 'Cyberpunk-style neon gauge',
+    config: {
+      type: 'semicircle' as const,
+      arc: {
+        width: 0.1,
+        padding: 0.02,
+        subArcs: [
+          { limit: 33, color: '#ff00ff' },
+          { limit: 66, color: '#00ffff' },
+          { color: '#ffff00' },
+        ],
+      },
+      pointer: { type: 'blob' as const, color: '#fff', strokeWidth: 8, elastic: true },
+      labels: {
+        valueLabel: { style: { fontSize: '32px', fill: '#00ffff', textShadow: '0 0 10px #00ffff' } },
+        tickLabels: { hideMinMax: true },
+      },
+    },
+  },
+  {
+    name: 'VU Meter',
+    description: 'Audio level meter style',
+    config: {
+      type: 'semicircle' as const,
+      minValue: -20,
+      maxValue: 3,
+      arc: {
+        width: 0.15,
+        padding: 0.005,
+        subArcs: [
+          { limit: -10, color: '#4caf50' },
+          { limit: -3, color: '#8bc34a' },
+          { limit: 0, color: '#ffeb3b' },
+          { color: '#f44336' },
+        ],
+      },
+      pointer: { type: 'needle' as const, color: '#212121', length: 0.9, width: 8 },
+      labels: {
+        valueLabel: { formatTextValue: (v: number) => `${v} dB`, style: { fontSize: '22px' } },
+        tickLabels: {
+          type: 'outer' as const,
+          ticks: [{ value: -20 }, { value: -10 }, { value: -3 }, { value: 0 }, { value: 3 }],
+        },
+      },
+    },
+  },
+  {
+    name: 'Pressure Gauge',
+    description: 'Industrial pressure meter',
+    config: {
+      type: 'radial' as const,
+      minValue: 0,
+      maxValue: 200,
+      arc: {
+        width: 0.2,
+        padding: 0.01,
+        subArcs: [
+          { limit: 50, color: '#2196f3' },
+          { limit: 100, color: '#4caf50' },
+          { limit: 150, color: '#ff9800' },
+          { color: '#f44336' },
+        ],
+      },
+      pointer: { type: 'needle' as const, color: '#263238', length: 0.75, width: 12 },
+      labels: {
+        valueLabel: { formatTextValue: (v: number) => `${v} PSI`, style: { fontSize: '20px' } },
+        tickLabels: {
+          type: 'outer' as const,
+          ticks: [{ value: 0 }, { value: 50 }, { value: 100 }, { value: 150 }, { value: 200 }],
+        },
+      },
+    },
+  },
+  {
+    name: 'Heart Rate',
+    description: 'Health monitor style',
+    config: {
+      type: 'semicircle' as const,
+      minValue: 40,
+      maxValue: 180,
+      arc: {
+        width: 0.18,
+        gradient: true,
+        subArcs: [
+          { limit: 60, color: '#2196f3' },
+          { limit: 100, color: '#4caf50' },
+          { limit: 140, color: '#ff9800' },
+          { color: '#f44336' },
+        ],
+      },
+      pointer: { type: 'blob' as const, color: '#e91e63', strokeWidth: 6 },
+      labels: {
+        valueLabel: { formatTextValue: (v: number) => `${v} BPM`, matchColorWithArc: true, style: { fontSize: '26px' } },
+        tickLabels: { hideMinMax: true },
+      },
+    },
+  },
+  {
+    name: 'Score Meter',
+    description: 'Gaming score display',
+    config: {
+      type: 'grafana' as const,
+      arc: {
+        width: 0.3,
+        nbSubArcs: 50,
+        colorArray: ['#ff1744', '#ff9100', '#ffc400', '#76ff03', '#00e676'],
+        padding: 0.005,
+      },
+      pointer: { type: 'arrow' as const, color: '#fff', elastic: true },
+      labels: {
+        valueLabel: { 
+          formatTextValue: (v: number) => v >= 90 ? 'S' : v >= 70 ? 'A' : v >= 50 ? 'B' : v >= 30 ? 'C' : 'D',
+          matchColorWithArc: true,
+          style: { fontSize: '48px', fontWeight: 'bold' },
+        },
+      },
+    },
+  },
 ];
 
 // Generate random gauge config
@@ -539,11 +659,15 @@ const GaugeGallery: React.FC = () => {
             type="semicircle"
             arc={{
               width: 0.2,
+              gradient: true,
               subArcs: [
                 { limit: 33, color: '#5BE12C' },
                 { limit: 66, color: '#F5CD19' },
                 { color: '#EA4228' },
               ],
+            }}
+            labels={{
+              tickLabels: { hideMinMax: true },
             }}
           />
         </div>
