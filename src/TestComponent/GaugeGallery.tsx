@@ -137,23 +137,33 @@ const GAUGE_PRESETS = [
     },
   },
   {
-    name: 'Minimalist',
-    description: 'Minimal with subtle ticks',
+    name: 'Barista Brew',
+    description: 'Coffee extraction timer',
     config: {
-      type: 'semicircle' as const,
+      type: 'grafana' as const,
+      minValue: 0,
+      maxValue: 40,
       arc: {
-        width: 0.08,
-        padding: 0,
-        subArcs: [{ color: '#555' }],
+        width: 0.22,
+        gradient: true,
+        subArcs: [
+          { limit: 15, color: '#4a2c2a' },
+          { limit: 22, color: '#6f4e37' },
+          { limit: 30, color: '#c19a6b' },
+          { color: '#d4a574' },
+        ],
       },
-      pointer: { type: 'needle' as const, color: '#ff6b6b', length: 0.7, width: 10 },
+      pointer: { type: 'needle' as const, color: '#f5deb3', length: 0.75, width: 12 },
       labels: {
-        valueLabel: { style: { fontSize: '32px', fill: '#e0e0e0', fontWeight: 'bold' } },
+        valueLabel: { formatTextValue: (v: number) => `${v}s`, style: { fontSize: '26px', fill: '#d4a574', fontWeight: 'bold' } },
         tickLabels: {
           type: 'outer' as const,
-          ticks: [{ value: 0 }, { value: 50 }, { value: 100 }],
-          defaultTickValueConfig: { style: { fontSize: '10px', fill: '#666' } },
-          defaultTickLineConfig: { color: '#444', length: 3, width: 1 },
+          ticks: [
+            { value: 0, valueConfig: { formatTextValue: () => '☕', style: { fontSize: '12px', fill: '#6f4e37' } } },
+            { value: 20, valueConfig: { formatTextValue: () => '✨', style: { fontSize: '12px', fill: '#c19a6b' } } },
+            { value: 40, valueConfig: { formatTextValue: () => '🔥', style: { fontSize: '12px', fill: '#d4a574' } } },
+          ],
+          defaultTickLineConfig: { color: '#8b6914', length: 5, width: 2 },
         },
       },
     },
@@ -186,28 +196,35 @@ const GAUGE_PRESETS = [
     },
   },
   {
-    name: 'Progress Ring',
-    description: 'Clean progress with quarter ticks',
+    name: 'Altitude',
+    description: 'Aircraft altimeter',
     config: {
       type: 'radial' as const,
+      minValue: 0,
+      maxValue: 45000,
       arc: {
-        width: 0.35,
-        nbSubArcs: 1,
-        colorArray: ['#00c853'],
-        padding: 0,
-        cornerRadius: 0,
+        width: 0.18,
+        gradient: true,
+        subArcs: [
+          { limit: 10000, color: '#2d5a27' },
+          { limit: 25000, color: '#3498db' },
+          { limit: 35000, color: '#5d6d7e' },
+          { color: '#1a1a2e' },
+        ],
       },
-      pointer: { hide: true },
+      pointer: { type: 'needle' as const, color: '#f39c12', length: 0.85, width: 10 },
       labels: {
-        valueLabel: { 
-          formatTextValue: (v: number) => `${v}%`, 
-          style: { fontSize: '36px', fill: '#00c853', fontWeight: 'bold' },
-        },
+        valueLabel: { formatTextValue: (v: number) => `${(v/1000).toFixed(1)}k ft`, style: { fontSize: '20px', fill: '#f39c12', fontWeight: 'bold' } },
         tickLabels: {
-          type: 'inner' as const,
-          ticks: [{ value: 0 }, { value: 25 }, { value: 50 }, { value: 75 }, { value: 100 }],
-          defaultTickValueConfig: { style: { fontSize: '8px', fill: '#00c853' } },
-          defaultTickLineConfig: { hide: true },
+          type: 'outer' as const,
+          ticks: [
+            { value: 0, valueConfig: { formatTextValue: () => 'GND' } },
+            { value: 15000, valueConfig: { formatTextValue: () => '15k' } },
+            { value: 30000, valueConfig: { formatTextValue: () => '30k' } },
+            { value: 45000, valueConfig: { formatTextValue: () => 'FL450' } },
+          ],
+          defaultTickValueConfig: { style: { fontSize: '8px', fill: '#95a5a6' } },
+          defaultTickLineConfig: { color: '#7f8c8d', length: 4, width: 1 },
         },
       },
     },
@@ -461,25 +478,35 @@ const GAUGE_PRESETS = [
     },
   },
   {
-    name: 'Fitness Ring',
-    description: 'Clean progress ring',
+    name: 'Turbo Boost',
+    description: 'Supercharger pressure',
     config: {
-      type: 'radial' as const,
+      type: 'semicircle' as const,
+      minValue: -15,
+      maxValue: 25,
       arc: {
-        width: 0.28,
-        nbSubArcs: 1,
-        colorArray: ['#ff2d55'],
-        padding: 0,
-        cornerRadius: 7,
+        width: 0.2,
+        padding: 0.01,
+        subArcs: [
+          { limit: -5, color: '#3498db' },
+          { limit: 5, color: '#27ae60' },
+          { limit: 15, color: '#f39c12' },
+          { color: '#e74c3c' },
+        ],
       },
-      pointer: { hide: true },
+      pointer: { type: 'needle' as const, color: '#ecf0f1', length: 0.82, width: 14 },
       labels: {
-        valueLabel: { formatTextValue: (v: number) => `${v}%`, style: { fontSize: '32px', fill: '#ff2d55', fontWeight: 'bold' } },
+        valueLabel: { formatTextValue: (v: number) => `${v > 0 ? '+' : ''}${v} PSI`, style: { fontSize: '22px', fill: '#e74c3c', fontWeight: 'bold' } },
         tickLabels: {
-          type: 'inner' as const,
-          ticks: [{ value: 0 }, { value: 50 }, { value: 100 }],
-          defaultTickValueConfig: { style: { fontSize: '8px', fill: '#ff2d55' } },
-          defaultTickLineConfig: { hide: true },
+          type: 'outer' as const,
+          ticks: [
+            { value: -15, valueConfig: { formatTextValue: () => 'VAC' } },
+            { value: 0, valueConfig: { formatTextValue: () => 'ATM' } },
+            { value: 15, valueConfig: { formatTextValue: () => '15' } },
+            { value: 25, valueConfig: { formatTextValue: () => 'MAX' } },
+          ],
+          defaultTickValueConfig: { style: { fontSize: '8px', fill: '#bdc3c7' } },
+          defaultTickLineConfig: { color: '#7f8c8d', length: 5, width: 1 },
         },
       },
     },
@@ -831,54 +858,91 @@ const GAUGE_PRESETS = [
   },
 ];
 
+// Creative range presets for random generation
+const RANDOM_RANGES = [
+  { minValue: 0, maxValue: 100, format: (v: number) => `${Math.round(v)}%`, unit: 'percent' },
+  { minValue: -40, maxValue: 120, format: (v: number) => `${Math.round(v)}°F`, unit: 'temp' },
+  { minValue: 0, maxValue: 8000, format: (v: number) => `${(v/1000).toFixed(1)}k RPM`, unit: 'rpm' },
+  { minValue: 0, maxValue: 300, format: (v: number) => `${Math.round(v)} km/h`, unit: 'speed' },
+  { minValue: 0, maxValue: 500, format: (v: number) => `${Math.round(v)} W`, unit: 'power' },
+  { minValue: -30, maxValue: 10, format: (v: number) => `${v > 0 ? '+' : ''}${Math.round(v)} dB`, unit: 'db' },
+  { minValue: 0, maxValue: 1000, format: (v: number) => `${Math.round(v)} mb`, unit: 'pressure' },
+  { minValue: 0, maxValue: 99999, format: (v: number) => `$${(v/1000).toFixed(1)}k`, unit: 'money' },
+  { minValue: 40, maxValue: 200, format: (v: number) => `${Math.round(v)} BPM`, unit: 'bpm' },
+  { minValue: 0, maxValue: 255, format: (v: number) => `0x${Math.round(v).toString(16).toUpperCase().padStart(2, '0')}`, unit: 'hex' },
+  { minValue: 0, maxValue: 60, format: (v: number) => `${Math.floor(v)}:${String(Math.floor((v % 1) * 60)).padStart(2, '0')}`, unit: 'time' },
+  { minValue: 1, maxValue: 10, format: (v: number) => `${v.toFixed(1)}x`, unit: 'multiplier' },
+  { minValue: 0, maxValue: 1024, format: (v: number) => v < 1000 ? `${Math.round(v)} MB` : `${(v/1024).toFixed(1)} GB`, unit: 'storage' },
+  { minValue: 0, maxValue: 5, format: (v: number) => '★'.repeat(Math.round(v)) + '☆'.repeat(5 - Math.round(v)), unit: 'rating' },
+  { minValue: -20, maxValue: 30, format: (v: number) => `${v > 0 ? '+' : ''}${Math.round(v)} PSI`, unit: 'boost' },
+];
+
 // Generate random gauge config
 const generateRandomConfig = () => {
   const types = ['semicircle', 'radial', 'grafana'] as const;
   const pointerTypes = ['needle', 'blob', 'arrow'] as const;
   
-  const colors = [
-    ['#5BE12C', '#F5CD19', '#EA4228'],
-    ['#00bcd4', '#4caf50', '#ff5722'],
-    ['#e91e63', '#9c27b0', '#2196f3'],
-    ['#ff6f00', '#ff8f00', '#ffc107'],
-    ['#00c853', '#69f0ae', '#b9f6ca'],
-    ['#d500f9', '#651fff', '#3d5afe'],
-    ['#1de9b6', '#00e5ff', '#00b0ff'],
-    ['#ff1744', '#ff5252', '#ff8a80'],
+  const colorThemes = [
+    { name: 'fire', colors: ['#ff6b35', '#f7931e', '#ffcc02', '#ff3d00'] },
+    { name: 'ocean', colors: ['#0077b6', '#0096c7', '#00b4d8', '#48cae4'] },
+    { name: 'forest', colors: ['#2d5a27', '#4a7c44', '#6b9b37', '#8bc34a'] },
+    { name: 'neon', colors: ['#ff00ff', '#00ffff', '#ffff00', '#ff0080'] },
+    { name: 'sunset', colors: ['#ff4757', '#ff6b6b', '#ffa502', '#eccc68'] },
+    { name: 'arctic', colors: ['#74b9ff', '#81ecec', '#a29bfe', '#dfe6e9'] },
+    { name: 'volcanic', colors: ['#2c3e50', '#e74c3c', '#f39c12', '#f1c40f'] },
+    { name: 'toxic', colors: ['#1b5e20', '#388e3c', '#7cb342', '#c6ff00'] },
+    { name: 'royal', colors: ['#4a148c', '#7b1fa2', '#ab47bc', '#e1bee7'] },
+    { name: 'copper', colors: ['#5d4037', '#8d6e63', '#bcaaa4', '#d7ccc8'] },
+    { name: 'electric', colors: ['#1a1a2e', '#16537e', '#0984e3', '#74b9ff'] },
+    { name: 'candy', colors: ['#fd79a8', '#fdcb6e', '#81ecec', '#a29bfe'] },
   ];
   
   const randomType = types[Math.floor(Math.random() * types.length)];
   const randomPointer = pointerTypes[Math.floor(Math.random() * pointerTypes.length)];
-  const randomColors = colors[Math.floor(Math.random() * colors.length)];
-  const useGradient = Math.random() > 0.5;
+  const randomTheme = colorThemes[Math.floor(Math.random() * colorThemes.length)];
+  const randomRange = RANDOM_RANGES[Math.floor(Math.random() * RANDOM_RANGES.length)];
+  const useGradient = Math.random() > 0.4;
   const arcWidth = 0.1 + Math.random() * 0.25;
+  const hidePointer = Math.random() > 0.85;
+  
+  // Calculate limits based on the range
+  const range = randomRange.maxValue - randomRange.minValue;
+  const limits = randomTheme.colors.map((color, i) => ({
+    limit: randomRange.minValue + ((i + 1) / randomTheme.colors.length) * range,
+    color,
+  }));
   
   return {
     type: randomType,
+    minValue: randomRange.minValue,
+    maxValue: randomRange.maxValue,
     arc: {
       width: arcWidth,
       ...(useGradient ? {
         gradient: true,
-        subArcs: randomColors.map((color, i) => ({ 
-          limit: ((i + 1) / randomColors.length) * 100, 
-          color 
-        })),
+        subArcs: limits,
       } : {
-        nbSubArcs: 15 + Math.floor(Math.random() * 40),
-        colorArray: randomColors,
-        padding: 0.01 + Math.random() * 0.02,
+        nbSubArcs: 12 + Math.floor(Math.random() * 30),
+        colorArray: randomTheme.colors,
+        padding: 0.008 + Math.random() * 0.015,
       }),
     },
-    pointer: {
+    pointer: hidePointer ? { hide: true } : {
       type: randomPointer,
       elastic: Math.random() > 0.5,
-      animationDelay: Math.random() > 0.5 ? 0 : 200,
+      animationDelay: Math.random() > 0.5 ? 0 : 150,
+      color: Math.random() > 0.5 ? '#fff' : randomTheme.colors[randomTheme.colors.length - 1],
     },
     labels: {
       valueLabel: {
-        formatTextValue: (v: number) => `${v}`,
-        matchColorWithArc: Math.random() > 0.5,
+        formatTextValue: randomRange.format,
+        matchColorWithArc: Math.random() > 0.4,
+        style: { fontSize: '22px', fontWeight: 'bold' },
       },
+      tickLabels: Math.random() > 0.5 ? {
+        type: (Math.random() > 0.5 ? 'outer' : 'inner') as const,
+        hideMinMax: Math.random() > 0.6,
+      } : { hideMinMax: true },
     },
   };
 };
@@ -905,26 +969,46 @@ const stringifyConfig = (config: any, value: number): string => {
 };
 
 const GaugeGallery: React.FC = () => {
-  const [values, setValues] = useState<number[]>(GAUGE_PRESETS.map(() => 50));
+  // Initialize values to mid-range for each preset
+  const [values, setValues] = useState<number[]>(() => 
+    GAUGE_PRESETS.map(preset => {
+      const min = (preset.config as any)?.minValue ?? 0;
+      const max = (preset.config as any)?.maxValue ?? 100;
+      return min + (max - min) * 0.5;
+    })
+  );
   const [randomConfig, setRandomConfig] = useState(() => generateRandomConfig());
-  const [randomValue, setRandomValue] = useState(50);
+  const [randomValue, setRandomValue] = useState(() => {
+    const config = generateRandomConfig();
+    const min = (config as any)?.minValue ?? 0;
+    const max = (config as any)?.maxValue ?? 100;
+    return min + (max - min) * 0.5;
+  });
   const [autoAnimate, setAutoAnimate] = useState(true);
   const [copiedIndex, setCopiedIndex] = useState<number | 'random' | null>(null);
   const [randomKey, setRandomKey] = useState(0); // Key to force re-render
   const [showEditor, setShowEditor] = useState(true); // Start with editor open
   const [editorValue, setEditorValue] = useState('');
 
-  // Auto-animate values
+  // Auto-animate values - respects min/max ranges for random gauge
   useEffect(() => {
     if (!autoAnimate) return;
     
     const interval = setInterval(() => {
-      setValues(prev => prev.map(() => Math.floor(Math.random() * 100)));
-      setRandomValue(Math.floor(Math.random() * 100));
+      setValues(prev => prev.map((_, idx) => {
+        const preset = GAUGE_PRESETS[idx]?.config;
+        const min = (preset as any)?.minValue ?? 0;
+        const max = (preset as any)?.maxValue ?? 100;
+        return min + Math.random() * (max - min);
+      }));
+      // Generate value within the random gauge's range
+      const min = (randomConfig as any)?.minValue ?? 0;
+      const max = (randomConfig as any)?.maxValue ?? 100;
+      setRandomValue(min + Math.random() * (max - min));
     }, 3000);
     
     return () => clearInterval(interval);
-  }, [autoAnimate]);
+  }, [autoAnimate, randomConfig]);
 
   // Generate the full component code string
   const generateComponentCode = useCallback((config: any, value: number) => {
@@ -941,7 +1025,10 @@ const GaugeGallery: React.FC = () => {
   const handleRandomize = useCallback(() => {
     try {
       const newConfig = generateRandomConfig();
-      const newValue = Math.floor(Math.random() * 100);
+      // Generate value within the new config's range
+      const min = (newConfig as any)?.minValue ?? 0;
+      const max = (newConfig as any)?.maxValue ?? 100;
+      const newValue = min + Math.random() * (max - min);
       setRandomConfig(newConfig);
       setRandomValue(newValue);
       setRandomKey(prev => prev + 1); // Force complete re-render
@@ -1126,11 +1213,12 @@ const GaugeGallery: React.FC = () => {
                 <label style={styles.valueLabel}>Value:</label>
                 <input
                   type="number"
-                  min="0"
-                  max="100"
-                  value={randomValue}
+                  min={(randomConfig as any)?.minValue ?? 0}
+                  max={(randomConfig as any)?.maxValue ?? 100}
+                  value={Math.round(randomValue * 100) / 100}
                   onChange={(e) => setRandomValue(Number(e.target.value))}
                   style={styles.valueInput}
+                  step="any"
                 />
               </div>
               <textarea
