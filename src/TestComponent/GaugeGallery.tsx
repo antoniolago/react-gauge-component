@@ -148,8 +148,7 @@ const GAUGE_PRESETS = [
         gradient: true,
         subArcs: [
           { limit: 15, color: '#4a2c2a' },
-          { limit: 22, color: '#6f4e37' },
-          { limit: 30, color: '#c19a6b' },
+          { limit: 20, color: '#c19a6b' },
           { color: '#d4a574' },
         ],
       },
@@ -905,13 +904,22 @@ const generateRandomConfig = () => {
   const arcWidth = 0.1 + Math.random() * 0.25;
   const hidePointer = Math.random() > 0.85;
   
-  // Calculate limits based on the range
+  // Calculate limits based on the range - ensure limits are within valid bounds
   const range = randomRange.maxValue - randomRange.minValue;
-  const limits = randomTheme.colors.map((color, i) => ({
-    limit: randomRange.minValue + ((i + 1) / randomTheme.colors.length) * range,
-    color,
-  }));
+  const numColors = randomTheme.colors.length;
   
+  // For gradient mode: use subArcs WITHOUT explicit limits (just colors)
+  // This avoids validation issues and lets the gradient distribute colors evenly
+  const gradientSubArcs = randomTheme.colors.map((color, i) => {
+    // Use percentage-based length instead of absolute limits
+    // This is more robust and avoids minValue/maxValue validation issues
+    return { 
+      length: 1 / numColors, // Equal distribution
+      color 
+    };
+  });
+  
+  // For non-gradient mode: use colorArray (no subArcs needed)
   return {
     type: randomType,
     minValue: randomRange.minValue,
@@ -920,11 +928,13 @@ const generateRandomConfig = () => {
       width: arcWidth,
       ...(useGradient ? {
         gradient: true,
-        subArcs: limits,
+        subArcs: gradientSubArcs,
       } : {
+        gradient: false,
         nbSubArcs: 12 + Math.floor(Math.random() * 30),
         colorArray: randomTheme.colors,
         padding: 0.008 + Math.random() * 0.015,
+        subArcs: [], // IMPORTANT: Empty array overrides default subArcs to prevent limit validation errors
       }),
     },
     pointer: hidePointer ? { hide: true } : {
@@ -989,25 +999,67 @@ const GaugeGallery: React.FC = () => {
   const [randomKey, setRandomKey] = useState(0); // Key to force re-render
   const [showEditor, setShowEditor] = useState(true); // Start with editor open
   const [editorValue, setEditorValue] = useState('');
+  const [isLightTheme, setIsLightTheme] = useState(false); // Theme toggle
 
-  // Auto-animate values - respects min/max ranges for random gauge
+  // Auto-animate values with STAGGERED updates for better performance
+  // Instead of updating all gauges at once (overwhelming), we update in waves
   useEffect(() => {
     if (!autoAnimate) return;
     
-    const interval = setInterval(() => {
-      setValues(prev => prev.map((_, idx) => {
-        const preset = GAUGE_PRESETS[idx]?.config;
-        const min = (preset as any)?.minValue ?? 0;
-        const max = (preset as any)?.maxValue ?? 100;
-        return min + Math.random() * (max - min);
-      }));
-      // Generate value within the random gauge's range
-      const min = (randomConfig as any)?.minValue ?? 0;
-      const max = (randomConfig as any)?.maxValue ?? 100;
-      setRandomValue(min + Math.random() * (max - min));
-    }, 3000);
+    const STAGGER_DELAY = 100; // ms between each gauge update
+    const CYCLE_INTERVAL = 4000; // ms between full cycles
+    const BATCH_SIZE = 4; // Update this many gauges per batch
     
-    return () => clearInterval(interval);
+    let timeouts: ReturnType<typeof setTimeout>[] = [];
+    
+    const runAnimationCycle = () => {
+      // Clear any pending timeouts
+      timeouts.forEach(clearTimeout);
+      timeouts = [];
+      
+      // Stagger gallery gauge updates in batches
+      const totalBatches = Math.ceil(GAUGE_PRESETS.length / BATCH_SIZE);
+      
+      for (let batch = 0; batch < totalBatches; batch++) {
+        const timeout = setTimeout(() => {
+          setValues(prev => {
+            const next = [...prev];
+            const startIdx = batch * BATCH_SIZE;
+            const endIdx = Math.min(startIdx + BATCH_SIZE, GAUGE_PRESETS.length);
+            
+            for (let idx = startIdx; idx < endIdx; idx++) {
+              const preset = GAUGE_PRESETS[idx]?.config;
+              const min = (preset as any)?.minValue ?? 0;
+              const max = (preset as any)?.maxValue ?? 100;
+              next[idx] = min + Math.random() * (max - min);
+            }
+            return next;
+          });
+        }, batch * STAGGER_DELAY);
+        
+        timeouts.push(timeout);
+      }
+      
+      // Update random gauge after gallery animations settle
+      const randomTimeout = setTimeout(() => {
+        const min = (randomConfig as any)?.minValue ?? 0;
+        const max = (randomConfig as any)?.maxValue ?? 100;
+        setRandomValue(min + Math.random() * (max - min));
+      }, totalBatches * STAGGER_DELAY + 200);
+      
+      timeouts.push(randomTimeout);
+    };
+    
+    // Initial animation
+    runAnimationCycle();
+    
+    // Set up recurring cycle
+    const interval = setInterval(runAnimationCycle, CYCLE_INTERVAL);
+    
+    return () => {
+      timeouts.forEach(clearTimeout);
+      clearInterval(interval);
+    };
   }, [autoAnimate, randomConfig]);
 
   // Generate the full component code string
@@ -1119,10 +1171,63 @@ const GaugeGallery: React.FC = () => {
     copyToClipboard(config, value, index);
   }, [copyToClipboard]);
 
+  // Dynamic theme styles
+  const themeStyles = {
+    container: {
+      ...styles.container,
+      background: isLightTheme 
+        ? 'linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 50%, #d1d8e0 100%)' 
+        : styles.container.background,
+      color: isLightTheme ? '#1a1a2e' : '#fff',
+    },
+    header: {
+      ...styles.header,
+      background: isLightTheme ? 'rgba(255, 255, 255, 0.8)' : styles.header.background,
+    },
+    gaugeCard: {
+      ...styles.gaugeCard,
+      background: isLightTheme ? 'rgba(255, 255, 255, 0.9)' : styles.gaugeCard.background,
+      border: isLightTheme ? '1px solid rgba(0, 0, 0, 0.1)' : styles.gaugeCard.border,
+    },
+    randomizerCard: {
+      ...styles.randomizerCard,
+      background: isLightTheme ? 'rgba(255, 255, 255, 0.9)' : styles.randomizerCard.background,
+      border: isLightTheme ? '1px solid rgba(0, 0, 0, 0.1)' : styles.randomizerCard.border,
+    },
+    editorPanel: {
+      ...styles.editorPanel,
+      background: isLightTheme ? 'rgba(240, 240, 245, 0.95)' : styles.editorPanel.background,
+      border: isLightTheme ? '1px solid rgba(0, 0, 0, 0.1)' : styles.editorPanel.border,
+    },
+    editorTextarea: {
+      ...styles.editorTextarea,
+      background: isLightTheme ? 'rgba(255, 255, 255, 0.9)' : styles.editorTextarea.background,
+      color: isLightTheme ? '#2d5a27' : styles.editorTextarea.color,
+      border: isLightTheme ? '1px solid rgba(0, 0, 0, 0.15)' : styles.editorTextarea.border,
+    },
+    resizeDemo: {
+      ...styles.resizeDemo,
+      background: isLightTheme ? 'rgba(255, 255, 255, 0.9)' : styles.resizeDemo.background,
+      border: isLightTheme ? '1px solid rgba(0, 0, 0, 0.1)' : styles.resizeDemo.border,
+    },
+    footer: {
+      ...styles.footer,
+      background: isLightTheme ? 'rgba(255, 255, 255, 0.5)' : styles.footer.background,
+    },
+    hint: {
+      ...styles.hint,
+      color: isLightTheme ? 'rgba(0, 0, 0, 0.5)' : styles.hint.color,
+    },
+    toggleLabel: {
+      ...styles.toggleLabel,
+      background: isLightTheme ? 'rgba(0, 0, 0, 0.05)' : styles.toggleLabel.background,
+    },
+  };
+
   return (
-    <div style={styles.container}>
+    <div style={themeStyles.container}>
       {/* Header */}
-      <header style={styles.header}>
+      <header style={themeStyles.header}>
         <div style={styles.headerContent}>
           <h1 style={styles.title}>
             <span style={styles.titleIcon}>📊</span>
@@ -1144,7 +1249,7 @@ const GaugeGallery: React.FC = () => {
 
       {/* Controls */}
       <div style={styles.controls}>
-        <label style={styles.toggleLabel}>
+        <label style={themeStyles.toggleLabel}>
           <input 
             type="checkbox" 
             checked={autoAnimate} 
@@ -1153,7 +1258,18 @@ const GaugeGallery: React.FC = () => {
           />
           <span style={styles.toggleText}>Auto-animate values</span>
         </label>
-        <span style={styles.hint}>Click any gauge to copy its code!</span>
+        <button 
+          onClick={() => setIsLightTheme(!isLightTheme)} 
+          style={{
+            ...styles.themeToggle,
+            background: isLightTheme ? '#1a1a2e' : '#fff',
+            color: isLightTheme ? '#fff' : '#1a1a2e',
+          }}
+          type="button"
+        >
+          {isLightTheme ? '🌙 Dark' : '☀️ Light'}
+        </button>
+        <span style={themeStyles.hint}>Click any gauge to copy its code!</span>
       </div>
 
       {/* Randomizer Section */}
@@ -1181,7 +1297,7 @@ const GaugeGallery: React.FC = () => {
           {/* Gauge Display */}
           <div 
             style={{
-              ...styles.randomizerCard,
+              ...themeStyles.randomizerCard,
               ...(copiedIndex === 'random' ? styles.copiedCard : {}),
               flex: showEditor ? '1' : 'none',
               maxWidth: showEditor ? '50%' : '100%',
@@ -1202,7 +1318,7 @@ const GaugeGallery: React.FC = () => {
           
           {/* Config Editor */}
           {showEditor && (
-            <div style={styles.editorPanel}>
+            <div style={themeStyles.editorPanel}>
               <div style={styles.editorHeader}>
                 <span style={styles.editorTitle}>Configuration (JSON)</span>
                 <button onClick={applyEditorConfig} style={styles.applyButton} type="button">
@@ -1224,7 +1340,7 @@ const GaugeGallery: React.FC = () => {
               <textarea
                 value={editorValue}
                 onChange={handleEditorChange}
-                style={styles.editorTextarea}
+                style={themeStyles.editorTextarea}
                 spellCheck={false}
               />
             </div>
@@ -1240,7 +1356,7 @@ const GaugeGallery: React.FC = () => {
             <div 
               key={index} 
               style={{
-                ...styles.gaugeCard,
+                ...themeStyles.gaugeCard,
                 ...(copiedIndex === index ? styles.copiedCard : {}),
               }}
               onClick={(e) => handleCardClick(e, preset.config, values[index], index)}
@@ -1264,11 +1380,8 @@ const GaugeGallery: React.FC = () => {
 
       {/* Resize Demo */}
       <section style={styles.section}>
-        <h2 style={styles.sectionTitle}>📐 Responsive Resize</h2>
-        <p style={styles.sectionDescription}>
-          Drag the corner to resize the container and see the gauge adapt smoothly.
-        </p>
-        <div style={styles.resizeDemo}>
+        <h2 style={styles.sectionTitle}>📐 Resize Test</h2>
+        <div style={themeStyles.resizeDemo}>
           <GaugeComponent 
             value={values[0]} 
             type="semicircle"
@@ -1299,8 +1412,7 @@ const GaugeGallery: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer style={styles.footer}>
-        <p>Made with ❤️ by <a href="https://github.com/antoniolago" style={styles.footerLink}>Antonio Lago</a></p>
+      <footer style={themeStyles.footer}>
         <p style={styles.footerSmall}>MIT License • Open Source</p>
       </footer>
     </div>
@@ -1380,6 +1492,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   toggleText: {
     fontSize: '0.95rem',
+  },
+  themeToggle: {
+    padding: '10px 20px',
+    borderRadius: '25px',
+    border: 'none',
+    fontWeight: 600,
+    fontSize: '0.95rem',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
   },
   hint: {
     color: 'rgba(255, 255, 255, 0.6)',

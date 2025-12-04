@@ -345,11 +345,57 @@ export const redrawArcs = (gauge: Gauge) => {
 export const clearArcs = (gauge: Gauge) => {
   gauge.doughnut.current.selectAll(".subArc").remove();
 }
+
+/**
+ * Efficiently update Grafana arc for animation frames.
+ * Instead of clearing and recreating DOM elements on every frame,
+ * this updates the existing arc paths' data, which is MUCH faster.
+ */
+export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
+  const { innerRadius, outerRadius } = gauge.dimensions.current;
+  
+  // Get the new arc data
+  const data = getGrafanaMainArcData(gauge, percent);
+  
+  // Create the arc generator
+  const arcObj = arc()
+    .outerRadius(outerRadius)
+    .innerRadius(innerRadius)
+    .cornerRadius(0)
+    .padAngle(0);
+  
+  // Get existing arcs
+  const existingArcs = gauge.doughnut.current.selectAll(".subArc");
+  
+  // If arcs don't exist yet, create them (first render)
+  if (existingArcs.empty()) {
+    drawArc(gauge, percent);
+    return;
+  }
+  
+  // Update existing arc paths with new data - this is MUCH faster than recreating
+  const pieData = gauge.pieChart.current(data);
+  const paths = existingArcs.selectAll("path");
+  
+  paths.data(pieData)
+    .attr("d", arcObj)
+    .style("fill", (d: any) => d.data.color);
+}
 export const clearOuterArcs = (gauge: Gauge) => {
   gauge.doughnut.current.selectAll(".outerSubArc").remove();
 }
 
 export const validateArcs = (gauge: Gauge) => {
+  // Debug: log when validation is triggered
+  if (typeof window !== 'undefined' && (window as any).__GAUGE_DEBUG__) {
+    console.log('[GaugeComponent] validateArcs called:', {
+      minValue: gauge.props.minValue,
+      maxValue: gauge.props.maxValue,
+      gradient: gauge.props.arc?.gradient,
+      subArcsCount: gauge.props.arc?.subArcs?.length,
+      subArcLimits: gauge.props.arc?.subArcs?.map(s => s.limit)
+    });
+  }
   verifySubArcsLimits(gauge);
 }
 /**
@@ -379,23 +425,66 @@ const verifySubArcsLimits = (gauge: Gauge) => {
   let arc = gauge.props.arc as Arc;
   let subArcs = arc.subArcs as SubArc[];
   let prevLimit: number | undefined = undefined;
+  
+  // Skip validation if using gradient mode (limits don't apply)
+  if (gauge.props.arc?.gradient) return;
+  
+  // Helper to create debug info string
+  const getDebugInfo = () => {
+    try {
+      return JSON.stringify({
+        minValue,
+        maxValue,
+        value: gauge.props.value,
+        gradient: gauge.props.arc?.gradient,
+        type: gauge.props.type,
+        subArcs: gauge.props.arc?.subArcs?.map(s => ({ 
+          limit: s.limit, 
+          length: (s as any).length,
+          color: typeof s.color === 'string' ? s.color.substring(0, 10) : s.color
+        }))
+      }, null, 2);
+    } catch (e) {
+      return 'Unable to stringify gauge props';
+    }
+  };
+  
   for (const subArc of gauge.props.arc?.subArcs || []) {
     const limit = subArc.limit;
+    // Only validate if limit is explicitly defined (skip length-based subArcs)
     if (typeof limit !== 'undefined') {
       // Check if the limit is within the valid range
-      if (limit < minValue || limit > maxValue)
-        throw new Error(`The limit of a subArc must be between the minValue and maxValue. The limit of the subArc is ${limit}`);
+      if (limit < minValue || limit > maxValue) {
+        const debugInfo = getDebugInfo();
+        console.error('[GaugeComponent] SubArc limit validation failed:', debugInfo);
+        throw new Error(
+          `SubArc limit ${limit} is outside range [${minValue}, ${maxValue}]. ` +
+          `Type: ${gauge.props.type}, Gradient: ${gauge.props.arc?.gradient}. ` +
+          `Check console for full debug info.`
+        );
+      }
       // Check if the limit is greater than the previous limit
       if (typeof prevLimit !== 'undefined') {
-        if (limit <= prevLimit)
-          throw new Error(`The limit of a subArc must be greater than the limit of the previous subArc. The limit of the subArc is ${limit}. If you're trying to specify length in percent of the arc, use property "length". refer to: https://github.com/antoniolago/react-gauge-component`);
+        if (limit <= prevLimit) {
+          const debugInfo = getDebugInfo();
+          console.error('[GaugeComponent] SubArc order validation failed:', debugInfo);
+          throw new Error(
+            `SubArc limit ${limit} must be > previous limit ${prevLimit}. ` +
+            `Use "length" property for percentage-based sizing. ` +
+            `See: https://github.com/antoniolago/react-gauge-component`
+          );
+        }
       }
       prevLimit = limit;
     }
   }
-  // If the user has defined subArcs, make sure the last subArc has a limit equal to the maxValue
-  if (subArcs.length > 0) {
+  // If the user has defined subArcs with limits, make sure the last one covers maxValue
+  // Only apply to subArcs using limit (not length)
+  if (subArcs && subArcs.length > 0) {
     let lastSubArc = subArcs[subArcs.length - 1];
-    if (lastSubArc.limit as number < maxValue) lastSubArc.limit = maxValue;
+    // Only set limit if this subArc uses limits (not length-based)
+    if (typeof lastSubArc.limit !== 'undefined' && lastSubArc.limit < maxValue) {
+      lastSubArc.limit = maxValue;
+    }
   }
 }

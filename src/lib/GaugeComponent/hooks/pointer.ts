@@ -36,8 +36,8 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                     const progress = currentInterpolatedPercent(percentOfPercent);
                     if (isProgressValid(progress, prevProgress, gauge)) {
                         if(gauge.props.type == GaugeType.Grafana){
-                            arcHooks.clearArcs(gauge);
-                            arcHooks.drawArc(gauge, progress);
+                            // Use efficient arc update instead of clearing/recreating DOM elements
+                            arcHooks.updateGrafanaArc(gauge, progress);
                         } else {
                             updatePointer(progress, gauge);
                         }
