@@ -40,7 +40,9 @@ export interface GaugeComponentProps {
     /** This configures the pointer of the Gauge. */
     pointer?: PointerProps,
     /** This configures the type of the Gauge. */
-    type?: "semicircle" | "radial" | "grafana"
+    type?: "semicircle" | "radial" | "grafana",
+    /** Callback fired when value changes via pointer drag. Enables input mode. */
+    onValueChange?: (value: number) => void
 }
 
 export const defaultGaugeProps: GaugeComponentProps = {

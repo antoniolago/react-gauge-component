@@ -2,6 +2,8 @@ import {
     easeElastic,
     easeExpOut,
     interpolateNumber,
+    drag,
+    select,
 } from "d3";
 import { PointerContext, PointerProps, PointerType } from "../types/Pointer";
 import { getCoordByValue } from "./arc";
@@ -75,7 +77,7 @@ const setupContext = (gauge: Gauge): PointerContext => {
 const initPointer = (gauge: Gauge) => {
     let value = gauge.props.value as number;
     let pointer = gauge.props.pointer as PointerProps;
-    const { shouldDrawPath, centerPoint, pointerRadius, pathStr, currentPercent, prevPercent } = gauge.pointer.current.context;
+    const { shouldDrawPath, centerPoint, pointerRadius, pathStr, currentPercent, prevPercent, pathLength } = gauge.pointer.current.context;
     
     // Get the initial color based on current value - this makes pointer color match arc by default
     const initialColor = pointer.color || arcHooks.getColorByPercentage(currentPercent, gauge);
@@ -83,6 +85,22 @@ const initPointer = (gauge: Gauge) => {
     if(shouldDrawPath){
         gauge.pointer.current.context.pathStr = calculatePointerPath(gauge, prevPercent || currentPercent);
         gauge.pointer.current.path = gauge.pointer.current.element.append("path").attr("d", gauge.pointer.current.context.pathStr).attr("fill", initialColor);
+        
+        // Add grab handle at pointer tip if onValueChange is provided
+        if (gauge.props.onValueChange) {
+            const tipPosition = calculatePointerTipPosition(gauge, prevPercent || currentPercent);
+            const handleRadius = Math.max(6, pointerRadius * 0.8);
+            gauge.pointer.current.element
+                .append("circle")
+                .attr("class", "pointer-grab-handle")
+                .attr("cx", tipPosition.x)
+                .attr("cy", tipPosition.y)
+                .attr("r", handleRadius)
+                .attr("fill", "rgba(255, 255, 255, 0.3)")
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 2)
+                .style("cursor", "grab");
+        }
     }
     //Add a circle at the bottom of pointer
     if (pointer.type == PointerType.Needle) {
@@ -104,6 +122,11 @@ const initPointer = (gauge: Gauge) => {
             .attr("stroke", strokeColor)
             .attr("stroke-width", pointer.strokeWidth! * pointerRadius / 10);
         gauge.pointer.current.context.prevColor = strokeColor;
+        
+        // For blob, the blob itself is the grab handle - just add cursor style
+        if (gauge.props.onValueChange) {
+            gauge.pointer.current.element.select("circle").style("cursor", "grab");
+        }
     }
     //Translate the pointer starting point of the arc
     setPointerPosition(pointerRadius, value, gauge);
@@ -112,8 +135,16 @@ const updatePointer = (percentage: number, gauge: Gauge) => {
     let pointer = gauge.props.pointer as PointerProps;
     const { pointerRadius, shouldDrawPath, prevColor } = gauge.pointer.current.context;
     setPointerPosition(pointerRadius, percentage, gauge);
-    if(shouldDrawPath && gauge.props.type != GaugeType.Grafana) 
+    if(shouldDrawPath && gauge.props.type != GaugeType.Grafana) {
         gauge.pointer.current.path.attr("d", calculatePointerPath(gauge, percentage));
+        
+        // Update grab handle position if it exists
+        const grabHandle = gauge.pointer.current.element.select(".pointer-grab-handle");
+        if (!grabHandle.empty()) {
+            const tipPosition = calculatePointerTipPosition(gauge, percentage);
+            grabHandle.attr("cx", tipPosition.x).attr("cy", tipPosition.y);
+        }
+    }
     if(pointer.type == PointerType.Blob) {
         // Use getColorByPercentage which handles both gradient and non-gradient modes
         let currentColor = arcHooks.getColorByPercentage(percentage, gauge);
@@ -182,6 +213,20 @@ const calculatePointerPath = (gauge: Gauge, percent: number) => {
     return pathStr;
 };
 
+/**
+ * Calculate the position of the pointer tip for the grab handle
+ */
+const calculatePointerTipPosition = (gauge: Gauge, percent: number): { x: number, y: number } => {
+    const { centerPoint, pathLength } = gauge.pointer.current.context;
+    let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -42);
+    let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 223);
+    const angle = startAngle + (percent) * (endAngle - startAngle);
+    return {
+        x: centerPoint[0] - pathLength * Math.cos(angle),
+        y: centerPoint[1] - pathLength * Math.sin(angle),
+    };
+};
+
 const getPointerRadius = (gauge: Gauge) => {
     let pointer = gauge.props.pointer as PointerProps;
     let pointerWidth = pointer.width as number;
@@ -191,3 +236,203 @@ const getPointerRadius = (gauge: Gauge) => {
 export const translatePointer = (x: number, y: number, gauge: Gauge) => gauge.pointer.current.element.attr("transform", "translate(" + x + ", " + y + ")");
 export const addPointerElement = (gauge: Gauge) => gauge.pointer.current.element = gauge.g.current.append("g").attr("class", "pointer");
 export const clearPointerElement = (gauge: Gauge) => gauge.pointer.current.element.selectAll("*").remove();
+
+/**
+ * Calculate value from mouse/touch position on the gauge arc
+ * @param gauge The gauge instance
+ * @param clientX Mouse/touch X coordinate
+ * @param clientY Mouse/touch Y coordinate
+ * @returns The calculated value based on position
+ */
+export const getValueFromPosition = (gauge: Gauge, clientX: number, clientY: number): number => {
+    const svgElement = gauge.svg.current.node();
+    if (!svgElement) return gauge.props.value as number;
+    
+    const rect = svgElement.getBoundingClientRect();
+    const viewBoxAttr = gauge.svg.current.attr("viewBox");
+    if (!viewBoxAttr) return gauge.props.value as number;
+    
+    const viewBox = viewBoxAttr.split(" ").map(Number);
+    
+    // Convert client coordinates to SVG viewBox coordinates
+    const scaleX = viewBox[2] / rect.width;
+    const scaleY = viewBox[3] / rect.height;
+    
+    const svgX = (clientX - rect.left) * scaleX + viewBox[0];
+    const svgY = (clientY - rect.top) * scaleY + viewBox[1];
+    
+    // Get gauge center from the current layout
+    const centerX = gauge.prevGSize.current?.gaugeCenter?.x || (viewBox[0] + viewBox[2] / 2);
+    const centerY = gauge.prevGSize.current?.gaugeCenter?.y || (viewBox[1] + viewBox[3] / 2);
+    
+    // Calculate vector from center to mouse position
+    const dx = svgX - centerX;
+    const dy = svgY - centerY;
+    
+    // The gauge pointer system uses:
+    // - Semicircle: 0° (left) to 180° (right), with pointer calculated as -cos(angle), -sin(angle)
+    // - Radial/Grafana: -42° to 223°
+    // 
+    // atan2(dy, dx) gives angle from positive X axis (pointing right)
+    // We need to convert to the gauge's coordinate system where:
+    // - 0° points LEFT (negative X direction)
+    // - 90° points DOWN (positive Y direction)
+    // - 180° points RIGHT (positive X direction)
+    //
+    // So we need: gaugeAngle = atan2(dy, dx) + PI (rotate 180°)
+    // This makes: atan2(0, -1) + PI = PI + PI = 2PI ≈ 0 (pointing left)
+    //             atan2(0, 1) + PI = 0 + PI = PI (pointing right)
+    //             atan2(1, 0) + PI = PI/2 + PI = 3PI/2 → normalize to PI/2 (pointing down)
+    
+    let angle = Math.atan2(dy, dx) + Math.PI;
+    
+    // Normalize to 0 to 2*PI range
+    if (angle < 0) angle += 2 * Math.PI;
+    if (angle >= 2 * Math.PI) angle -= 2 * Math.PI;
+    
+    // Define gauge angle ranges (in radians)
+    let startAngle: number, endAngle: number;
+    
+    if (gauge.props.type === GaugeType.Semicircle) {
+        // Semicircle: 0° to 180° (0 to PI radians)
+        startAngle = 0;
+        endAngle = Math.PI;
+    } else {
+        // Radial/Grafana: -42° to 223° 
+        // In our coordinate system: -42° becomes 360-42 = 318° but we want it as the start
+        // Actually, the gauge goes from -42° (upper left) to 223° (upper right)
+        // Converting: -42° = -42 * PI/180 = -0.733 rad, but in 0-2PI: 2PI - 0.733 = 5.55 rad
+        // 223° = 223 * PI/180 = 3.89 rad
+        // 
+        // The arc spans from upper-left, down through bottom, to upper-right
+        // Total span: 223 - (-42) = 265°
+        startAngle = utils.degToRad(-42);
+        endAngle = utils.degToRad(223);
+        
+        // Handle the wrap-around: if angle is in the "dead zone" (223° to 318°), clamp it
+        // Dead zone in radians: 3.89 to 5.55 (or equivalently, 223° to 318°)
+        if (angle > endAngle && angle < (2 * Math.PI + startAngle)) {
+            // In dead zone - clamp to nearest edge
+            const distToEnd = angle - endAngle;
+            const distToStart = (2 * Math.PI + startAngle) - angle;
+            angle = distToEnd < distToStart ? endAngle : startAngle;
+        }
+        
+        // Normalize angle for calculation (handle negative start angle)
+        if (angle > Math.PI) {
+            // Angle is in the range PI to 2PI, which corresponds to negative angles
+            angle = angle - 2 * Math.PI;
+        }
+    }
+    
+    // Clamp angle to valid range
+    if (angle < startAngle) angle = startAngle;
+    if (angle > endAngle) angle = endAngle;
+    
+    // Calculate percentage (0 to 1)
+    const percentage = (angle - startAngle) / (endAngle - startAngle);
+    
+    // Convert percentage to value
+    const minValue = gauge.props.minValue as number;
+    const maxValue = gauge.props.maxValue as number;
+    const value = minValue + percentage * (maxValue - minValue);
+    
+    // Clamp value to min/max
+    return Math.max(minValue, Math.min(maxValue, value));
+};
+
+/**
+ * Set up drag behavior for the pointer element
+ * This allows users to grab and drag the pointer to set values
+ */
+export const setupPointerDrag = (gauge: Gauge) => {
+    const onValueChange = gauge.props.onValueChange;
+    if (!onValueChange) return; // Only enable drag if callback is provided
+    
+    const pointerElement = gauge.pointer.current.element;
+    if (!pointerElement) return;
+    
+    // Also make the arc draggable for easier interaction
+    const arcElement = gauge.doughnut.current;
+    
+    // Track if we've actually moved during drag (to distinguish from click)
+    let hasMoved = false;
+    let startX = 0;
+    let startY = 0;
+    const moveThreshold = 3; // Minimum pixels to move before considering it a drag
+    
+    const handleDragStart = (event: any) => {
+        // Stop any ongoing animations
+        pointerElement.interrupt();
+        if (arcElement) arcElement.interrupt();
+        
+        // Record start position
+        hasMoved = false;
+        startX = event.sourceEvent.clientX;
+        startY = event.sourceEvent.clientY;
+    };
+    
+    const handleDrag = (event: any) => {
+        const clientX = event.sourceEvent.clientX;
+        const clientY = event.sourceEvent.clientY;
+        
+        // Check if we've moved enough to consider it a drag
+        const dx = Math.abs(clientX - startX);
+        const dy = Math.abs(clientY - startY);
+        
+        if (dx > moveThreshold || dy > moveThreshold) {
+            hasMoved = true;
+        }
+        
+        // Only update value if we've actually moved
+        if (hasMoved) {
+            const value = getValueFromPosition(gauge, clientX, clientY);
+            onValueChange(value);
+        }
+    };
+    
+    const dragBehavior = drag()
+        .on("start", handleDragStart)
+        .on("drag", handleDrag);
+    
+    // Apply drag to pointer
+    pointerElement.call(dragBehavior);
+    pointerElement.style("cursor", "grab");
+    
+    // Also apply drag to the arc for easier interaction
+    if (arcElement) {
+        arcElement.call(dragBehavior);
+        arcElement.style("cursor", "pointer");
+    }
+};
+
+/**
+ * Set up click-to-set behavior on the arc
+ * Allows users to click anywhere on the arc to set the value
+ */
+export const setupArcClick = (gauge: Gauge) => {
+    // Note: Click behavior is now handled separately from drag
+    // The arc click will set value on single click (no drag)
+    const onValueChange = gauge.props.onValueChange;
+    if (!onValueChange) return;
+    
+    const arcElement = gauge.doughnut.current;
+    if (!arcElement) return;
+    
+    // Use mouseup instead of click to avoid conflict with drag
+    // Only fire if it was a quick click (not a drag)
+    let mouseDownTime = 0;
+    const clickThreshold = 200; // ms - if mouseup happens within this time, treat as click
+    
+    arcElement.on("mousedown.click", () => {
+        mouseDownTime = Date.now();
+    });
+    
+    arcElement.on("mouseup.click", (event: any) => {
+        const elapsed = Date.now() - mouseDownTime;
+        if (elapsed < clickThreshold) {
+            const value = getValueFromPosition(gauge, event.clientX, event.clientY);
+            onValueChange(value);
+        }
+    });
+};

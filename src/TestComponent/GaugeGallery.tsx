@@ -1020,8 +1020,6 @@ const GaugeGallery: React.FC = () => {
   const [sandboxWidth, setSandboxWidth] = useState('400px'); // Sandbox gauge width
   const [sandboxHeight, setSandboxHeight] = useState('300px'); // Sandbox gauge height
   const [gaugeAlign, setGaugeAlign] = useState<'left' | 'center' | 'right'>('left'); // Gauge alignment
-  const [isDragging, setIsDragging] = useState(false); // Drag state for gauge card
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 }); // Drag offset
 
   // Grid size configurations based on column count
   const gridConfigs = {
@@ -1369,138 +1367,201 @@ const GaugeGallery: React.FC = () => {
         
         {sandboxOpen && (
           <div style={styles.sandboxContent}>
-            {/* Organized Grid Toolbar - 3 columns */}
-            <div style={styles.toolbarGrid}>
-              {/* Presets - Full width */}
-              <div style={styles.toolbarSectionWide}>
-                <div style={styles.toolbarSectionHeader}>🚀 Presets</div>
-                <div style={styles.toolbarRow}>
-                  <button onClick={handleRandomize} style={styles.actionButton} type="button">🎲 Random</button>
+            {/* Enhanced Toolbar with CSS Grid Layout */}
+            <div style={styles.editorToolbar}>
+              {/* Presets - Full Width */}
+              <div style={{ ...styles.toolbarGroupFull, borderColor: '#ff6b6b' }}>
+                <span style={styles.groupLabel}>📦 Presets</span>
+                <div style={styles.buttonRow}>
+                  <button onClick={handleRandomize} style={styles.toolBtn} title="Random Config" type="button">🎲</button>
                   {[
-                    { label: '🌐 Bandwidth', config: { type: 'semicircle', minValue: 0, maxValue: 1000000, arc: { width: 0.2, subArcs: [{ limit: 100, color: '#5BE12C' }, { limit: 1000, color: '#F5CD19' }, { limit: 10000, color: '#F58B19' }, { limit: 100000, color: '#EA4228' }, { color: '#8B0000' }] }, labels: { valueLabel: { formatTextValue: (v: number) => v >= 1000000 ? `${(v/1000000).toFixed(1)} Tbps` : v >= 1000 ? `${(v/1000).toFixed(0)} Gbps` : `${v} Mbps` }, tickLabels: { type: 'outer', ticks: [{ value: 0 }, { value: 100 }, { value: 1000 }, { value: 10000 }, { value: 100000 }, { value: 1000000 }], defaultTickValueConfig: { formatTextValue: (v: number) => v >= 1000000 ? '1T' : v >= 1000 ? `${v/1000}G` : `${v}M` } } }, pointer: { type: 'needle' } }, value: 50000 },
-                    { label: '🌡️ Temp', config: { type: 'semicircle', minValue: -40, maxValue: 150, arc: { width: 0.2, subArcs: [{ limit: 0, color: '#00bcd4' }, { limit: 25, color: '#4caf50' }, { limit: 80, color: '#ff9800' }, { color: '#f44336' }] }, labels: { valueLabel: { formatTextValue: (v: number) => `${v}°C` }, tickLabels: { type: 'outer', ticks: [{ value: -40 }, { value: 0 }, { value: 50 }, { value: 100 }, { value: 150 }] } }, pointer: { type: 'blob' } }, value: 23 },
-                    { label: '🔊 Audio', config: { type: 'radial', minValue: -60, maxValue: 20, arc: { width: 0.15, gradient: true, subArcs: [{ limit: -20, color: '#2d5a27' }, { limit: 0, color: '#5BE12C' }, { limit: 10, color: '#F5CD19' }, { color: '#EA4228' }] }, labels: { valueLabel: { formatTextValue: (v: number) => `${v > 0 ? '+' : ''}${v} dB` }, tickLabels: { type: 'outer', ticks: [{ value: -60 }, { value: -40 }, { value: -20 }, { value: 0 }, { value: 20 }] } }, pointer: { type: 'needle', color: '#00ff88' } }, value: -12 },
-                    { label: '🔋 Battery', config: { type: 'grafana', minValue: 0, maxValue: 100, arc: { width: 0.25, subArcs: [{ limit: 20, color: '#EA4228' }, { limit: 40, color: '#F58B19' }, { limit: 60, color: '#F5CD19' }, { color: '#5BE12C' }] }, labels: { valueLabel: { formatTextValue: (v: number) => `${v.toFixed(1)}%`, matchColorWithArc: true }, tickLabels: { type: 'inner', ticks: [{ value: 0 }, { value: 25 }, { value: 50 }, { value: 75 }, { value: 100 }] } }, pointer: { type: 'arrow' } }, value: 73.5 },
-                    { label: '⚙️ RPM', config: { type: 'semicircle', minValue: 0, maxValue: 10000, arc: { width: 0.2, subArcs: [{ limit: 2000, color: '#5BE12C' }, { limit: 6000, color: '#F5CD19' }, { limit: 8000, color: '#F58B19' }, { color: '#EA4228' }] }, labels: { valueLabel: { formatTextValue: (v: number) => `${(v/1000).toFixed(1)}k` }, tickLabels: { type: 'outer', ticks: [{ value: 0 }, { value: 2000 }, { value: 4000 }, { value: 6000 }, { value: 8000 }, { value: 10000 }], defaultTickValueConfig: { formatTextValue: (v: number) => `${v/1000}k` } } }, pointer: { type: 'needle', color: '#ff4444' } }, value: 3500 },
-                    { label: '💨 PSI', config: { type: 'radial', minValue: 0, maxValue: 300, arc: { width: 0.18, subArcs: [{ limit: 50, color: '#00bcd4' }, { limit: 150, color: '#5BE12C' }, { limit: 250, color: '#F5CD19' }, { color: '#EA4228' }] }, labels: { valueLabel: { formatTextValue: (v: number) => `${v} PSI` }, tickLabels: { type: 'outer', ticks: [{ value: 0 }, { value: 100 }, { value: 200 }, { value: 300 }] } }, pointer: { type: 'needle' } }, value: 125 },
-                    { label: '💻 CPU', config: { type: 'semicircle', minValue: 0, maxValue: 100, arc: { width: 0.3, gradient: true, subArcs: [{ limit: 40, color: '#5BE12C' }, { limit: 60, color: '#F5CD19' }, { limit: 80, color: '#F58B19' }, { color: '#EA4228' }] }, labels: { valueLabel: { formatTextValue: (v: number) => `${v.toFixed(0)}%` }, tickLabels: { hideMinMax: true } }, pointer: { type: 'blob' } }, value: 67 },
-                    { label: '⛽ Fuel', config: { type: 'semicircle', minValue: 0, maxValue: 100, arc: { width: 0.15, subArcs: [{ limit: 15, color: '#EA4228' }, { limit: 25, color: '#F58B19' }, { color: '#5BE12C' }] }, labels: { valueLabel: { hide: true }, tickLabels: { type: 'outer', ticks: [{ value: 0, valueConfig: { formatTextValue: () => 'E' } }, { value: 50, valueConfig: { formatTextValue: () => '½' } }, { value: 100, valueConfig: { formatTextValue: () => 'F' } }] } }, pointer: { type: 'needle', color: '#fff' } }, value: 35 },
+                    { icon: '🌐', label: 'Bandwidth', config: { type: 'grafana', minValue: 0, maxValue: 3000, arc: { nbSubArcs: 150, colorArray: ['#5BE12C', '#F5CD19', '#EA4228'], width: 0.3, padding: 0.003 }, labels: { valueLabel: { style: { fontSize: 40 }, formatTextValue: (v: number) => v >= 1000 ? (Number.isInteger(v/1000) ? `${(v/1000).toFixed(0)} mbit/s` : `${(v/1000).toFixed(1)} mbit/s`) : `${v.toFixed(0)} kbit/s` }, tickLabels: { type: 'outer', ticks: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }, { value: 600 }, { value: 700 }, { value: 800 }, { value: 900 }, { value: 1000 }, { value: 1500 }, { value: 2000 }, { value: 2500 }, { value: 3000 }], defaultTickValueConfig: { formatTextValue: (v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}m` : `${v}k` } } }, pointer: { type: 'needle' } }, value: 900 },
+                    { icon: '🌡️', label: 'Temp', config: { type: 'semicircle', minValue: -40, maxValue: 150, arc: { width: 0.2, subArcs: [{ limit: 0, color: '#00bcd4' }, { limit: 25, color: '#4caf50' }, { limit: 80, color: '#ff9800' }, { color: '#f44336' }] }, labels: { valueLabel: { formatTextValue: (v: number) => `${v}°C` }, tickLabels: { type: 'outer', ticks: [{ value: -40 }, { value: 0 }, { value: 50 }, { value: 100 }, { value: 150 }] } }, pointer: { type: 'blob' } }, value: 23 },
+                    { icon: '🔊', label: 'Audio', config: { type: 'radial', minValue: -60, maxValue: 20, arc: { width: 0.15, gradient: true, subArcs: [{ limit: -20, color: '#2d5a27' }, { limit: 0, color: '#5BE12C' }, { limit: 10, color: '#F5CD19' }, { color: '#EA4228' }] }, labels: { valueLabel: { formatTextValue: (v: number) => `${v > 0 ? '+' : ''}${v} dB` }, tickLabels: { type: 'outer', ticks: [{ value: -60 }, { value: -40 }, { value: -20 }, { value: 0 }, { value: 20 }] } }, pointer: { type: 'needle', color: '#00ff88' } }, value: -12 },
+                    { icon: '🔋', label: 'Battery', config: { type: 'grafana', minValue: 0, maxValue: 100, arc: { width: 0.25, subArcs: [{ limit: 20, color: '#EA4228' }, { limit: 40, color: '#F58B19' }, { limit: 60, color: '#F5CD19' }, { color: '#5BE12C' }] }, labels: { valueLabel: { formatTextValue: (v: number) => `${v.toFixed(1)}%`, matchColorWithArc: true }, tickLabels: { type: 'inner', ticks: [{ value: 0 }, { value: 25 }, { value: 50 }, { value: 75 }, { value: 100 }] } }, pointer: { type: 'arrow' } }, value: 73.5 },
+                    { icon: '⚙️', label: 'RPM', config: { type: 'grafana', minValue: 0, maxValue: 8000, arc: { nbSubArcs: 30, colorArray: ['#5BE12C', '#5BE12C', '#F5CD19', '#F5CD19', '#EA4228'], width: 0.3, padding: 0.02 }, labels: { valueLabel: { formatTextValue: (v: number) => `${v.toFixed(0)} RPM` }, tickLabels: { type: 'outer', ticks: [{ value: 0 }, { value: 1000 }, { value: 2000 }, { value: 3000 }, { value: 4000 }, { value: 5000 }, { value: 6000 }, { value: 7000 }, { value: 8000 }], defaultTickValueConfig: { formatTextValue: (v: number) => `${v/1000}` } } }, pointer: { type: 'needle', color: '#EA4228' } }, value: 3500 },
+                    { icon: '⚡', label: 'Voltage', config: { type: 'grafana', minValue: 0, maxValue: 16, arc: { width: 0.25, subArcs: [{ limit: 10, color: '#EA4228' }, { limit: 12, color: '#F5CD19' }, { limit: 14.5, color: '#5BE12C' }, { color: '#EA4228' }] }, labels: { valueLabel: { renderContent: (value: number) => React.createElement('div', { style: { textAlign: 'center', color: '#fff' } }, React.createElement('div', { style: { fontSize: '1.5rem' } }, '⚡'), React.createElement('div', { style: { fontSize: '1.2rem', fontWeight: 'bold' } }, `${value.toFixed(1)} V`)) }, tickLabels: { type: 'outer', ticks: [{ value: 0 }, { value: 4 }, { value: 8 }, { value: 10 }, { value: 12 }, { value: 14 }, { value: 16 }] } }, pointer: { type: 'arrow' } }, value: 12.6 },
+                    { icon: '💻', label: 'CPU', config: { type: 'semicircle', minValue: 0, maxValue: 100, arc: { width: 0.3, gradient: true, subArcs: [{ limit: 40, color: '#5BE12C' }, { limit: 60, color: '#F5CD19' }, { limit: 80, color: '#F58B19' }, { color: '#EA4228' }] }, labels: { valueLabel: { formatTextValue: (v: number) => `${v.toFixed(0)}%` }, tickLabels: { hideMinMax: true } }, pointer: { type: 'blob' } }, value: 67 },
+                    { icon: '⛽', label: 'Fuel', config: { type: 'semicircle', minValue: 0, maxValue: 100, arc: { width: 0.15, subArcs: [{ limit: 15, color: '#EA4228' }, { limit: 25, color: '#F58B19' }, { color: '#5BE12C' }] }, labels: { valueLabel: { hide: true }, tickLabels: { type: 'outer', ticks: [{ value: 0, valueConfig: { formatTextValue: () => 'E' } }, { value: 50, valueConfig: { formatTextValue: () => '½' } }, { value: 100, valueConfig: { formatTextValue: () => 'F' } }] } }, pointer: { type: 'needle', color: '#fff' } }, value: 35 },
                   ].map((p) => (
-                    <button key={p.label} onClick={() => { setRandomConfig(p.config as any); setRandomValue(p.value); setRandomKey(k => k + 1); }} style={styles.presetButton} type="button">{p.label}</button>
+                    <button key={p.icon} onClick={() => { setRandomConfig(p.config as any); setRandomValue(p.value); setRandomKey(k => k + 1); }} style={styles.toolBtn} title={p.label} type="button">{p.icon}</button>
                   ))}
                 </div>
               </div>
 
-              {/* Column 1: Value */}
-              <div style={styles.toolbarSection}>
-                <div style={styles.toolbarSectionHeader}>🎯 Value</div>
-                <div style={styles.controlRow}>
+              {/* Gauge Type */}
+              <div style={{ ...styles.toolbarGroup, borderColor: '#9b59b6' }}>
+                <span style={styles.groupLabel}>🎨 Type</span>
+                <div style={styles.buttonRow}>
+                  {/* Semicircle - 180° arc */}
+                  <button onClick={() => { setRandomConfig(prev => ({ ...prev, type: 'semicircle' })); setRandomKey(k => k + 1); }} style={{ ...styles.toolBtn, padding: '4px 8px', ...((randomConfig as any)?.type === 'semicircle' ? styles.toolBtnActive : {}) }} title="Semicircle" type="button">
+                    <svg width="32" height="18" viewBox="0 0 32 18">
+                      <path d="M 2 16 A 14 14 0 0 1 30 16" fill="none" stroke="#5BE12C" strokeWidth="3" strokeLinecap="round" />
+                      <path d="M 2 16 A 14 14 0 0 1 16 2" fill="none" stroke="#F5CD19" strokeWidth="3" strokeLinecap="round" />
+                      <line x1="16" y1="16" x2="10" y2="6" stroke={(randomConfig as any)?.type === 'semicircle' ? '#1a1a2e' : '#fff'} strokeWidth="2" strokeLinecap="round" />
+                      <circle cx="16" cy="16" r="2" fill={(randomConfig as any)?.type === 'semicircle' ? '#1a1a2e' : '#fff'} />
+                    </svg>
+                  </button>
+                  {/* Radial - ~270° arc */}
+                  <button onClick={() => { setRandomConfig(prev => ({ ...prev, type: 'radial' })); setRandomKey(k => k + 1); }} style={{ ...styles.toolBtn, padding: '4px 8px', ...((randomConfig as any)?.type === 'radial' ? styles.toolBtnActive : {}) }} title="Radial" type="button">
+                    <svg width="32" height="24" viewBox="0 0 32 24">
+                      <path d="M 4 20 A 13 13 0 1 1 28 20" fill="none" stroke="#5BE12C" strokeWidth="3" strokeLinecap="round" />
+                      <path d="M 4 20 A 13 13 0 0 1 16 4" fill="none" stroke="#F5CD19" strokeWidth="3" strokeLinecap="round" />
+                      <line x1="16" y1="17" x2="10" y2="9" stroke={(randomConfig as any)?.type === 'radial' ? '#1a1a2e' : '#fff'} strokeWidth="2" strokeLinecap="round" />
+                      <circle cx="16" cy="17" r="2" fill={(randomConfig as any)?.type === 'radial' ? '#1a1a2e' : '#fff'} />
+                    </svg>
+                  </button>
+                  {/* Grafana - segmented arc with outer ring */}
+                  <button onClick={() => { setRandomConfig(prev => ({ ...prev, type: 'grafana' })); setRandomKey(k => k + 1); }} style={{ ...styles.toolBtn, padding: '4px 8px', ...((randomConfig as any)?.type === 'grafana' ? styles.toolBtnActive : {}) }} title="Grafana" type="button">
+                    <svg width="32" height="24" viewBox="0 0 32 24">
+                      <path d="M 4 20 A 13 13 0 0 1 10 6" fill="none" stroke="#5BE12C" strokeWidth="4" strokeLinecap="round" />
+                      <path d="M 11 5 A 13 13 0 0 1 21 5" fill="none" stroke="#F5CD19" strokeWidth="4" strokeLinecap="round" />
+                      <path d="M 22 6 A 13 13 0 0 1 28 20" fill="none" stroke="#EA4228" strokeWidth="4" strokeLinecap="round" />
+                      <path d="M 3 21 A 14 14 0 1 1 29 21" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+                      <line x1="16" y1="17" x2="10" y2="9" stroke={(randomConfig as any)?.type === 'grafana' ? '#1a1a2e' : '#fff'} strokeWidth="2" strokeLinecap="round" />
+                      <circle cx="16" cy="17" r="2" fill={(randomConfig as any)?.type === 'grafana' ? '#1a1a2e' : '#fff'} />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* SubArcs - Full Width */}
+              <div style={{ ...styles.toolbarGroupFull, borderColor: '#e74c3c' }}>
+                <span style={styles.groupLabel}>🌈 SubArcs</span>
+                <div style={styles.buttonRow}>
+                  {/* Color Presets */}
+                  {[
+                    { label: 'Traffic', colors: ['#5BE12C', '#F5CD19', '#EA4228'] },
+                    { label: 'Ocean', colors: ['#00bcd4', '#2196f3', '#3f51b5'] },
+                    { label: 'Sunset', colors: ['#ff9800', '#ff5722', '#e91e63'] },
+                    { label: 'Forest', colors: ['#8bc34a', '#4caf50', '#2e7d32'] },
+                    { label: 'Purple', colors: ['#ce93d8', '#9c27b0', '#6a1b9a'] },
+                    { label: 'Mono', colors: ['#bdbdbd', '#757575', '#424242'] },
+                  ].map((preset) => (
+                    <button key={preset.label} onClick={() => { 
+                      const nbArcs = (randomConfig as any)?.arc?.nbSubArcs || 3;
+                      setRandomConfig(prev => ({ ...prev, arc: { ...(prev as any).arc, colorArray: preset.colors, nbSubArcs: nbArcs, subArcs: [] } })); 
+                      setRandomKey(k => k + 1); 
+                    }} style={styles.toolBtn} title={preset.label} type="button">
+                      <span style={{ display: 'flex', gap: '1px' }}>
+                        {preset.colors.map((c, i) => <span key={i} style={{ width: '8px', height: '8px', borderRadius: '1px', background: c }} />)}
+                      </span>
+                    </button>
+                  ))}
+                  <span style={styles.toolbarDivider} />
+                  {/* Number of SubArcs */}
+                  <span style={styles.sliderLabel}>#</span>
+                  {[3, 5, 10, 20, 50, 100].map((n) => (
+                    <button key={n} onClick={() => { 
+                      const colors = (randomConfig as any)?.arc?.colorArray || ['#5BE12C', '#F5CD19', '#EA4228'];
+                      setRandomConfig(prev => ({ ...prev, arc: { ...(prev as any).arc, nbSubArcs: n, colorArray: colors, subArcs: [] } })); 
+                      setRandomKey(k => k + 1); 
+                    }} style={{ ...styles.toolBtn, ...((randomConfig as any)?.arc?.nbSubArcs === n ? styles.toolBtnActive : {}) }} type="button">{n}</button>
+                  ))}
+                  <span style={styles.toolbarDivider} />
+                  {/* Gradient Toggle */}
+                  <label style={styles.inlineLabel}>
+                    <input type="checkbox" checked={(randomConfig as any)?.arc?.gradient || false} onChange={(e) => { setRandomConfig(prev => ({ ...prev, arc: { ...(prev as any).arc, gradient: e.target.checked } })); setRandomKey(k => k + 1); }} style={styles.inlineCheckbox} />
+                    Gradient
+                  </label>
+                  <span style={styles.toolbarDivider} />
+                  {/* Color Pickers */}
+                  <span style={styles.sliderLabel}>Pick:</span>
+                  {[0, 1, 2].map((i) => {
+                    const colors = (randomConfig as any)?.arc?.colorArray || ['#5BE12C', '#F5CD19', '#EA4228'];
+                    return (
+                      <input 
+                        key={i} 
+                        type="color" 
+                        value={colors[i] || '#ffffff'} 
+                        onChange={(e) => {
+                          const newColors = [...colors];
+                          newColors[i] = e.target.value;
+                          setRandomConfig(prev => ({ ...prev, arc: { ...(prev as any).arc, colorArray: newColors, nbSubArcs: (prev as any)?.arc?.nbSubArcs || 3, subArcs: [] } }));
+                          setRandomKey(k => k + 1);
+                        }}
+                        style={styles.colorPicker}
+                        title={`Color ${i + 1}`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Arc Settings */}
+              <div style={{ ...styles.toolbarGroup, borderColor: '#3498db' }}>
+                <span style={styles.groupLabel}>📊 Arc</span>
+                <div style={styles.buttonRow}>
+                  <span style={styles.sliderLabel}>W</span>
+                  <input type="range" min="0.05" max="0.5" step="0.01" value={(randomConfig as any)?.arc?.width ?? 0.2} onChange={(e) => { setRandomConfig(prev => ({ ...prev, arc: { ...(prev as any).arc, width: Number(e.target.value) } })); setRandomKey(k => k + 1); }} style={styles.slider} />
+                  <span style={styles.sliderValue}>{((randomConfig as any)?.arc?.width ?? 0.2).toFixed(2)}</span>
+                  <span style={styles.sliderLabel}>R</span>
+                  <input type="range" min="0" max="20" step="1" value={(randomConfig as any)?.arc?.cornerRadius ?? 7} onChange={(e) => { setRandomConfig(prev => ({ ...prev, arc: { ...(prev as any).arc, cornerRadius: Number(e.target.value) } })); setRandomKey(k => k + 1); }} style={styles.slider} />
+                  <span style={styles.sliderValue}>{(randomConfig as any)?.arc?.cornerRadius ?? 7}</span>
+                </div>
+              </div>
+
+              {/* Pointer */}
+              <div style={{ ...styles.toolbarGroup, borderColor: '#f39c12' }}>
+                <span style={styles.groupLabel}>🎯 Pointer</span>
+                <div style={styles.buttonRow}>
+                  {[{ icon: '📍', type: 'needle', hide: false }, { icon: '⚫', type: 'blob', hide: false }, { icon: '➤', type: 'arrow', hide: false }, { icon: '👻', type: 'needle', hide: true }].map((p) => (
+                    <button key={p.icon} onClick={() => { setRandomConfig(prev => ({ ...prev, pointer: { ...(prev as any).pointer, type: p.type, hide: p.hide } })); setRandomKey(k => k + 1); }} style={{ ...styles.toolBtn, ...((randomConfig as any)?.pointer?.type === p.type && (randomConfig as any)?.pointer?.hide === p.hide ? styles.toolBtnActive : {}) }} type="button">{p.icon}</button>
+                  ))}
+                  <input type="range" min="0.5" max="1" step="0.05" value={(randomConfig as any)?.pointer?.length ?? 0.7} onChange={(e) => { setRandomConfig(prev => ({ ...prev, pointer: { ...(prev as any).pointer, length: Number(e.target.value) } })); setRandomKey(k => k + 1); }} style={styles.slider} title={`Length: ${((randomConfig as any)?.pointer?.length ?? 0.7).toFixed(2)}`} />
+                </div>
+              </div>
+
+              {/* Value Label */}
+              <div style={{ ...styles.toolbarGroup, borderColor: '#1abc9c' }}>
+                <span style={styles.groupLabel}>🏷️ Label</span>
+                <div style={styles.buttonRow}>
+                  <button onClick={() => { setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, valueLabel: { ...(prev as any).labels?.valueLabel, hide: !(prev as any).labels?.valueLabel?.hide } } })); setRandomKey(k => k + 1); }} style={{ ...styles.toolBtn, ...(!(randomConfig as any)?.labels?.valueLabel?.hide ? styles.toolBtnActive : {}) }} type="button">👁️</button>
+                  <button onClick={() => { setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, valueLabel: { ...(prev as any).labels?.valueLabel, matchColorWithArc: !(prev as any).labels?.valueLabel?.matchColorWithArc } } })); setRandomKey(k => k + 1); }} style={{ ...styles.toolBtn, ...((randomConfig as any)?.labels?.valueLabel?.matchColorWithArc ? styles.toolBtnActive : {}) }} type="button">🌈</button>
+                  <input type="range" min="12" max="72" step="1" value={parseInt((randomConfig as any)?.labels?.valueLabel?.style?.fontSize || '35')} onChange={(e) => { setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, valueLabel: { ...(prev as any).labels?.valueLabel, hide: false, style: { ...(prev as any).labels?.valueLabel?.style, fontSize: `${e.target.value}px` } } } })); setRandomKey(k => k + 1); }} style={styles.slider} title={`Font: ${parseInt((randomConfig as any)?.labels?.valueLabel?.style?.fontSize || '35')}px`} />
+                </div>
+              </div>
+
+              {/* Tick Labels */}
+              <div style={{ ...styles.toolbarGroup, borderColor: '#e67e22' }}>
+                <span style={styles.groupLabel}>📏 Ticks</span>
+                <div style={styles.buttonRow}>
+                  {[{ label: '∅', interval: 0 }, { label: '10', interval: 10 }, { label: '25', interval: 25 }].map((t) => (
+                    <button key={t.label} onClick={() => { const min = (randomConfig as any)?.minValue ?? 0; const max = (randomConfig as any)?.maxValue ?? 100; const ticks = t.interval === 0 ? [] : Array.from({ length: Math.floor((max - min) / t.interval) + 1 }, (_, i) => ({ value: min + i * t.interval })); setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, tickLabels: { ...(prev as any).labels?.tickLabels, type: 'outer', ticks, hideMinMax: t.interval === 0 } } })); setRandomKey(k => k + 1); }} style={styles.toolBtn} type="button">{t.label}</button>
+                  ))}
+                  <button onClick={() => { setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, tickLabels: { ...(prev as any).labels?.tickLabels, type: 'outer' } } })); setRandomKey(k => k + 1); }} style={{ ...styles.toolBtn, ...((randomConfig as any)?.labels?.tickLabels?.type === 'outer' ? styles.toolBtnActive : {}) }} type="button">↗</button>
+                  <button onClick={() => { setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, tickLabels: { ...(prev as any).labels?.tickLabels, type: 'inner' } } })); setRandomKey(k => k + 1); }} style={{ ...styles.toolBtn, ...((randomConfig as any)?.labels?.tickLabels?.type === 'inner' ? styles.toolBtnActive : {}) }} type="button">↙</button>
+                </div>
+              </div>
+
+              {/* Container Size - Small */}
+              <div style={{ ...styles.toolbarGroupSmall, borderColor: '#95a5a6' }}>
+                <span style={styles.groupLabel}>📐 Size</span>
+                <div style={styles.buttonRow}>
+                  <input type="range" min="150" max="600" step="10" value={parseInt(sandboxWidth)} onChange={(e) => setSandboxWidth(`${e.target.value}px`)} style={{ ...styles.slider, width: '50px' }} title={`W: ${parseInt(sandboxWidth)}px`} />
+                  <input type="range" min="100" max="400" step="10" value={parseInt(sandboxHeight)} onChange={(e) => setSandboxHeight(`${e.target.value}px`)} style={{ ...styles.slider, width: '50px' }} title={`H: ${parseInt(sandboxHeight)}px`} />
+                  {[{ icon: '⬅', v: 'left' as const }, { icon: '⬛', v: 'center' as const }, { icon: '➡', v: 'right' as const }].map((a) => (
+                    <button key={a.v} onClick={() => setGaugeAlign(a.v)} style={{ ...styles.toolBtn, padding: '4px 6px', ...((gaugeAlign === a.v) ? styles.toolBtnActive : {}) }} type="button">{a.icon}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Value Control - Full Width */}
+              <div style={{ ...styles.toolbarGroupFull, borderColor: '#2ecc71' }}>
+                <span style={styles.groupLabel}>🎚️ Value</span>
+                <div style={styles.buttonRow}>
+                  <label style={styles.inlineLabel}>
+                    <input type="checkbox" checked={autoAnimate} onChange={(e) => setAutoAnimate(e.target.checked)} style={styles.inlineCheckbox} />
+                    Auto
+                  </label>
                   {[0, 25, 50, 75, 100].map((val) => {
                     const min = (randomConfig as any)?.minValue ?? 0;
                     const max = (randomConfig as any)?.maxValue ?? 100;
                     const actualValue = min + (val / 100) * (max - min);
-                    return (
-                      <button key={val} onClick={() => setRandomValue(actualValue)} style={{ ...styles.tinyButton, background: Math.abs(randomValue - actualValue) < 0.01 ? 'linear-gradient(90deg, #00d9ff, #00ff88)' : 'rgba(255, 255, 255, 0.1)', color: Math.abs(randomValue - actualValue) < 0.01 ? '#1a1a2e' : '#fff' }} type="button">{val}%</button>
-                    );
+                    return <button key={val} onClick={() => setRandomValue(actualValue)} style={{ ...styles.toolBtn, ...(Math.abs(randomValue - actualValue) < 0.01 ? styles.toolBtnActive : {}) }} type="button">{val}</button>;
                   })}
-                </div>
-                <div style={{ ...styles.controlRow, marginTop: '6px' }}>
-                  <input type="range" min={(randomConfig as any)?.minValue ?? 0} max={(randomConfig as any)?.maxValue ?? 100} value={randomValue} onChange={(e) => setRandomValue(Number(e.target.value))} style={{ ...styles.slider, maxWidth: '200px' }} step="0.1" />
-                  <span style={styles.sliderValue}>{randomValue.toFixed(1)}</span>
-                </div>
-              </div>
-
-              {/* Column 2: Type */}
-              <div style={styles.toolbarSection}>
-                <div style={styles.toolbarSectionHeader}>🎨 Type</div>
-                <div style={styles.controlRow}>
-                  {(['semicircle', 'radial', 'grafana'] as const).map((type) => (
-                    <button key={type} onClick={() => { setRandomConfig(prev => ({ ...prev, type })); setRandomKey(k => k + 1); }} style={{ ...styles.presetButton, background: (randomConfig as any)?.type === type ? 'linear-gradient(90deg, #00d9ff, #00ff88)' : 'rgba(255, 255, 255, 0.1)', color: (randomConfig as any)?.type === type ? '#1a1a2e' : '#fff' }} type="button">{type === 'semicircle' ? '◗ Semi' : type === 'radial' ? '◐ Radial' : '◔ Grafana'}</button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Column 3: Arc */}
-              <div style={styles.toolbarSection}>
-                <div style={styles.toolbarSectionHeader}>📊 Arc</div>
-                <div style={styles.controlRow}>
-                  <span style={styles.controlLabel}>Width</span>
-                  <input type="range" min="0.05" max="0.5" step="0.01" value={(randomConfig as any)?.arc?.width ?? 0.2} onChange={(e) => { setRandomConfig(prev => ({ ...prev, arc: { ...(prev as any).arc, width: Number(e.target.value) } })); setRandomKey(k => k + 1); }} style={styles.slider} />
-                  <span style={styles.sliderValue}>{((randomConfig as any)?.arc?.width ?? 0.2).toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Column 4: Value Label */}
-              <div style={styles.toolbarSection}>
-                <div style={styles.toolbarSectionHeader}>🏷️ Value Label</div>
-                <div style={styles.controlRow}>
-                  <button onClick={() => { setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, valueLabel: { ...(prev as any).labels?.valueLabel, hide: !(prev as any).labels?.valueLabel?.hide } } })); setRandomKey(k => k + 1); }} style={{ ...styles.tinyButton, background: (randomConfig as any)?.labels?.valueLabel?.hide ? 'rgba(255,255,255,0.1)' : 'linear-gradient(90deg, #00d9ff, #00ff88)', color: (randomConfig as any)?.labels?.valueLabel?.hide ? '#fff' : '#1a1a2e' }} type="button">{(randomConfig as any)?.labels?.valueLabel?.hide ? '👁️‍🗨️' : '👁️'}</button>
-                  <input type="range" min="12" max="72" step="1" value={parseInt((randomConfig as any)?.labels?.valueLabel?.style?.fontSize || '35')} onChange={(e) => { setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, valueLabel: { ...(prev as any).labels?.valueLabel, hide: false, style: { ...(prev as any).labels?.valueLabel?.style, fontSize: `${e.target.value}px` } } } })); setRandomKey(k => k + 1); }} style={styles.slider} />
-                  <span style={styles.sliderValue}>{parseInt((randomConfig as any)?.labels?.valueLabel?.style?.fontSize || '35')}px</span>
-                  <button onClick={() => { setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, valueLabel: { ...(prev as any).labels?.valueLabel, matchColorWithArc: !(prev as any).labels?.valueLabel?.matchColorWithArc } } })); setRandomKey(k => k + 1); }} style={{ ...styles.tinyButton, background: (randomConfig as any)?.labels?.valueLabel?.matchColorWithArc ? 'linear-gradient(90deg, #00d9ff, #00ff88)' : 'rgba(255,255,255,0.1)', color: (randomConfig as any)?.labels?.valueLabel?.matchColorWithArc ? '#1a1a2e' : '#fff' }} type="button">🌈</button>
-                </div>
-              </div>
-
-              {/* Column 5: Ticks */}
-              <div style={styles.toolbarSection}>
-                <div style={styles.toolbarSectionHeader}>📏 Ticks</div>
-                <div style={styles.controlRow}>
-                  {[{ label: '∅', interval: 0 }, { label: '10', interval: 10 }, { label: '20', interval: 20 }, { label: '25', interval: 25 }].map((preset) => (
-                    <button key={preset.label} onClick={() => { const min = (randomConfig as any)?.minValue ?? 0; const max = (randomConfig as any)?.maxValue ?? 100; const ticks = preset.interval === 0 ? [] : Array.from({ length: Math.floor((max - min) / preset.interval) + 1 }, (_, i) => ({ value: min + i * preset.interval })); setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, tickLabels: { ...(prev as any).labels?.tickLabels, type: 'outer', ticks, hideMinMax: preset.interval === 0 } } })); setRandomKey(k => k + 1); }} style={styles.tinyButton} type="button">{preset.label}</button>
-                  ))}
-                  <input type="number" placeholder="N" min="1" style={styles.numberInput} onKeyDown={(e) => { if (e.key === 'Enter') { const interval = Number((e.target as HTMLInputElement).value); if (interval > 0) { const min = (randomConfig as any)?.minValue ?? 0; const max = (randomConfig as any)?.maxValue ?? 100; const ticks = Array.from({ length: Math.floor((max - min) / interval) + 1 }, (_, i) => ({ value: min + i * interval })); setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, tickLabels: { ...(prev as any).labels?.tickLabels, type: 'outer', ticks, hideMinMax: false } } })); setRandomKey(k => k + 1); } } }} />
-                  {(['outer', 'inner'] as const).map((pos) => (
-                    <button key={pos} onClick={() => { setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, tickLabels: { ...(prev as any).labels?.tickLabels, type: pos } } })); setRandomKey(k => k + 1); }} style={{ ...styles.tinyButton, background: (randomConfig as any)?.labels?.tickLabels?.type === pos ? 'linear-gradient(90deg, #00d9ff, #00ff88)' : 'rgba(255, 255, 255, 0.1)', color: (randomConfig as any)?.labels?.tickLabels?.type === pos ? '#1a1a2e' : '#fff' }} type="button">{pos === 'outer' ? '↗' : '↙'}</button>
-                  ))}
-                </div>
-                <div style={{ ...styles.controlRow, marginTop: '6px' }}>
-                  <span style={styles.controlLabel}>Font</span>
-                  <input type="range" min="6" max="24" step="1" value={parseInt((randomConfig as any)?.labels?.tickLabels?.defaultTickValueConfig?.style?.fontSize || '12')} onChange={(e) => { setRandomConfig(prev => ({ ...prev, labels: { ...(prev as any).labels, tickLabels: { ...(prev as any).labels?.tickLabels, defaultTickValueConfig: { ...(prev as any).labels?.tickLabels?.defaultTickValueConfig, style: { ...(prev as any).labels?.tickLabels?.defaultTickValueConfig?.style, fontSize: `${e.target.value}px` } } } } })); setRandomKey(k => k + 1); }} style={styles.slider} />
-                  <span style={styles.sliderValue}>{parseInt((randomConfig as any)?.labels?.tickLabels?.defaultTickValueConfig?.style?.fontSize || '12')}px</span>
-                </div>
-              </div>
-
-              {/* Column 6: Pointer */}
-              <div style={styles.toolbarSection}>
-                <div style={styles.toolbarSectionHeader}>🎭 Pointer</div>
-                <div style={styles.controlRow}>
-                  {[{ label: '📍', type: 'needle', hide: false }, { label: '⚫', type: 'blob', hide: false }, { label: '➤', type: 'arrow', hide: false }, { label: '👻', type: 'needle', hide: true }].map((preset) => (
-                    <button key={preset.label} onClick={() => { setRandomConfig(prev => ({ ...prev, pointer: { ...(prev as any).pointer, type: preset.type, hide: preset.hide } })); setRandomKey(k => k + 1); }} style={{ ...styles.tinyButton, background: (randomConfig as any)?.pointer?.type === preset.type && (randomConfig as any)?.pointer?.hide === preset.hide ? 'linear-gradient(90deg, #00d9ff, #00ff88)' : 'rgba(255, 255, 255, 0.1)', color: (randomConfig as any)?.pointer?.type === preset.type && (randomConfig as any)?.pointer?.hide === preset.hide ? '#1a1a2e' : '#fff' }} type="button" title={preset.type}>{preset.label}</button>
-                  ))}
-                </div>
-                <div style={{ ...styles.controlRow, marginTop: '6px' }}>
-                  <span style={styles.controlLabel}>Len</span>
-                  <input type="range" min="0.5" max="1" step="0.05" value={(randomConfig as any)?.pointer?.length ?? 0.8} onChange={(e) => { setRandomConfig(prev => ({ ...prev, pointer: { ...(prev as any).pointer, length: Number(e.target.value) } })); setRandomKey(k => k + 1); }} style={styles.slider} />
-                  <span style={styles.sliderValue}>{((randomConfig as any)?.pointer?.length ?? 0.8).toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Row: Container, Align & Code - Full width */}
-              <div style={styles.toolbarSectionWide}>
-                <div style={styles.toolbarSectionHeader}>📐 Container & Actions</div>
-                <div style={styles.toolbarRow}>
-                  <div style={styles.controlGroup}>
-                    <span style={styles.controlLabel}>Size</span>
-                    <div style={styles.controlRow}>
-                      {sizePresets.slice(0, 6).map((preset) => (
-                        <button key={preset.name} onClick={() => { setSandboxWidth(preset.width); setSandboxHeight(preset.height); }} style={{ ...styles.tinyButton, background: sandboxWidth === preset.width && sandboxHeight === preset.height ? 'linear-gradient(90deg, #00d9ff, #00ff88)' : 'rgba(255, 255, 255, 0.1)', color: sandboxWidth === preset.width && sandboxHeight === preset.height ? '#1a1a2e' : '#fff' }} type="button" title={`${preset.width} × ${preset.height}`}>{preset.name}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={styles.controlGroup}>
-                    <span style={styles.controlLabel}>Align</span>
-                    <div style={styles.controlRow}>
-                      {([{ label: '⬅️', value: 'left' }, { label: '⬛', value: 'center' }, { label: '➡️', value: 'right' }] as const).map((align) => (
-                        <button key={align.value} onClick={() => setGaugeAlign(align.value)} style={{ ...styles.tinyButton, background: gaugeAlign === align.value ? 'linear-gradient(90deg, #00d9ff, #00ff88)' : 'rgba(255, 255, 255, 0.1)', color: gaugeAlign === align.value ? '#1a1a2e' : '#fff' }} type="button" title={`Align ${align.value}`}>{align.label}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={styles.controlGroup}>
-                    <span style={styles.controlLabel}>Code</span>
-                    <div style={styles.controlRow}>
-                      <button onClick={() => copyToClipboard(randomConfig, randomValue, 'random')} style={{ ...styles.actionButton, background: copiedIndex === 'random' ? '#5BE12C' : 'linear-gradient(90deg, #00d9ff, #00ff88)' }} type="button">{copiedIndex === 'random' ? '✓ Copied!' : '📋 Copy Code'}</button>
-                    </div>
-                  </div>
+                  <input type="range" min={(randomConfig as any)?.minValue ?? 0} max={(randomConfig as any)?.maxValue ?? 100} value={randomValue} onChange={(e) => setRandomValue(Number(e.target.value))} style={{ ...styles.slider, flex: 1, minWidth: '100px' }} step="0.1" />
+                  <span style={{ ...styles.sliderValue, fontWeight: 700, color: '#00d9ff' }}>{randomValue.toFixed(1)}</span>
                 </div>
               </div>
             </div>
@@ -1511,12 +1572,6 @@ const GaugeGallery: React.FC = () => {
               justifyContent: gaugeAlign === 'left' ? 'flex-start' : gaugeAlign === 'right' ? 'flex-end' : 'center',
             }}>
               <div 
-                draggable
-                onDragStart={(e) => {
-                  setIsDragging(true);
-                  e.dataTransfer.effectAllowed = 'move';
-                }}
-                onDragEnd={() => setIsDragging(false)}
                 style={{
                   ...themeStyles.randomizerCard,
                   width: sandboxWidth,
@@ -1524,15 +1579,31 @@ const GaugeGallery: React.FC = () => {
                   minWidth: '150px',
                   minHeight: '100px',
                   maxWidth: '100%',
-                  transition: isDragging ? 'none' : 'all 0.3s ease',
+                  transition: 'all 0.3s ease',
                   resize: 'both',
                   overflow: 'hidden',
-                  cursor: isDragging ? 'grabbing' : 'grab',
-                  opacity: isDragging ? 0.8 : 1,
+                  position: 'relative',
                 }}
               >
-                <div style={{ width: '100%', height: '100%', position: 'relative', pointerEvents: 'none' }}>
-                  <GaugeComponent key={randomKey} value={randomValue} {...randomConfig} />
+                {/* Copy button in top-right corner */}
+                <button
+                  onClick={() => copyToClipboard(randomConfig, randomValue, 'random')}
+                  style={styles.copyCornerBtn}
+                  title="Copy Code"
+                  type="button"
+                >
+                  {copiedIndex === 'random' ? '✓' : '📋'}
+                </button>
+                <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                  <GaugeComponent 
+                    key={randomKey} 
+                    value={randomValue} 
+                    {...randomConfig} 
+                    onValueChange={(newValue) => setRandomValue(newValue)}
+                  />
+                </div>
+                <div style={styles.dragHint}>
+                  🎯 Drag the pointer or click the arc to set value
                 </div>
               </div>
             </div>
@@ -2036,96 +2107,159 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '20px',
     animation: 'fadeIn 0.3s ease',
   },
-  toolbarGrid: {
+  // Enhanced Editor Toolbar with Colored Groups - CSS Grid Layout
+  editorToolbar: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '2px',
-    marginBottom: '20px',
-    background: 'rgba(255, 255, 255, 0.05)',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: '8px',
+    marginBottom: '16px',
+    background: 'rgba(0, 0, 0, 0.3)',
     borderRadius: '12px',
-    overflow: 'hidden',
+    padding: '12px',
   },
-  toolbarSection: {
-    background: 'rgba(0, 0, 0, 0.3)',
-    padding: '10px 14px',
+  toolbarRow: {
+    display: 'contents', // Allow children to participate in parent grid
   },
-  toolbarSectionWide: {
-    background: 'rgba(0, 0, 0, 0.3)',
-    padding: '10px 14px',
-    gridColumn: 'span 3',
+  toolbarGroup: {
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    borderLeft: '3px solid',
   },
-  toolbarSectionHeader: {
-    fontSize: '0.7rem',
+  // Wide groups span 2 columns
+  toolbarGroupWide: {
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    borderLeft: '3px solid',
+    gridColumn: 'span 2',
+  },
+  // Full width groups span all columns
+  toolbarGroupFull: {
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    borderLeft: '3px solid',
+    gridColumn: '1 / -1',
+  },
+  // Small group for compact controls
+  toolbarGroupSmall: {
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: '8px',
+    padding: '8px 10px',
+    borderLeft: '3px solid',
+    minWidth: 'auto',
+    flex: '0 0 auto',
+  },
+  toolbarDivider: {
+    width: '1px',
+    height: '20px',
+    background: 'rgba(255, 255, 255, 0.2)',
+    margin: '0 4px',
+  },
+  colorPicker: {
+    width: '28px',
+    height: '28px',
+    padding: '0',
+    border: '2px solid rgba(255, 255, 255, 0.3)',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    background: 'transparent',
+  },
+  groupLabel: {
+    display: 'block',
+    fontSize: '0.75rem',
     fontWeight: 700,
-    color: '#00d9ff',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: '8px',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
   },
-  toolbarRow: {
+  buttonRow: {
     display: 'flex',
-    gap: '12px',
+    gap: '6px',
     flexWrap: 'wrap',
-    alignItems: 'flex-start',
-  },
-  controlGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-    minWidth: '120px',
-  },
-  controlLabel: {
-    fontSize: '0.7rem',
-    fontWeight: 500,
-    color: 'rgba(255, 255, 255, 0.5)',
-    textTransform: 'uppercase',
-  },
-  controlRow: {
-    display: 'flex',
-    gap: '6px',
     alignItems: 'center',
-    flexWrap: 'wrap',
+  },
+  toolBtn: {
+    padding: '6px 10px',
+    borderRadius: '6px',
+    border: 'none',
+    background: 'rgba(255, 255, 255, 0.1)',
+    color: '#fff',
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+  },
+  toolBtnActive: {
+    background: 'linear-gradient(90deg, #00d9ff, #00ff88)',
+    color: '#1a1a2e',
   },
   slider: {
-    flex: 1,
-    minWidth: '60px',
-    maxWidth: '120px',
-    height: '4px',
-    borderRadius: '2px',
+    width: '80px',
+    height: '6px',
+    borderRadius: '3px',
     cursor: 'pointer',
     accentColor: '#00d9ff',
   },
+  sliderLabel: {
+    fontSize: '0.75rem',
+    fontWeight: 500,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginLeft: '8px',
+  },
   sliderValue: {
-    fontSize: '0.7rem',
+    fontSize: '0.75rem',
     fontWeight: 600,
     color: '#00d9ff',
     minWidth: '40px',
   },
-  tinyButton: {
-    padding: '4px 8px',
-    borderRadius: '8px',
-    border: 'none',
-    fontWeight: 500,
-    fontSize: '0.7rem',
+  inlineLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    fontSize: '0.75rem',
+    color: 'rgba(255, 255, 255, 0.7)',
     cursor: 'pointer',
-    transition: 'all 0.15s ease',
-    background: 'rgba(255, 255, 255, 0.1)',
-    color: '#fff',
   },
-  numberInput: {
-    width: '40px',
-    padding: '4px 6px',
-    borderRadius: '8px',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    background: 'rgba(255, 255, 255, 0.1)',
-    color: '#fff',
-    fontSize: '0.7rem',
-    textAlign: 'center',
+  inlineCheckbox: {
+    width: '14px',
+    height: '14px',
+    accentColor: '#00d9ff',
   },
   gaugePreviewContainer: {
     display: 'flex',
     justifyContent: 'center',
     padding: '20px',
+  },
+  dragHint: {
+    textAlign: 'center',
+    fontSize: '0.75rem',
+    color: 'rgba(255, 255, 255, 0.5)',
+    padding: '8px',
+    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+    marginTop: '8px',
+  },
+  copyCornerBtn: {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    width: '32px',
+    height: '32px',
+    borderRadius: '6px',
+    border: 'none',
+    background: 'rgba(0, 0, 0, 0.5)',
+    color: '#fff',
+    fontSize: '1rem',
+    cursor: 'pointer',
+    zIndex: 10,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease',
   },
   actionButton: {
     padding: '6px 12px',

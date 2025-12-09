@@ -197,6 +197,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         if (!gauge.props?.pointer?.hide)
             pointerHooks.drawPointer(gauge, resize);
         
+        // Set up pointer drag if onValueChange callback is provided
+        // Only set up on second pass when layout is stable
+        if (gauge.props.onValueChange && currentPass === 2) {
+            pointerHooks.setupPointerDrag(gauge);
+            pointerHooks.setupArcClick(gauge);
+        }
+        
         // After first pass, measure the actual bounds and trigger second pass
         if (currentPass === 1) {
             // Use requestAnimationFrame to ensure DOM is updated before measuring
