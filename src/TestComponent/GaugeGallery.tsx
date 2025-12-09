@@ -48,7 +48,7 @@ const GAUGE_PRESETS = [
           { color: '#f44336' },
         ],
       },
-      pointer: { type: 'blob' as const, color: '#e0e0e0', animationDelay: 0 },
+      pointer: { type: 'blob' as const, animationDelay: 0 },
       labels: {
         valueLabel: { formatTextValue: (v: number) => `${v}°C`, style: { fontSize: '28px', fill: '#e0e0e0', fontWeight: 'bold' } },
         tickLabels: {
@@ -145,22 +145,23 @@ const GAUGE_PRESETS = [
       maxValue: 40,
       arc: {
         width: 0.22,
-        gradient: true,
+        padding: 0.02,
         subArcs: [
           { limit: 15, color: '#4a2c2a' },
-          { limit: 20, color: '#c19a6b' },
+          { limit: 22, color: '#6f4e37' },
+          { limit: 30, color: '#a67c52' },
           { color: '#d4a574' },
         ],
       },
       pointer: { type: 'needle' as const, color: '#f5deb3', length: 0.75, width: 12 },
       labels: {
-        valueLabel: { formatTextValue: (v: number) => `${v}s`, style: { fontSize: '26px', fill: '#d4a574', fontWeight: 'bold' } },
+        valueLabel: { formatTextValue: (v: number) => `${Math.round(v)}s`, style: { fontSize: '26px', fill: '#d4a574', fontWeight: 'bold' } },
         tickLabels: {
           type: 'outer' as const,
           ticks: [
-            { value: 0, valueConfig: { formatTextValue: () => '☕', style: { fontSize: '12px', fill: '#6f4e37' } } },
-            { value: 20, valueConfig: { formatTextValue: () => '✨', style: { fontSize: '12px', fill: '#c19a6b' } } },
-            { value: 40, valueConfig: { formatTextValue: () => '🔥', style: { fontSize: '12px', fill: '#d4a574' } } },
+            { value: 0, valueConfig: { formatTextValue: () => '☕', style: { fontSize: '14px', fill: '#6f4e37' } } },
+            { value: 20, valueConfig: { formatTextValue: () => '✨', style: { fontSize: '14px', fill: '#c19a6b' } } },
+            { value: 40, valueConfig: { formatTextValue: () => '🔥', style: { fontSize: '14px', fill: '#d4a574' } } },
           ],
           defaultTickLineConfig: { color: '#8b6914', length: 5, width: 2 },
         },
@@ -203,12 +204,13 @@ const GAUGE_PRESETS = [
       maxValue: 45000,
       arc: {
         width: 0.18,
-        gradient: true,
+        padding: 0.01,
         subArcs: [
           { limit: 10000, color: '#2d5a27' },
-          { limit: 25000, color: '#3498db' },
-          { limit: 35000, color: '#5d6d7e' },
-          { color: '#1a1a2e' },
+          { limit: 20000, color: '#4a7c59' },
+          { limit: 30000, color: '#3498db' },
+          { limit: 38000, color: '#5d6d7e' },
+          { color: '#2c3e50' },
         ],
       },
       pointer: { type: 'needle' as const, color: '#f39c12', length: 0.85, width: 10 },
@@ -217,13 +219,12 @@ const GAUGE_PRESETS = [
         tickLabels: {
           type: 'outer' as const,
           ticks: [
-            { value: 0, valueConfig: { formatTextValue: () => 'GND' } },
-            { value: 15000, valueConfig: { formatTextValue: () => '15k' } },
-            { value: 30000, valueConfig: { formatTextValue: () => '30k' } },
-            { value: 45000, valueConfig: { formatTextValue: () => 'FL450' } },
+            { value: 0, valueConfig: { formatTextValue: () => 'GND', style: { fontSize: '9px', fill: '#2d5a27' } } },
+            { value: 15000, valueConfig: { formatTextValue: () => '15k', style: { fontSize: '9px', fill: '#3498db' } } },
+            { value: 30000, valueConfig: { formatTextValue: () => '30k', style: { fontSize: '9px', fill: '#5d6d7e' } } },
+            { value: 45000, valueConfig: { formatTextValue: () => 'FL450', style: { fontSize: '9px', fill: '#95a5a6' } } },
           ],
-          defaultTickValueConfig: { style: { fontSize: '8px', fill: '#95a5a6' } },
-          defaultTickLineConfig: { color: '#7f8c8d', length: 4, width: 1 },
+          defaultTickLineConfig: { color: '#7f8c8d', length: 5, width: 1 },
         },
       },
     },
@@ -363,7 +364,7 @@ const GAUGE_PRESETS = [
   },
   {
     name: 'Pressure Gauge',
-    description: 'PSI with industrial ticks',
+    description: 'PSI with inner ticks',
     config: {
       type: 'radial' as const,
       minValue: 0,
@@ -380,12 +381,17 @@ const GAUGE_PRESETS = [
       },
       pointer: { type: 'needle' as const, color: '#e0e0e0', length: 0.75, width: 14 },
       labels: {
-        valueLabel: { formatTextValue: (v: number) => `${v} PSI`, style: { fontSize: '18px', fill: '#e0e0e0', fontWeight: 'bold' } },
+        valueLabel: { formatTextValue: (v: number) => `${Math.round(v)} PSI`, style: { fontSize: '20px', fill: '#e0e0e0', fontWeight: 'bold' } },
         tickLabels: {
-          type: 'outer' as const,
-          ticks: [{ value: 0 }, { value: 50 }, { value: 100 }, { value: 150 }, { value: 200 }],
-          defaultTickValueConfig: { style: { fontSize: '8px', fill: '#bbb' } },
-          defaultTickLineConfig: { color: '#888', length: 6, width: 1 },
+          type: 'inner' as const,
+          ticks: [
+            { value: 0, valueConfig: { formatTextValue: () => '0', style: { fontSize: '9px', fill: '#2196f3' } } },
+            { value: 50, valueConfig: { formatTextValue: () => '50 PSI', style: { fontSize: '9px', fill: '#4caf50' } } },
+            { value: 100, valueConfig: { formatTextValue: () => '100 PSI', style: { fontSize: '9px', fill: '#4caf50' } } },
+            { value: 150, valueConfig: { formatTextValue: () => '150 PSI', style: { fontSize: '9px', fill: '#ff9800' } } },
+            { value: 200, valueConfig: { formatTextValue: () => 'MAX', style: { fontSize: '9px', fill: '#f44336', fontWeight: 'bold' } } },
+          ],
+          defaultTickLineConfig: { color: '#888', length: 5, width: 1 },
         },
       },
     },
@@ -456,7 +462,7 @@ const GAUGE_PRESETS = [
       maxValue: 180,
       arc: {
         width: 0.18,
-        gradient: true,
+        padding: 0.01,
         subArcs: [
           { limit: 60, color: '#2196f3' },
           { limit: 100, color: '#4caf50' },
@@ -466,11 +472,14 @@ const GAUGE_PRESETS = [
       },
       pointer: { type: 'blob' as const, color: '#ff5252', strokeWidth: 8 },
       labels: {
-        valueLabel: { formatTextValue: (v: number) => `${v} BPM`, style: { fontSize: '22px', fill: '#ff5252', fontWeight: 'bold' } },
+        valueLabel: { formatTextValue: (v: number) => `${Math.round(v)} BPM`, style: { fontSize: '24px', fill: '#ff5252', fontWeight: 'bold' } },
         tickLabels: {
           type: 'inner' as const,
-          ticks: [{ value: 60 }, { value: 100 }, { value: 140 }],
-          defaultTickValueConfig: { style: { fontSize: '8px', fill: '#aaa' } },
+          ticks: [
+            { value: 60, valueConfig: { formatTextValue: () => '60 bpm', style: { fontSize: '8px', fill: '#2196f3' } } },
+            { value: 100, valueConfig: { formatTextValue: () => '100 bpm', style: { fontSize: '8px', fill: '#4caf50' } } },
+            { value: 140, valueConfig: { formatTextValue: () => '140 bpm', style: { fontSize: '8px', fill: '#ff9800' } } },
+          ],
           defaultTickLineConfig: { color: '#666', length: 4 },
         },
       },
@@ -519,21 +528,25 @@ const GAUGE_PRESETS = [
       maxValue: 8,
       arc: {
         width: 0.25,
-        gradient: true,
+        padding: 0.02,
         subArcs: [
-          { limit: 2, color: '#e3f2fd' },
-          { limit: 5, color: '#64b5f6' },
-          { color: '#1976d2' },
+          { limit: 2, color: '#bbdefb' },
+          { limit: 4, color: '#64b5f6' },
+          { limit: 6, color: '#2196f3' },
+          { color: '#1565c0' },
         ],
       },
       pointer: { type: 'blob' as const, color: '#fff', strokeWidth: 6 },
       labels: {
-        valueLabel: { formatTextValue: (v: number) => `${v} cups`, style: { fontSize: '20px', fill: '#64b5f6', fontWeight: 'bold' } },
+        valueLabel: { formatTextValue: (v: number) => `${Math.round(v)} cups`, style: { fontSize: '24px', fill: '#2196f3', fontWeight: 'bold' } },
         tickLabels: {
           type: 'outer' as const,
-          ticks: [{ value: 0 }, { value: 4 }, { value: 8 }],
-          defaultTickValueConfig: { style: { fontSize: '9px', fill: '#64b5f6' } },
-          defaultTickLineConfig: { color: '#64b5f6', length: 4, width: 1 },
+          ticks: [
+            { value: 0, valueConfig: { formatTextValue: () => '💧', style: { fontSize: '12px' } } },
+            { value: 4, valueConfig: { formatTextValue: () => '4', style: { fontSize: '11px', fill: '#2196f3' } } },
+            { value: 8, valueConfig: { formatTextValue: () => '8 🎯', style: { fontSize: '11px', fill: '#1565c0' } } },
+          ],
+          defaultTickLineConfig: { color: '#64b5f6', length: 5, width: 2 },
         },
       },
     },
@@ -578,44 +591,47 @@ const GAUGE_PRESETS = [
       type: 'semicircle' as const,
       arc: {
         width: 0.25,
-        gradient: true,
+        padding: 0.01,
         subArcs: [
-          { limit: 50, color: '#7c4dff' },
-          { limit: 75, color: '#536dfe' },
-          { color: '#448aff' },
+          { limit: 33, color: '#4527a0' },
+          { limit: 66, color: '#7c4dff' },
+          { color: '#b388ff' },
         ],
       },
       pointer: { type: 'blob' as const, color: '#fff', strokeWidth: 6, elastic: true },
       labels: {
-        valueLabel: { formatTextValue: (v: number) => `LVL ${Math.floor(v/10) + 1}`, style: { fontSize: '20px', fill: '#fff', fontWeight: 'bold' } },
+        valueLabel: { formatTextValue: (v: number) => `LVL ${Math.floor(v/10) + 1}`, style: { fontSize: '26px', fill: '#fff', fontWeight: 'bold' } },
         tickLabels: {
-          type: 'inner' as const,
-          ticks: [{ value: 0 }, { value: 50 }, { value: 100 }],
-          defaultTickValueConfig: { formatTextValue: (v: number) => `${v}%`, style: { fontSize: '8px', fill: '#b388ff' } },
-          defaultTickLineConfig: { hide: true },
+          type: 'outer' as const,
+          ticks: [
+            { value: 0, valueConfig: { formatTextValue: () => '0%', style: { fontSize: '10px', fill: '#b388ff' } } },
+            { value: 50, valueConfig: { formatTextValue: () => '50%', style: { fontSize: '10px', fill: '#b388ff' } } },
+            { value: 100, valueConfig: { formatTextValue: () => '100%', style: { fontSize: '10px', fill: '#b388ff' } } },
+          ],
+          defaultTickLineConfig: { color: '#7c4dff', length: 4, width: 1 },
         },
       },
     },
   },
   {
     name: 'Mana Pool',
-    description: 'Magic with rune ticks',
+    description: 'Magic power meter',
     config: {
       type: 'grafana' as const,
       arc: {
-        width: 0.2,
-        nbSubArcs: 30,
+        width: 0.22,
+        nbSubArcs: 20,
         colorArray: ['#1a237e', '#3949ab', '#5c6bc0', '#7986cb'],
-        padding: 0.008,
+        padding: 0.01,
       },
-      pointer: { type: 'blob' as const, color: '#e8eaf6', strokeWidth: 4 },
+      pointer: { type: 'blob' as const, color: '#e8eaf6', strokeWidth: 5 },
       labels: {
-        valueLabel: { formatTextValue: (v: number) => `${v} MP`, style: { fontSize: '18px', fill: '#7986cb', fontWeight: 'bold' } },
+        valueLabel: { formatTextValue: (v: number) => `${Math.round(v)} MP`, style: { fontSize: '24px', fill: '#7986cb', fontWeight: 'bold' } },
         tickLabels: {
           type: 'outer' as const,
-          ticks: [{ value: 0 }, { value: 25 }, { value: 50 }, { value: 75 }, { value: 100 }],
-          defaultTickValueConfig: { style: { fontSize: '7px', fill: '#5c6bc0' } },
-          defaultTickLineConfig: { color: '#3949ab', length: 4, width: 1 },
+          ticks: [{ value: 0 }, { value: 50 }, { value: 100 }],
+          defaultTickValueConfig: { style: { fontSize: '10px', fill: '#5c6bc0' } },
+          defaultTickLineConfig: { color: '#3949ab', length: 5, width: 2 },
         },
       },
     },
@@ -950,7 +966,7 @@ const generateRandomConfig = () => {
         style: { fontSize: '22px', fontWeight: 'bold' },
       },
       tickLabels: Math.random() > 0.5 ? {
-        type: (Math.random() > 0.5 ? 'outer' : 'inner') as const,
+        type: Math.random() > 0.5 ? ('outer' as const) : ('inner' as const),
         hideMinMax: Math.random() > 0.6,
       } : { hideMinMax: true },
     },
@@ -1000,6 +1016,30 @@ const GaugeGallery: React.FC = () => {
   const [showEditor, setShowEditor] = useState(true); // Start with editor open
   const [editorValue, setEditorValue] = useState('');
   const [isLightTheme, setIsLightTheme] = useState(false); // Theme toggle
+  const [columnCount, setColumnCount] = useState<1 | 2 | 3 | 4>(4); // Column count selector (default 4)
+  const [sandboxOpen, setSandboxOpen] = useState(false); // Sandbox accordion state
+  const [sandboxWidth, setSandboxWidth] = useState('400px'); // Sandbox gauge width
+  const [sandboxHeight, setSandboxHeight] = useState('300px'); // Sandbox gauge height
+
+  // Grid size configurations based on column count
+  const gridConfigs = {
+    1: { columns: 'repeat(1, 1fr)', cardHeight: '350px' },
+    2: { columns: 'repeat(2, 1fr)', cardHeight: '280px' },
+    3: { columns: 'repeat(3, 1fr)', cardHeight: '220px' },
+    4: { columns: 'repeat(4, 1fr)', cardHeight: '180px' },
+  };
+
+  // Sandbox size presets
+  const sizePresets = [
+    { name: '📱 Mobile', width: '280px', height: '200px', icon: '📱' },
+    { name: '💻 Desktop', width: '400px', height: '300px', icon: '💻' },
+    { name: '🖥️ Large', width: '600px', height: '400px', icon: '🖥️' },
+    { name: '📊 Dashboard', width: '250px', height: '180px', icon: '📊' },
+    { name: '🎯 Compact', width: '150px', height: '120px', icon: '🎯' },
+    { name: '🖼️ Wide', width: '500px', height: '250px', icon: '🖼️' },
+    { name: '📐 Square', width: '300px', height: '300px', icon: '📐' },
+    { name: '🔲 Full Width', width: '100%', height: '350px', icon: '🔲' },
+  ];
 
   // Auto-animate values with STAGGERED updates for better performance
   // Instead of updating all gauges at once (overwhelming), we update in waves
@@ -1272,86 +1312,33 @@ const GaugeGallery: React.FC = () => {
         <span style={themeStyles.hint}>Click any gauge to copy its code!</span>
       </div>
 
-      {/* Randomizer Section */}
-      <section style={styles.section}>
-        <div style={styles.sectionHeader}>
-          <h2 style={styles.sectionTitle}>🎲 Playground</h2>
-          <div style={styles.headerButtons}>
-            <button 
-              onClick={() => setShowEditor(!showEditor)} 
-              style={styles.editorToggle}
-              type="button"
-            >
-              {showEditor ? '📊 Hide Editor' : '⚙️ Edit Config'}
-            </button>
-            <button 
-              onClick={handleRandomize} 
-              style={styles.randomButton}
-              type="button"
-            >
-              🎲 Randomize
-            </button>
-          </div>
-        </div>
-        <div style={styles.playgroundContainer}>
-          {/* Gauge Display */}
-          <div 
-            style={{
-              ...themeStyles.randomizerCard,
-              ...(copiedIndex === 'random' ? styles.copiedCard : {}),
-              flex: showEditor ? '1' : 'none',
-              maxWidth: showEditor ? '50%' : '100%',
-            }}
-            onClick={(e) => handleCardClick(e, randomConfig, randomValue, 'random')}
-          >
-            <div style={styles.randomGaugeContainer}>
-              <GaugeComponent key={randomKey} value={randomValue} {...randomConfig} />
-            </div>
-            <div style={styles.copyOverlay}>
-              {copiedIndex === 'random' ? (
-                <span style={styles.copiedText}>✓ Copied!</span>
-              ) : (
-                <span style={styles.copyHint}>Click to copy code</span>
-              )}
-            </div>
-          </div>
-          
-          {/* Config Editor */}
-          {showEditor && (
-            <div style={themeStyles.editorPanel}>
-              <div style={styles.editorHeader}>
-                <span style={styles.editorTitle}>Configuration (JSON)</span>
-                <button onClick={applyEditorConfig} style={styles.applyButton} type="button">
-                  Apply Changes
-                </button>
-              </div>
-              <div style={styles.editorInputRow}>
-                <label style={styles.valueLabel}>Value:</label>
-                <input
-                  type="number"
-                  min={(randomConfig as any)?.minValue ?? 0}
-                  max={(randomConfig as any)?.maxValue ?? 100}
-                  value={Math.round(randomValue * 100) / 100}
-                  onChange={(e) => setRandomValue(Number(e.target.value))}
-                  style={styles.valueInput}
-                  step="any"
-                />
-              </div>
-              <textarea
-                value={editorValue}
-                onChange={handleEditorChange}
-                style={themeStyles.editorTextarea}
-                spellCheck={false}
-              />
-            </div>
-          )}
-        </div>
-      </section>
-
       {/* Gallery Section */}
       <section style={styles.section}>
-        <h2 style={styles.sectionTitle}>🎨 Preset Gallery</h2>
-        <div style={styles.gallery}>
+        <div style={styles.sectionHeader}>
+          <h2 style={styles.sectionTitle}>� Preset Gallery</h2>
+          <div style={styles.columnButtons}>
+            {([1, 2, 3, 4] as const).map((cols) => (
+              <button
+                key={cols}
+                onClick={() => setColumnCount(cols)}
+                style={{
+                  ...styles.columnButton,
+                  background: columnCount === cols 
+                    ? 'linear-gradient(90deg, #00d9ff, #00ff88)' 
+                    : 'rgba(255, 255, 255, 0.1)',
+                  color: columnCount === cols ? '#1a1a2e' : '#fff',
+                }}
+                type="button"
+              >
+                {cols} Col{cols > 1 ? 's' : ''}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{
+          ...styles.gallery,
+          gridTemplateColumns: gridConfigs[columnCount].columns,
+        }}>
           {GAUGE_PRESETS.map((preset, index) => (
             <div 
               key={index} 
@@ -1361,7 +1348,10 @@ const GaugeGallery: React.FC = () => {
               }}
               onClick={(e) => handleCardClick(e, preset.config, values[index], index)}
             >
-              <div style={styles.gaugeWrapper}>
+              <div style={{
+                ...styles.gaugeWrapper,
+                height: gridConfigs[columnCount].cardHeight,
+              }}>
                 <GaugeComponent value={values[index]} {...preset.config} />
               </div>
               <div style={styles.cardInfo}>
@@ -1501,6 +1491,19 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.95rem',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
+  },
+  columnButtons: {
+    display: 'flex',
+    gap: '8px',
+  },
+  columnButton: {
+    padding: '10px 16px',
+    borderRadius: '20px',
+    border: 'none',
+    fontWeight: 600,
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
   },
   hint: {
     color: 'rgba(255, 255, 255, 0.6)',

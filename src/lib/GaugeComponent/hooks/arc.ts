@@ -242,6 +242,56 @@ export const getArcDataByValue = (value: number, gauge: Gauge): SubArc =>
 export const getArcDataByPercentage = (percentage: number, gauge: Gauge): SubArc =>
   getArcDataByValue(utils.getCurrentGaugeValueByPercentage(percentage, gauge), gauge) as SubArc;
 
+/**
+ * Get the interpolated color for a given percentage when using gradient mode.
+ * This is needed because gradient mode doesn't store colors in arcData.current.
+ * Falls back to getArcDataByPercentage for non-gradient mode.
+ */
+export const getColorByPercentage = (percentage: number, gauge: Gauge): string => {
+  // For non-gradient mode, use the existing arc data lookup
+  if (!gauge.props?.arc?.gradient) {
+    const arcData = getArcDataByPercentage(percentage, gauge);
+    return arcData?.color as string || '#fff';
+  }
+  
+  // For gradient mode, interpolate color from subArcs
+  const subArcs = gauge.props.arc?.subArcs;
+  if (!subArcs || subArcs.length === 0) {
+    return '#fff';
+  }
+  
+  const minValue = gauge.props.minValue as number;
+  const maxValue = gauge.props.maxValue as number;
+  const value = utils.getCurrentGaugeValueByPercentage(percentage, gauge);
+  
+  // Find which subArc segment the value falls into
+  let prevLimit = minValue;
+  for (let i = 0; i < subArcs.length; i++) {
+    const subArc = subArcs[i];
+    const limit = subArc.limit ?? maxValue;
+    
+    if (value <= limit) {
+      // Value is in this segment
+      if (i === 0) {
+        return subArc.color as string || '#fff';
+      }
+      
+      // Interpolate between previous and current color
+      const prevColor = subArcs[i - 1]?.color as string || '#fff';
+      const currentColor = subArc.color as string || '#fff';
+      const segmentPercentage = (value - prevLimit) / (limit - prevLimit);
+      
+      // Use d3 color interpolation
+      const colorInterpolator = interpolateHsl(prevColor, currentColor);
+      return colorInterpolator(segmentPercentage);
+    }
+    prevLimit = limit;
+  }
+  
+  // Value exceeds all limits, return last color
+  return subArcs[subArcs.length - 1]?.color as string || '#fff';
+}
+
 export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
 
   gauge.arcData.current.forEach((subArcData: SubArc) => {

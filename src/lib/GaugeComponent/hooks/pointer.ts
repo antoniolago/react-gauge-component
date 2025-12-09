@@ -76,9 +76,13 @@ const initPointer = (gauge: Gauge) => {
     let value = gauge.props.value as number;
     let pointer = gauge.props.pointer as PointerProps;
     const { shouldDrawPath, centerPoint, pointerRadius, pathStr, currentPercent, prevPercent } = gauge.pointer.current.context;
+    
+    // Get the initial color based on current value - this makes pointer color match arc by default
+    const initialColor = pointer.color || arcHooks.getColorByPercentage(currentPercent, gauge);
+    
     if(shouldDrawPath){
         gauge.pointer.current.context.pathStr = calculatePointerPath(gauge, prevPercent || currentPercent);
-        gauge.pointer.current.path = gauge.pointer.current.element.append("path").attr("d", gauge.pointer.current.context.pathStr).attr("fill", pointer.color);
+        gauge.pointer.current.path = gauge.pointer.current.element.append("path").attr("d", gauge.pointer.current.context.pathStr).attr("fill", initialColor);
     }
     //Add a circle at the bottom of pointer
     if (pointer.type == PointerType.Needle) {
@@ -87,16 +91,19 @@ const initPointer = (gauge: Gauge) => {
             .attr("cx", centerPoint[0])
             .attr("cy", centerPoint[1])
             .attr("r", pointerRadius)
-            .attr("fill", pointer.color);
+            .attr("fill", initialColor);
     } else if (pointer.type == PointerType.Blob) {
+        // For blob, stroke color always matches arc color
+        const strokeColor = arcHooks.getColorByPercentage(currentPercent, gauge);
         gauge.pointer.current.element
             .append("circle")
             .attr("cx", centerPoint[0])
             .attr("cy", centerPoint[1])
             .attr("r", pointerRadius)
             .attr("fill", pointer.baseColor)
-            .attr("stroke", pointer.color)
+            .attr("stroke", strokeColor)
             .attr("stroke-width", pointer.strokeWidth! * pointerRadius / 10);
+        gauge.pointer.current.context.prevColor = strokeColor;
     }
     //Translate the pointer starting point of the arc
     setPointerPosition(pointerRadius, value, gauge);
@@ -108,7 +115,8 @@ const updatePointer = (percentage: number, gauge: Gauge) => {
     if(shouldDrawPath && gauge.props.type != GaugeType.Grafana) 
         gauge.pointer.current.path.attr("d", calculatePointerPath(gauge, percentage));
     if(pointer.type == PointerType.Blob) {
-        let currentColor = arcHooks.getArcDataByPercentage(percentage, gauge)?.color as string;
+        // Use getColorByPercentage which handles both gradient and non-gradient modes
+        let currentColor = arcHooks.getColorByPercentage(percentage, gauge);
         let shouldChangeColor = currentColor != prevColor;
         if(shouldChangeColor) gauge.pointer.current.element.select("circle").attr("stroke", currentColor)
         var strokeWidth = pointer.strokeWidth! * pointerRadius / 10;
