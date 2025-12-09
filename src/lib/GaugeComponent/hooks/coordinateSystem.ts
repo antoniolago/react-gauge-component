@@ -474,3 +474,164 @@ export const isLayoutStable = (
   
   return radiusChange < tolerance;
 };
+
+/**
+ * TWO-PASS RENDERING: Calculate optimized layout from measured bounds
+ * 
+ * After the first render, we measure the actual bounding box of the <g> element.
+ * This tells us exactly how much space the gauge content uses.
+ * We then recalculate the viewBox to fit the content with minimal padding.
+ * 
+ * The measured bounds are relative to the <g> element's transform origin (gauge center).
+ * So bounds.x and bounds.y can be negative (content extends left/up from center).
+ */
+export const calculateLayoutFromMeasuredBounds = (
+  parentWidth: number,
+  parentHeight: number,
+  measuredBounds: { width: number; height: number; x: number; y: number },
+  gaugeType: GaugeType,
+  arcWidth: number,
+  currentLayout: GaugeLayout
+): GaugeLayout => {
+  // Add safety margin around the measured bounds (5% minimum, more for safety)
+  const marginFactor = 0.05;
+  const minMargin = 5; // Minimum 5px margin
+  const marginX = Math.max(minMargin, measuredBounds.width * marginFactor);
+  const marginY = Math.max(minMargin, measuredBounds.height * marginFactor);
+  
+  // The measured bounds are relative to the gauge center (0,0 in <g> space)
+  // bounds.x is the left edge, bounds.y is the top edge (can be negative)
+  // We need to calculate the full extent from center
+  const leftExtent = Math.abs(measuredBounds.x) + marginX;
+  const rightExtent = measuredBounds.x + measuredBounds.width + marginX;
+  const topExtent = Math.abs(measuredBounds.y) + marginY;
+  const bottomExtent = measuredBounds.y + measuredBounds.height + marginY;
+  
+  // Total content dimensions (from the perspective of center being at 0,0)
+  const contentWidth = leftExtent + rightExtent;
+  const contentHeight = topExtent + bottomExtent;
+  
+  // Calculate the scale factor to fit the content in the parent
+  const scaleX = parentWidth / contentWidth;
+  const scaleY = parentHeight / contentHeight;
+  const scale = Math.min(scaleX, scaleY);
+  
+  // Calculate new outer radius based on the scale
+  const newOuterRadius = currentLayout.outerRadius * scale;
+  const newInnerRadius = newOuterRadius * (1 - arcWidth);
+  
+  // Calculate new viewBox dimensions
+  const newViewBoxWidth = contentWidth * scale;
+  const newViewBoxHeight = contentHeight * scale;
+  
+  // Calculate new center position
+  // Center should be positioned so that leftExtent * scale from left edge
+  const newCenterX = leftExtent * scale;
+  const newCenterY = topExtent * scale;
+  
+  const viewBox: ViewBox = {
+    x: 0,
+    y: 0,
+    width: newViewBoxWidth,
+    height: newViewBoxHeight,
+    toString() {
+      return `${this.x} ${this.y} ${this.width} ${this.height}`;
+    },
+  };
+  
+  return {
+    viewBox,
+    outerRadius: newOuterRadius,
+    innerRadius: newInnerRadius,
+    gaugeCenter: { x: newCenterX, y: newCenterY },
+    doughnutTransform: { x: newOuterRadius, y: newOuterRadius },
+  };
+};
+
+/**
+ * TWO-PASS RENDERING: Optimized approach using actual measured bounds
+ * 
+ * Pass 1: Render with generous initial padding to ensure all content is visible
+ *         for accurate measurement. This pass is hidden from the user.
+ * Pass 2: Recalculate viewBox to maximize gauge size while fitting content
+ * 
+ * This approach:
+ * 1. Uses generous padding for first pass (hidden) to capture all content
+ * 2. Renders all elements (arcs, labels, pointer)
+ * 3. Measures the actual bounding box of the rendered content
+ * 4. Adjusts the viewBox to tightly fit the content with proper margins
+ */
+export const calculateTightLayout = (
+  parentWidth: number,
+  parentHeight: number,
+  gaugeType: GaugeType,
+  arcWidth: number,
+  marginPercent: number = 0
+): GaugeLayout => {
+  // Apply margin
+  const availableWidth = parentWidth * (1 - marginPercent);
+  const availableHeight = parentHeight * (1 - marginPercent);
+  
+  // Arc bottom extent for radial/grafana types
+  // Semicircle needs extra bottom space for needle/value label
+  const arcBottomExtent = gaugeType === GaugeType.Semicircle ? 0.15 : 
+    (gaugeType === GaugeType.Grafana ? 0.70 : 0.72);
+  
+  // Use generous padding for first pass to ensure all content is captured
+  // This pass is hidden, so it's okay if there's extra space
+  const topPadding = 30; // Space for outer ticks/labels at top
+  const sidePadding = 40; // Space for tick labels at sides (0 and 100)
+  const bottomPadding = 25; // Space for value label and needle base
+  
+  // Calculate radius with generous padding
+  const radiusFromWidth = (availableWidth - 2 * sidePadding) / 2;
+  
+  let radiusFromHeight: number;
+  if (gaugeType === GaugeType.Semicircle) {
+    // Semicircle: top padding + radius + bottom padding (for value label/needle)
+    radiusFromHeight = (availableHeight - topPadding - bottomPadding);
+  } else {
+    // Radial/Grafana: top padding + radius + arc bottom extent + bottom padding
+    radiusFromHeight = (availableHeight - topPadding - bottomPadding) / (1 + arcBottomExtent);
+  }
+  
+  const outerRadius = Math.max(10, Math.min(radiusFromWidth, radiusFromHeight));
+  const innerRadius = outerRadius * (1 - arcWidth);
+  
+  // Calculate viewBox with generous padding
+  const diameter = outerRadius * 2;
+  const viewBoxWidth = diameter + sidePadding * 2;
+  let viewBoxHeight: number;
+  
+  if (gaugeType === GaugeType.Semicircle) {
+    // Semicircle: top padding + radius + bottom padding
+    viewBoxHeight = topPadding + outerRadius + bottomPadding;
+  } else {
+    // Radial/Grafana: top padding + radius + arc extent + bottom padding
+    viewBoxHeight = topPadding + outerRadius + (outerRadius * arcBottomExtent) + bottomPadding;
+  }
+  
+  const viewBox: ViewBox = {
+    x: 0,
+    y: 0,
+    width: viewBoxWidth,
+    height: viewBoxHeight,
+    toString() {
+      return `${this.x} ${this.y} ${this.width} ${this.height}`;
+    },
+  };
+  
+  // Calculate gauge center
+  const gaugeCenter = {
+    x: viewBoxWidth / 2,
+    y: topPadding + outerRadius,
+  };
+  
+  return {
+    viewBox,
+    outerRadius,
+    innerRadius,
+    gaugeCenter,
+    doughnutTransform: { x: outerRadius, y: outerRadius },
+  };
+};

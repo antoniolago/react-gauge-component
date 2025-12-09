@@ -70,30 +70,73 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             return;
         }
         
-        if (CONSTANTS.debugLogs) {
-            console.log('[renderChart] Container dimensions:', { width: parentWidth, height: parentHeight });
+        // Initialize render pass tracking
+        if (!gauge.renderPass) {
+            gauge.renderPass = { current: 1 };
+        }
+        if (!gauge.measuredBounds) {
+            gauge.measuredBounds = { current: null };
         }
         
-        // Extract padding configuration from gauge props for optimized layout
-        const paddingConfig = coordinateSystem.extractPaddingConfig(
-            labels,
-            gauge.props.pointer?.length
-        );
-        
-        // Use the optimized coordinate system that calculates padding dynamically
-        const layout = coordinateSystem.calculateOptimizedLayout(
-            parentWidth,
-            parentHeight,
-            gauge.props.type as GaugeType,
-            arc.width as number,
-            paddingConfig,
-            typeof gauge.props.marginInPercent === 'number' 
-                ? gauge.props.marginInPercent 
-                : 0
-        );
+        const currentPass = gauge.renderPass.current;
         
         if (CONSTANTS.debugLogs) {
-            console.log('[renderChart] Layout calculated:', {
+            console.log(`[renderChart] Pass ${currentPass} - Container:`, { width: parentWidth, height: parentHeight });
+        }
+        
+        let layout: coordinateSystem.GaugeLayout;
+        
+        if (currentPass === 1) {
+            // PASS 1: Use tight layout with minimal padding
+            // This will likely clip some content, but we'll measure and fix it
+            layout = coordinateSystem.calculateTightLayout(
+                parentWidth,
+                parentHeight,
+                gauge.props.type as GaugeType,
+                arc.width as number,
+                typeof gauge.props.marginInPercent === 'number' 
+                    ? gauge.props.marginInPercent 
+                    : 0
+            );
+        } else if (currentPass === 2 && gauge.measuredBounds.current) {
+            // PASS 2: Use measured bounds to calculate optimal layout
+            const prevLayout = gauge.prevGSize.current;
+            layout = coordinateSystem.calculateLayoutFromMeasuredBounds(
+                parentWidth,
+                parentHeight,
+                gauge.measuredBounds.current,
+                gauge.props.type as GaugeType,
+                arc.width as number,
+                prevLayout
+            );
+            
+            if (CONSTANTS.debugLogs) {
+                console.log('[renderChart] Pass 2 - Optimized layout from bounds:', {
+                    measuredBounds: gauge.measuredBounds.current,
+                    newRadius: layout.outerRadius,
+                    viewBox: layout.viewBox.toString()
+                });
+            }
+        } else {
+            // Fallback to optimized layout calculation
+            const paddingConfig = coordinateSystem.extractPaddingConfig(
+                labels,
+                gauge.props.pointer?.length
+            );
+            layout = coordinateSystem.calculateOptimizedLayout(
+                parentWidth,
+                parentHeight,
+                gauge.props.type as GaugeType,
+                arc.width as number,
+                paddingConfig,
+                typeof gauge.props.marginInPercent === 'number' 
+                    ? gauge.props.marginInPercent 
+                    : 0
+            );
+        }
+        
+        if (CONSTANTS.debugLogs) {
+            console.log(`[renderChart] Pass ${currentPass} - Layout:`, {
                 outerRadius: layout.outerRadius,
                 viewBox: layout.viewBox.toString(),
                 gaugeCenter: layout.gaugeCenter
@@ -101,7 +144,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         }
         
         // Check for layout stability to prevent infinite resize loops
-        if (gauge.prevGSize.current) {
+        if (gauge.prevGSize.current && currentPass > 1) {
             const stable = coordinateSystem.isLayoutStable(
                 gauge.prevGSize.current,
                 layout,
@@ -109,6 +152,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             );
             if (stable) {
                 // Layout hasn't changed significantly, skip re-render
+                if (CONSTANTS.debugLogs) {
+                    console.log('[renderChart] Layout stable, skipping re-render');
+                }
                 return;
             }
         }
@@ -118,13 +164,15 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         coordinateSystem.updateDimensionsFromLayout(dimensions.current, layout);
         
         // Configure SVG with proper viewBox and dimensions
-        // Use both width and height to constrain the SVG properly
+        // Hide during first pass to avoid visual flicker
         gauge.svg.current
             .attr("width", "100%")
             .attr("height", "100%")
             .style("max-width", "100%")
             .style("max-height", "100%")
             .style("display", "block")
+            .style("visibility", currentPass === 1 ? "hidden" : "visible")
+            .style("opacity", currentPass === 1 ? "0" : "1")
             .attr("viewBox", layout.viewBox.toString())
             .attr('preserveAspectRatio', 'xMidYMid meet');
         
@@ -133,7 +181,6 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             .attr("transform", `translate(${layout.gaugeCenter.x}, ${layout.gaugeCenter.y})`);
 
         // Position the doughnut (arcs) at the origin relative to g
-        // Since g is already centered, doughnut just needs to be at origin
         gauge.doughnut.current.attr(
             "transform",
             "translate(0, 0)"
@@ -149,6 +196,41 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         labelsHooks.setupLabels(gauge);
         if (!gauge.props?.pointer?.hide)
             pointerHooks.drawPointer(gauge, resize);
+        
+        // After first pass, measure the actual bounds and trigger second pass
+        if (currentPass === 1) {
+            // Use requestAnimationFrame to ensure DOM is updated before measuring
+            requestAnimationFrame(() => {
+                const gElement = gauge.g.current.node();
+                if (gElement) {
+                    try {
+                        const bbox = gElement.getBBox();
+                        gauge.measuredBounds!.current = {
+                            width: bbox.width,
+                            height: bbox.height,
+                            x: bbox.x,
+                            y: bbox.y
+                        };
+                        
+                        if (CONSTANTS.debugLogs) {
+                            console.log('[renderChart] Measured bounds:', gauge.measuredBounds!.current);
+                        }
+                        
+                        // Trigger second pass
+                        gauge.renderPass!.current = 2;
+                        renderChart(gauge, true);
+                        
+                        // Reset for next resize
+                        gauge.renderPass!.current = 1;
+                    } catch (e) {
+                        // getBBox can fail if element is not rendered
+                        if (CONSTANTS.debugLogs) {
+                            console.log('[renderChart] Could not measure bounds:', e);
+                        }
+                    }
+                }
+            });
+        }
     } else {
         // Non-resize updates (only data/props changed)
         let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));

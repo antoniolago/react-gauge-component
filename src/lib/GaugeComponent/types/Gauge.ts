@@ -31,4 +31,8 @@ export interface Gauge {
     maxGHeight: React.MutableRefObject<any>;
     /** Holds custom React content configuration for value label rendering */
     customContent?: React.MutableRefObject<CustomContentConfig | {}>;
+    /** Tracks render pass for two-pass optimization (1 = initial, 2 = optimized) */
+    renderPass?: React.MutableRefObject<number>;
+    /** Stores measured bounds from first render pass */
+    measuredBounds?: React.MutableRefObject<{ width: number; height: number; x: number; y: number } | null>;
 }
