@@ -253,6 +253,7 @@ export const getValueFromPosition = (gauge: Gauge, clientX: number, clientY: num
     if (!viewBoxAttr) return gauge.props.value as number;
     
     const viewBox = viewBoxAttr.split(" ").map(Number);
+    // viewBox = [x, y, width, height]
     
     // Convert client coordinates to SVG viewBox coordinates
     const scaleX = viewBox[2] / rect.width;
@@ -262,72 +263,90 @@ export const getValueFromPosition = (gauge: Gauge, clientX: number, clientY: num
     const svgY = (clientY - rect.top) * scaleY + viewBox[1];
     
     // Get gauge center from the current layout
-    const centerX = gauge.prevGSize.current?.gaugeCenter?.x || (viewBox[0] + viewBox[2] / 2);
-    const centerY = gauge.prevGSize.current?.gaugeCenter?.y || (viewBox[1] + viewBox[3] / 2);
+    // The g element is translated to gaugeCenter, so that's our pivot point
+    const layout = gauge.prevGSize.current;
+    if (!layout?.gaugeCenter) return gauge.props.value as number;
+    
+    const centerX = layout.gaugeCenter.x;
+    const centerY = layout.gaugeCenter.y;
     
     // Calculate vector from center to mouse position
     const dx = svgX - centerX;
     const dy = svgY - centerY;
     
-    // The gauge pointer system uses:
-    // - Semicircle: 0° (left) to 180° (right), with pointer calculated as -cos(angle), -sin(angle)
-    // - Radial/Grafana: -42° to 223°
-    // 
-    // atan2(dy, dx) gives angle from positive X axis (pointing right)
-    // We need to convert to the gauge's coordinate system where:
-    // - 0° points LEFT (negative X direction)
-    // - 90° points DOWN (positive Y direction)
-    // - 180° points RIGHT (positive X direction)
+    // The gauge pointer path uses: -pathLength * cos(angle), -pathLength * sin(angle)
+    // This means:
+    //   angle = 0    → pointer points LEFT  (x = -pathLength, y = 0)
+    //   angle = 90°  → pointer points DOWN  (x = 0, y = -pathLength... wait, sin(90°)=1, so y = -pathLength)
+    //   angle = 180° → pointer points RIGHT (x = pathLength, y = 0)
     //
-    // So we need: gaugeAngle = atan2(dy, dx) + PI (rotate 180°)
-    // This makes: atan2(0, -1) + PI = PI + PI = 2PI ≈ 0 (pointing left)
-    //             atan2(0, 1) + PI = 0 + PI = PI (pointing right)
-    //             atan2(1, 0) + PI = PI/2 + PI = 3PI/2 → normalize to PI/2 (pointing down)
+    // So the gauge coordinate system has:
+    //   0° = LEFT, 90° = UP (negative Y in SVG), 180° = RIGHT
+    //
+    // But wait, the path calculation is: topPoint = [centerX - pathLength * cos(angle), centerY - pathLength * sin(angle)]
+    // At angle=0: [-pathLength, 0] = LEFT ✓
+    // At angle=90° (PI/2): [0, -pathLength] = UP (negative Y) ✓
+    // At angle=180° (PI): [pathLength, 0] = RIGHT ✓
+    //
+    // So to convert from mouse position to gauge angle:
+    // We need to find the angle such that (-cos(angle), -sin(angle)) points from center to mouse
+    // That means: -cos(angle) = dx/dist, -sin(angle) = dy/dist
+    // So: cos(angle) = -dx/dist, sin(angle) = -dy/dist
+    // angle = atan2(-dy, -dx) = atan2(dy, dx) + PI
     
-    let angle = Math.atan2(dy, dx) + Math.PI;
+    let angle = Math.atan2(-dy, -dx);
     
-    // Normalize to 0 to 2*PI range
+    // Normalize to 0 to 2*PI range for easier handling
     if (angle < 0) angle += 2 * Math.PI;
-    if (angle >= 2 * Math.PI) angle -= 2 * Math.PI;
     
     // Define gauge angle ranges (in radians)
     let startAngle: number, endAngle: number;
     
     if (gauge.props.type === GaugeType.Semicircle) {
         // Semicircle: 0° to 180° (0 to PI radians)
+        // 0° = left edge, 180° = right edge
         startAngle = 0;
         endAngle = Math.PI;
-    } else {
-        // Radial/Grafana: -42° to 223° 
-        // In our coordinate system: -42° becomes 360-42 = 318° but we want it as the start
-        // Actually, the gauge goes from -42° (upper left) to 223° (upper right)
-        // Converting: -42° = -42 * PI/180 = -0.733 rad, but in 0-2PI: 2PI - 0.733 = 5.55 rad
-        // 223° = 223 * PI/180 = 3.89 rad
-        // 
-        // The arc spans from upper-left, down through bottom, to upper-right
-        // Total span: 223 - (-42) = 265°
-        startAngle = utils.degToRad(-42);
-        endAngle = utils.degToRad(223);
         
-        // Handle the wrap-around: if angle is in the "dead zone" (223° to 318°), clamp it
-        // Dead zone in radians: 3.89 to 5.55 (or equivalently, 223° to 318°)
-        if (angle > endAngle && angle < (2 * Math.PI + startAngle)) {
-            // In dead zone - clamp to nearest edge
-            const distToEnd = angle - endAngle;
-            const distToStart = (2 * Math.PI + startAngle) - angle;
-            angle = distToEnd < distToStart ? endAngle : startAngle;
+        // For semicircle, valid angles are 0 to PI
+        // Angles > PI are in the bottom half - clamp to nearest edge
+        if (angle > Math.PI) {
+            // Bottom half - clamp to nearest edge
+            if (angle < 1.5 * Math.PI) {
+                angle = Math.PI; // Closer to right
+            } else {
+                angle = 0; // Closer to left
+            }
+        }
+    } else {
+        // Radial/Grafana: -42° to 223°
+        // Convert to radians: -42° = -0.733 rad, 223° = 3.89 rad
+        // In 0-2PI space: -42° = 2PI - 0.733 = 5.55 rad
+        startAngle = utils.degToRad(-42);  // -0.733 rad
+        endAngle = utils.degToRad(223);    // 3.89 rad
+        
+        // The arc spans 265° from upper-left through bottom to upper-right
+        // Dead zone is from 223° to 318° (in 0-2PI: 3.89 to 5.55)
+        
+        // First, handle angles in the dead zone (top of gauge)
+        const deadZoneStart = endAngle;  // 223° = 3.89 rad
+        const deadZoneEnd = 2 * Math.PI + startAngle;  // 318° = 5.55 rad
+        
+        if (angle > deadZoneStart && angle < deadZoneEnd) {
+            // In dead zone - snap to nearest valid edge
+            const midDeadZone = (deadZoneStart + deadZoneEnd) / 2;
+            angle = angle < midDeadZone ? deadZoneStart : deadZoneEnd;
         }
         
-        // Normalize angle for calculation (handle negative start angle)
+        // Convert angle to the -42° to 223° range for percentage calculation
         if (angle > Math.PI) {
-            // Angle is in the range PI to 2PI, which corresponds to negative angles
+            // Angle is in upper-left quadrant (e.g., 318° = 5.55 rad → -42° = -0.733 rad)
             angle = angle - 2 * Math.PI;
         }
     }
     
     // Clamp angle to valid range
-    if (angle < startAngle) angle = startAngle;
-    if (angle > endAngle) angle = endAngle;
+    angle = Math.max(startAngle, Math.min(endAngle, angle));
     
     // Calculate percentage (0 to 1)
     const percentage = (angle - startAngle) / (endAngle - startAngle);
