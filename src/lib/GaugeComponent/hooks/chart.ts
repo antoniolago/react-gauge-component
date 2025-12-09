@@ -79,15 +79,31 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         }
         
         const currentPass = gauge.renderPass.current;
+        const hasPreviousBounds = gauge.measuredBounds?.current != null;
         
         if (CONSTANTS.debugLogs) {
-            console.log(`[renderChart] Pass ${currentPass} - Container:`, { width: parentWidth, height: parentHeight });
+            console.log(`[renderChart] Pass ${currentPass} - Container:`, { width: parentWidth, height: parentHeight, hasPreviousBounds });
         }
         
         let layout: coordinateSystem.GaugeLayout;
         
-        if (currentPass === 1) {
-            // PASS 1: Use tight layout with minimal padding
+        // On resize with existing bounds, skip pass 1 and go directly to optimized layout
+        if (currentPass === 1 && hasPreviousBounds && gauge.measuredBounds!.current) {
+            // We already have measured bounds - use them directly for a smooth resize
+            // Scale the previous layout to the new container size
+            const prevLayout = gauge.prevGSize.current;
+            layout = coordinateSystem.calculateLayoutFromMeasuredBounds(
+                parentWidth,
+                parentHeight,
+                gauge.measuredBounds!.current,
+                gauge.props.type as GaugeType,
+                arc.width as number,
+                prevLayout
+            );
+            // Skip to showing the result directly (no need for pass 2)
+            gauge.renderPass!.current = 2;
+        } else if (currentPass === 1) {
+            // PASS 1: First render - use tight layout with minimal padding
             // This will likely clip some content, but we'll measure and fix it
             layout = coordinateSystem.calculateTightLayout(
                 parentWidth,
@@ -164,15 +180,17 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         coordinateSystem.updateDimensionsFromLayout(dimensions.current, layout);
         
         // Configure SVG with proper viewBox and dimensions
-        // Hide during first pass to avoid visual flicker
+        // Only hide during first pass if this is the absolute first render (no measured bounds yet)
+        // On resize, keep the previous content visible to avoid flicker
+        const isAbsoluteFirstRender = currentPass === 1 && !gauge.measuredBounds?.current;
         gauge.svg.current
             .attr("width", "100%")
             .attr("height", "100%")
             .style("max-width", "100%")
             .style("max-height", "100%")
             .style("display", "block")
-            .style("visibility", currentPass === 1 ? "hidden" : "visible")
-            .style("opacity", currentPass === 1 ? "0" : "1")
+            .style("visibility", isAbsoluteFirstRender ? "hidden" : "visible")
+            .style("opacity", isAbsoluteFirstRender ? "0" : "1")
             .attr("viewBox", layout.viewBox.toString())
             .attr('preserveAspectRatio', 'xMidYMid meet');
         

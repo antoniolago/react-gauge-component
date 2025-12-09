@@ -31,8 +31,8 @@ export const createStyles = (isLightTheme: boolean) => ({
   },
   gaugeCard: {
     background: isLightTheme 
-      ? 'rgba(255, 255, 255, 0.9)'
-      : 'rgba(255, 255, 255, 0.05)',
+      ? 'rgba(255, 255, 255, 0.95)'
+      : 'rgba(255, 255, 255, 0.08)',
     borderRadius: '16px',
     padding: '15px',
     border: isLightTheme 
@@ -45,8 +45,8 @@ export const createStyles = (isLightTheme: boolean) => ({
   },
   randomizerCard: {
     background: isLightTheme 
-      ? 'rgba(255, 255, 255, 0.95)'
-      : 'rgba(255, 255, 255, 0.05)',
+      ? 'rgba(255, 255, 255, 0.98)'
+      : 'rgba(255, 255, 255, 0.08)',
     borderRadius: '20px',
     padding: '20px',
     border: isLightTheme 
@@ -119,9 +119,10 @@ export const styles: Record<string, React.CSSProperties> = {
   },
   toolbarGroup: {
     background: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: '8px',
-    padding: '10px 12px',
-    borderLeft: '3px solid',
+    borderRadius: '6px',
+    padding: '8px 10px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    margin: '2px',
   },
   groupLabel: {
     display: 'block',
@@ -160,8 +161,8 @@ export const styles: Record<string, React.CSSProperties> = {
   
   // Sliders
   slider: {
-    width: '80px',
-    height: '6px',
+    width: '120px',
+    height: '8px',
     borderRadius: '3px',
     cursor: 'pointer',
     accentColor: '#00d9ff',

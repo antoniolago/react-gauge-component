@@ -12,7 +12,7 @@ interface SandboxEditorProps {
 export const SandboxEditor: React.FC<SandboxEditorProps> = ({ isLightTheme }) => {
   const themeStyles = createStyles(isLightTheme);
   
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [config, setConfig] = useState<Partial<GaugeComponentProps>>(() => generateRandomConfig());
   const [value, setValue] = useState(() => getInitialValue(config));
   const [autoAnimate, setAutoAnimate] = useState(true);
@@ -21,6 +21,7 @@ export const SandboxEditor: React.FC<SandboxEditorProps> = ({ isLightTheme }) =>
   const [gaugeAlign, setGaugeAlign] = useState<'left' | 'center' | 'right'>('left');
   const [copied, setCopied] = useState(false);
   const [key, setKey] = useState(0);
+  const [interactionEnabled, setInteractionEnabled] = useState(true);
 
   // Auto-animate value
   useEffect(() => {
@@ -88,9 +89,11 @@ export const SandboxEditor: React.FC<SandboxEditorProps> = ({ isLightTheme }) =>
             onSizeChange={handleSizeChange}
             onAlignChange={setGaugeAlign}
             onRandomize={handleRandomize}
+            interactionEnabled={interactionEnabled}
+            onInteractionChange={setInteractionEnabled}
           />
 
-          {/* Gauge Preview */}
+          {/* Gauge Preview - Resizable */}
           <div style={{
             ...styles.gaugePreviewContainer,
             justifyContent: gaugeAlign === 'left' ? 'flex-start' : gaugeAlign === 'right' ? 'flex-end' : 'center',
@@ -101,7 +104,10 @@ export const SandboxEditor: React.FC<SandboxEditorProps> = ({ isLightTheme }) =>
               height: sandboxHeight,
               minWidth: '150px',
               minHeight: '120px',
+              maxWidth: '100%',
               position: 'relative',
+              resize: 'both',
+              overflow: 'hidden',
             }}>
               <button
                 onClick={handleCopy}
@@ -115,16 +121,32 @@ export const SandboxEditor: React.FC<SandboxEditorProps> = ({ isLightTheme }) =>
                 {copied ? '✓' : '📋'}
               </button>
               
-              <GaugeComponent
-                key={key}
-                {...config}
-                value={value}
-                onValueChange={setValue}
-              />
-              
-              <div style={styles.dragHint}>
-                💡 Drag the pointer to set value
+              <div style={{ width: '100%', height: 'calc(100% - 30px)' }}>
+                <GaugeComponent
+                  key={key}
+                  {...config}
+                  value={value}
+                  onValueChange={interactionEnabled ? setValue : undefined}
+                />
               </div>
+              
+              {interactionEnabled && (
+                <div style={styles.dragHint}>
+                  💡 Drag the pointer to set value
+                </div>
+              )}
+              
+              {/* Resize indicator */}
+              <div style={{
+                position: 'absolute',
+                bottom: '2px',
+                right: '2px',
+                width: '12px',
+                height: '12px',
+                opacity: 0.5,
+                pointerEvents: 'none',
+                background: 'linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.3) 50%)',
+              }} />
             </div>
           </div>
         </div>

@@ -12,8 +12,8 @@ interface GalleryGridProps {
 const GRID_CONFIGS = {
   1: { columns: 'repeat(1, 1fr)', cardHeight: '350px' },
   2: { columns: 'repeat(2, 1fr)', cardHeight: '280px' },
-  3: { columns: 'repeat(3, 1fr)', cardHeight: '220px' },
-  4: { columns: 'repeat(4, 1fr)', cardHeight: '180px' },
+  3: { columns: 'repeat(3, 1fr)', cardHeight: '260px' },
+  4: { columns: 'repeat(4, 1fr)', cardHeight: '220px' },
 };
 
 export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnimate }) => {

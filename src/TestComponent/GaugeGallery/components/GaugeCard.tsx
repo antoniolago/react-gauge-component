@@ -43,7 +43,7 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
       <div style={themeStyles.cardTitle}>{preset.name}</div>
       <div style={themeStyles.cardDescription}>{preset.description}</div>
       
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
         <GaugeComponent {...preset.config} value={value} />
       </div>
     </div>
