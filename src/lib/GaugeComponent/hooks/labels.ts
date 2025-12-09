@@ -214,9 +214,34 @@ export const addValueText = (gauge: Gauge) => {
   const { labels } = gauge.props;
   let value = gauge.props.value as number;
   let valueLabel = labels?.valueLabel as ValueLabel;
-  let text = '';
   let maxDecimalDigits = labels?.valueLabel?.maxDecimalDigits;
   let floatValue = utils.floatingNumber(value, maxDecimalDigits);
+  
+  // Get arc color for the current value
+  const arcColor = getArcDataByValue(value, gauge)?.color as string || "white";
+  
+  // Position label in the CENTER of the gauge arc
+  // The center is at (0, 0), so we position based on inner radius
+  const innerRadius = gauge.dimensions.current.innerRadius;
+  let x = 0;
+  let y = 0;
+  
+  if (gauge.props.type == GaugeType.Semicircle) {
+    y = -innerRadius * 0.1;
+  } else if (gauge.props.type == GaugeType.Radial) {
+    y = innerRadius * 0.15;
+  } else if (gauge.props.type == GaugeType.Grafana) {
+    y = innerRadius * 0.1;
+  }
+  
+  // Check if user wants to render custom React content
+  if (valueLabel.renderContent) {
+    addCustomValueContent(gauge, valueLabel, floatValue, arcColor, x, y);
+    return;
+  }
+  
+  // Standard text rendering
+  let text = '';
   if (valueLabel.formatTextValue) {
     text = valueLabel.formatTextValue(floatValue);
   } else if (gauge.props.minValue === 0 && gauge.props.maxValue === 100) {
@@ -225,39 +250,85 @@ export const addValueText = (gauge: Gauge) => {
   } else {
     text = floatValue.toString();
   }
+  
   const maxLengthBeforeComputation = 4;
   const textLength = text?.length || 0;
   let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1;
   let valueFontSize = valueLabel?.style?.fontSize as string;
   let valueTextStyle = { ...valueLabel.style };
-  // Since g is centered at gauge center (0, 0), position label relative to that
-  let x = 0;
-  let y = 0;
   valueTextStyle.textAnchor = "middle";
-  
-  // Position label in the CENTER of the gauge arc
-  // The center is at (0, 0), so we position based on inner radius
-  const innerRadius = gauge.dimensions.current.innerRadius;
-  
-  if (gauge.props.type == GaugeType.Semicircle) {
-    // For semicircle, position label in the vertical center of the visible arc
-    // Negative y moves up (SVG coordinates), positive moves down
-    // Position slightly above center for better visual balance
-    y = -innerRadius * 0.1;
-  } else if (gauge.props.type == GaugeType.Radial) {
-    // For radial, place label in the center
-    y = innerRadius * 0.15;
-  } else if (gauge.props.type == GaugeType.Grafana) {
-    // For Grafana, center of gauge
-    y = innerRadius * 0.1;
-  }
   
   let widthFactor = gauge.props.type == GaugeType.Radial ? 0.003 : 0.003;
   fontRatio = gauge.dimensions.current.width * widthFactor * fontRatio;
   let fontSizeNumber = parseInt(valueFontSize, 10) * fontRatio;
   valueTextStyle.fontSize = fontSizeNumber + "px";
-  if (valueLabel.matchColorWithArc) valueTextStyle.fill = getArcDataByValue(value, gauge)?.color as string || "white";
+  if (valueLabel.matchColorWithArc) valueTextStyle.fill = arcColor;
   addText(text, x, y, gauge, valueTextStyle, CONSTANTS.valueLabelClassname);
+};
+
+/**
+ * Adds custom React content to the gauge using foreignObject.
+ * This allows users to render any React element as the value label.
+ * 
+ * Note: The actual React content is rendered by the main GaugeComponent
+ * using the customContent ref. This function just sets up the foreignObject
+ * container and stores the render configuration.
+ */
+const addCustomValueContent = (
+  gauge: Gauge, 
+  valueLabel: ValueLabel, 
+  value: number, 
+  arcColor: string,
+  x: number,
+  y: number
+) => {
+  const contentWidth = valueLabel.contentWidth || 120;
+  const contentHeight = valueLabel.contentHeight || 60;
+  
+  // Create foreignObject to embed HTML content in SVG
+  const foreignObject = gauge.g.current
+    .append("foreignObject")
+    .attr("class", CONSTANTS.valueLabelClassname)
+    .attr("x", x - contentWidth / 2)
+    .attr("y", y - contentHeight / 2)
+    .attr("width", contentWidth)
+    .attr("height", contentHeight)
+    .style("overflow", "visible");
+  
+  // Create a container div - React will render into this via innerHTML
+  // We use a simple approach: render the React element to string
+  const container = foreignObject
+    .append("xhtml:div")
+    .attr("class", "gauge-custom-value-content")
+    .style("width", "100%")
+    .style("height", "100%")
+    .style("display", "flex")
+    .style("align-items", "center")
+    .style("justify-content", "center")
+    .style("overflow", "visible")
+    .style("pointer-events", "none");
+  
+  // For simple cases, we can render the content directly
+  // The renderContent function returns a React element, but we need to handle it
+  // Since we're in D3 context, we'll use a workaround: render to string for static content
+  // or store the config for the React component to handle
+  
+  // Store the render function and position info on the gauge for React to use
+  if (!gauge.customContent) {
+    gauge.customContent = { current: {} };
+  }
+  gauge.customContent.current = {
+    containerId: 'gauge-custom-value-content',
+    renderContent: valueLabel.renderContent,
+    value,
+    arcColor,
+  };
+  
+  // Get the DOM node and store it for React to render into
+  const domNode = container.node();
+  if (domNode && gauge.customContent) {
+    (gauge.customContent.current as any).domNode = domNode;
+  }
 };
 
 export const clearValueLabel = (gauge: Gauge) => gauge.g.current.selectAll(`.${CONSTANTS.valueLabelClassname}`).remove();

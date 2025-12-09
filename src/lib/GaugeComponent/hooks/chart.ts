@@ -74,12 +74,19 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             console.log('[renderChart] Container dimensions:', { width: parentWidth, height: parentHeight });
         }
         
-        // Use the new coordinate system to calculate layout
-        const layout = coordinateSystem.calculateGaugeLayout(
+        // Extract padding configuration from gauge props for optimized layout
+        const paddingConfig = coordinateSystem.extractPaddingConfig(
+            labels,
+            gauge.props.pointer?.length
+        );
+        
+        // Use the optimized coordinate system that calculates padding dynamically
+        const layout = coordinateSystem.calculateOptimizedLayout(
             parentWidth,
             parentHeight,
             gauge.props.type as GaugeType,
             arc.width as number,
+            paddingConfig,
             typeof gauge.props.marginInPercent === 'number' 
                 ? gauge.props.marginInPercent 
                 : 0

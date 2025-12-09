@@ -9,6 +9,20 @@ export interface Labels {
 export interface ValueLabel {
     /** This function enables to format the central value text as you wish. */
     formatTextValue?: (value: any) => string;
+    /** 
+     * Render a custom React element instead of text for the value label.
+     * Receives the current value and arc color as parameters.
+     * When provided, this takes precedence over formatTextValue.
+     * 
+     * @example
+     * renderContent: (value, color) => (
+     *   <div style={{ textAlign: 'center' }}>
+     *     <span style={{ fontSize: '2rem', color }}>{value}</span>
+     *     <span style={{ fontSize: '0.8rem' }}>km/h</span>
+     *   </div>
+     * )
+     */
+    renderContent?: (value: number, arcColor: string) => React.ReactNode;
     /** This will sync the value label color with the current value of the Gauge. */
     matchColorWithArc?: boolean;
     /** This enables configuration for the number of decimal digits of the 
@@ -18,6 +32,16 @@ export interface ValueLabel {
     style?: React.CSSProperties;
     /** This hides the central value label if true */
     hide?: boolean;
+    /** 
+     * Width of the foreignObject container for custom React content.
+     * Only used when renderContent is provided. Defaults to 100.
+     */
+    contentWidth?: number;
+    /** 
+     * Height of the foreignObject container for custom React content.
+     * Only used when renderContent is provided. Defaults to 50.
+     */
+    contentHeight?: number;
 }
 
 export const defaultValueLabel: ValueLabel = {

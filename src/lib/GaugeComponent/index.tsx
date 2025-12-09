@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useLayoutEffect } from "react";
+import React, { useEffect, useRef, useLayoutEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { pie, select } from "d3";
 import { defaultGaugeProps, GaugeComponentProps, GaugeType, getGaugeMarginByType } from "./types/GaugeComponentProps";
-import { Gauge } from "./types/Gauge";
+import { Gauge, CustomContentConfig } from "./types/Gauge";
 import * as chartHooks from "./hooks/chart";
 import * as arcHooks from "./hooks/arc";
 import { isEmptyObject, mergeObjects } from "./hooks/utils";
@@ -38,6 +39,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const prevGSize = useRef<any>(null);
   const maxGHeight = useRef<any>(null);
   const svgRef = useRef<any>(null);
+  const customContent = useRef<CustomContentConfig | {}>({});
+  
+  // State to trigger re-render when custom content needs to be rendered
+  const [customContentNode, setCustomContentNode] = useState<HTMLElement | null>(null);
 
   const gauge: Gauge = {
     props: mergedProps.current,
@@ -55,7 +60,8 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     pieChart,
     tooltip,
     prevGSize,
-    maxGHeight
+    maxGHeight,
+    customContent,
   };
 
   // Merge default props with user-provided props
@@ -108,6 +114,14 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     }
     
     gauge.prevProps.current = mergedProps.current;
+    
+    // Check if custom content needs to be rendered via React portal
+    const customContentConfig = customContent.current as any;
+    if (customContentConfig?.domNode) {
+      setCustomContentNode(customContentConfig.domNode);
+    } else {
+      setCustomContentNode(null);
+    }
   }, [props]);
 
   // Set up ResizeObserver for responsive resizing
@@ -166,13 +180,29 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     ...style,
   };
 
+  // Render custom content via React portal if configured
+  const renderCustomContent = () => {
+    if (!customContentNode) return null;
+    
+    const config = customContent.current as CustomContentConfig;
+    if (!config?.renderContent) return null;
+    
+    return createPortal(
+      config.renderContent(config.value, config.arcColor),
+      customContentNode
+    );
+  };
+
   return (
-    <div
-      id={id}
-      className={`gauge${className ? ' ' + className : ''}`}
-      style={containerStyle}
-      ref={(ref) => (svgRef.current = ref)}
-    />
+    <>
+      <div
+        id={id}
+        className={`gauge${className ? ' ' + className : ''}`}
+        style={containerStyle}
+        ref={(ref) => (svgRef.current = ref)}
+      />
+      {renderCustomContent()}
+    </>
   );
 };
 

@@ -1013,7 +1013,6 @@ const GaugeGallery: React.FC = () => {
   const [autoAnimate, setAutoAnimate] = useState(true);
   const [copiedIndex, setCopiedIndex] = useState<number | 'random' | null>(null);
   const [randomKey, setRandomKey] = useState(0); // Key to force re-render
-  const [showEditor, setShowEditor] = useState(true); // Start with editor open
   const [editorValue, setEditorValue] = useState('');
   const [isLightTheme, setIsLightTheme] = useState(false); // Theme toggle
   const [columnCount, setColumnCount] = useState<1 | 2 | 3 | 4>(4); // Column count selector (default 4)
@@ -1262,78 +1261,99 @@ const GaugeGallery: React.FC = () => {
       ...styles.toggleLabel,
       background: isLightTheme ? 'rgba(0, 0, 0, 0.05)' : styles.toggleLabel.background,
     },
+    fixedHeader: {
+      ...styles.fixedHeader,
+      background: isLightTheme 
+        ? 'rgba(255, 255, 255, 0.95)' 
+        : 'rgba(26, 26, 46, 0.95)',
+      borderBottom: isLightTheme 
+        ? '1px solid rgba(0, 0, 0, 0.1)' 
+        : '1px solid rgba(255, 255, 255, 0.1)',
+    },
   };
 
   return (
     <div style={themeStyles.container}>
-      {/* Header */}
-      <header style={themeStyles.header}>
-        <div style={styles.headerContent}>
-          <h1 style={styles.title}>
-            <span style={styles.titleIcon}>📊</span>
-            React Gauge Component
-          </h1>
-          <p style={styles.subtitle}>
-            Beautiful, customizable gauge charts for React applications
-          </p>
-          <div style={styles.badges}>
-            <a href="https://github.com/antoniolago/react-gauge-component" target="_blank" rel="noopener noreferrer" style={styles.badge}>
-              ⭐ GitHub
-            </a>
-            <a href="https://www.npmjs.com/package/react-gauge-component" target="_blank" rel="noopener noreferrer" style={styles.badge}>
-              📦 npm
+      {/* Fixed Header with Controls */}
+      <header style={themeStyles.fixedHeader}>
+        <div style={styles.headerRow}>
+          {/* Logo & Title */}
+          <div style={styles.headerBrand}>
+            <span style={styles.headerLogo}>📊</span>
+            <span style={styles.headerTitle}>React Gauge Component</span>
+          </div>
+
+          {/* Controls */}
+          <div style={styles.headerControls}>
+            {/* Auto-animate checkbox */}
+            <label style={styles.headerCheckbox}>
+              <input 
+                type="checkbox" 
+                checked={autoAnimate} 
+                onChange={(e) => setAutoAnimate(e.target.checked)}
+                style={styles.checkbox}
+              />
+              <span>Auto-animate</span>
+            </label>
+
+            {/* Column selector */}
+            <div style={styles.headerColumnButtons}>
+              {([1, 2, 3, 4] as const).map((cols) => (
+                <button
+                  key={cols}
+                  onClick={() => setColumnCount(cols)}
+                  style={{
+                    ...styles.headerColButton,
+                    background: columnCount === cols 
+                      ? 'linear-gradient(90deg, #00d9ff, #00ff88)' 
+                      : 'rgba(255, 255, 255, 0.1)',
+                    color: columnCount === cols ? '#1a1a2e' : '#fff',
+                  }}
+                  type="button"
+                  title={`${cols} column${cols > 1 ? 's' : ''}`}
+                >
+                  {cols}
+                </button>
+              ))}
+            </div>
+
+            {/* Theme toggle */}
+            <button 
+              onClick={() => setIsLightTheme(!isLightTheme)} 
+              style={{
+                ...styles.headerThemeToggle,
+                background: isLightTheme ? '#1a1a2e' : '#fff',
+                color: isLightTheme ? '#fff' : '#1a1a2e',
+              }}
+              type="button"
+            >
+              {isLightTheme ? '🌙' : '☀️'}
+            </button>
+
+            {/* GitHub link */}
+            <a 
+              href="https://github.com/antoniolago/react-gauge-component" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={styles.headerGithubLink}
+              title="View on GitHub"
+            >
+              <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+              </svg>
             </a>
           </div>
         </div>
       </header>
 
-      {/* Controls */}
-      <div style={styles.controls}>
-        <label style={themeStyles.toggleLabel}>
-          <input 
-            type="checkbox" 
-            checked={autoAnimate} 
-            onChange={(e) => setAutoAnimate(e.target.checked)}
-            style={styles.checkbox}
-          />
-          <span style={styles.toggleText}>Auto-animate values</span>
-        </label>
-        <button 
-          onClick={() => setIsLightTheme(!isLightTheme)} 
-          style={{
-            ...styles.themeToggle,
-            background: isLightTheme ? '#1a1a2e' : '#fff',
-            color: isLightTheme ? '#fff' : '#1a1a2e',
-          }}
-          type="button"
-        >
-          {isLightTheme ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <span style={themeStyles.hint}>Click any gauge to copy its code!</span>
-      </div>
+      {/* Spacer for fixed header */}
+      <div style={styles.headerSpacer} />
 
       {/* Gallery Section */}
       <section style={styles.section}>
         <div style={styles.sectionHeader}>
-          <h2 style={styles.sectionTitle}>� Preset Gallery</h2>
-          <div style={styles.columnButtons}>
-            {([1, 2, 3, 4] as const).map((cols) => (
-              <button
-                key={cols}
-                onClick={() => setColumnCount(cols)}
-                style={{
-                  ...styles.columnButton,
-                  background: columnCount === cols 
-                    ? 'linear-gradient(90deg, #00d9ff, #00ff88)' 
-                    : 'rgba(255, 255, 255, 0.1)',
-                  color: columnCount === cols ? '#1a1a2e' : '#fff',
-                }}
-                type="button"
-              >
-                {cols} Col{cols > 1 ? 's' : ''}
-              </button>
-            ))}
-          </div>
+          <h2 style={styles.sectionTitle}>🎨 Preset Gallery</h2>
+          <span style={themeStyles.hint}>Click any gauge to copy its code!</span>
         </div>
         <div style={{
           ...styles.gallery,
@@ -1368,37 +1388,687 @@ const GaugeGallery: React.FC = () => {
         </div>
       </section>
 
-      {/* Resize Demo */}
+      {/* Sandbox Editor Accordion */}
       <section style={styles.section}>
-        <h2 style={styles.sectionTitle}>📐 Resize Test</h2>
-        <div style={themeStyles.resizeDemo}>
-          <GaugeComponent 
-            value={values[0]} 
-            type="semicircle"
-            arc={{
-              width: 0.2,
-              gradient: true,
-              subArcs: [
-                { limit: 33, color: '#5BE12C' },
-                { limit: 66, color: '#F5CD19' },
-                { color: '#EA4228' },
-              ],
-            }}
-            labels={{
-              valueLabel: { formatTextValue: (v: number) => `${v}%` },
-              tickLabels: {
-                type: 'outer',
-                ticks: [
-                  { value: 0 },
-                  { value: 25 },
-                  { value: 50 },
-                  { value: 75 },
-                  { value: 100 },
-                ],
-              },
-            }}
-          />
+        <div 
+          style={styles.accordionHeader}
+          onClick={() => setSandboxOpen(!sandboxOpen)}
+        >
+          <h2 style={styles.sectionTitle}>
+            🧪 Sandbox Editor
+            <span style={styles.accordionArrow}>{sandboxOpen ? '▼' : '▶'}</span>
+          </h2>
+          <span style={styles.accordionHint}>
+            {sandboxOpen ? 'Click to collapse' : 'Click to expand - Test & customize your gauge'}
+          </span>
         </div>
+        
+        {sandboxOpen && (
+          <div style={styles.sandboxContent}>
+            {/* Quick Actions */}
+            <div style={styles.sandboxActions}>
+              {/* Edge Case Gauge Presets */}
+              <div style={styles.actionGroupWide}>
+                <span style={styles.actionLabel}>🚀 Ready-to-Go Gauges</span>
+                <div style={styles.actionButtons}>
+                  <button
+                    onClick={() => {
+                      setRandomConfig({
+                        type: 'semicircle',
+                        minValue: 0,
+                        maxValue: 1000000,
+                        arc: { width: 0.2, subArcs: [
+                          { limit: 100, color: '#5BE12C' },
+                          { limit: 1000, color: '#F5CD19' },
+                          { limit: 10000, color: '#F58B19' },
+                          { limit: 100000, color: '#EA4228' },
+                          { color: '#8B0000' },
+                        ]},
+                        labels: {
+                          valueLabel: { formatTextValue: (v: number) => v >= 1000000 ? `${(v/1000000).toFixed(1)} Tbps` : v >= 1000 ? `${(v/1000).toFixed(0)} Gbps` : `${v} Mbps` },
+                          tickLabels: { type: 'outer', ticks: [
+                            { value: 0 }, { value: 100 }, { value: 1000 }, { value: 10000 }, { value: 100000 }, { value: 1000000 }
+                          ], defaultTickValueConfig: { formatTextValue: (v: number) => v >= 1000000 ? '1T' : v >= 1000 ? `${v/1000}G` : `${v}M` }}
+                        },
+                        pointer: { type: 'needle' }
+                      } as any);
+                      setRandomValue(50000);
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.edgeCaseButton}
+                    type="button"
+                  >
+                    🌐 Bandwidth
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRandomConfig({
+                        type: 'semicircle',
+                        minValue: -40,
+                        maxValue: 150,
+                        arc: { width: 0.2, subArcs: [
+                          { limit: 0, color: '#00bcd4' },
+                          { limit: 25, color: '#4caf50' },
+                          { limit: 80, color: '#ff9800' },
+                          { color: '#f44336' },
+                        ]},
+                        labels: {
+                          valueLabel: { formatTextValue: (v: number) => `${v}°C` },
+                          tickLabels: { type: 'outer', ticks: [
+                            { value: -40 }, { value: 0 }, { value: 50 }, { value: 100 }, { value: 150 }
+                          ]}
+                        },
+                        pointer: { type: 'blob' }
+                      } as any);
+                      setRandomValue(23);
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.edgeCaseButton}
+                    type="button"
+                  >
+                    🌡️ Temperature
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRandomConfig({
+                        type: 'radial',
+                        minValue: -60,
+                        maxValue: 20,
+                        arc: { width: 0.15, gradient: true, subArcs: [
+                          { limit: -20, color: '#2d5a27' },
+                          { limit: 0, color: '#5BE12C' },
+                          { limit: 10, color: '#F5CD19' },
+                          { color: '#EA4228' },
+                        ]},
+                        labels: {
+                          valueLabel: { formatTextValue: (v: number) => `${v > 0 ? '+' : ''}${v} dB` },
+                          tickLabels: { type: 'outer', ticks: [
+                            { value: -60 }, { value: -40 }, { value: -20 }, { value: 0 }, { value: 20 }
+                          ]}
+                        },
+                        pointer: { type: 'needle', color: '#00ff88' }
+                      } as any);
+                      setRandomValue(-12);
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.edgeCaseButton}
+                    type="button"
+                  >
+                    🔊 Audio (dB)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRandomConfig({
+                        type: 'grafana',
+                        minValue: 0,
+                        maxValue: 100,
+                        arc: { width: 0.25, subArcs: [
+                          { limit: 20, color: '#EA4228' },
+                          { limit: 40, color: '#F58B19' },
+                          { limit: 60, color: '#F5CD19' },
+                          { color: '#5BE12C' },
+                        ]},
+                        labels: {
+                          valueLabel: { formatTextValue: (v: number) => `${v.toFixed(1)}%`, matchColorWithArc: true },
+                          tickLabels: { type: 'inner', ticks: [
+                            { value: 0 }, { value: 25 }, { value: 50 }, { value: 75 }, { value: 100 }
+                          ]}
+                        },
+                        pointer: { type: 'arrow' }
+                      } as any);
+                      setRandomValue(73.5);
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.edgeCaseButton}
+                    type="button"
+                  >
+                    🔋 Battery
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRandomConfig({
+                        type: 'semicircle',
+                        minValue: 0,
+                        maxValue: 10000,
+                        arc: { width: 0.2, subArcs: [
+                          { limit: 2000, color: '#5BE12C' },
+                          { limit: 6000, color: '#F5CD19' },
+                          { limit: 8000, color: '#F58B19' },
+                          { color: '#EA4228' },
+                        ]},
+                        labels: {
+                          valueLabel: { formatTextValue: (v: number) => `${(v/1000).toFixed(1)}k` },
+                          tickLabels: { type: 'outer', ticks: [
+                            { value: 0 }, { value: 2000 }, { value: 4000 }, { value: 6000 }, { value: 8000 }, { value: 10000 }
+                          ], defaultTickValueConfig: { formatTextValue: (v: number) => `${v/1000}k` }}
+                        },
+                        pointer: { type: 'needle', color: '#ff4444' }
+                      } as any);
+                      setRandomValue(3500);
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.edgeCaseButton}
+                    type="button"
+                  >
+                    ⚙️ RPM
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRandomConfig({
+                        type: 'radial',
+                        minValue: 0,
+                        maxValue: 300,
+                        arc: { width: 0.18, subArcs: [
+                          { limit: 50, color: '#00bcd4' },
+                          { limit: 150, color: '#5BE12C' },
+                          { limit: 250, color: '#F5CD19' },
+                          { color: '#EA4228' },
+                        ]},
+                        labels: {
+                          valueLabel: { formatTextValue: (v: number) => `${v} PSI` },
+                          tickLabels: { type: 'outer', ticks: [
+                            { value: 0 }, { value: 100 }, { value: 200 }, { value: 300 }
+                          ]}
+                        },
+                        pointer: { type: 'needle' }
+                      } as any);
+                      setRandomValue(125);
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.edgeCaseButton}
+                    type="button"
+                  >
+                    💨 Pressure
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRandomConfig({
+                        type: 'semicircle',
+                        minValue: 0,
+                        maxValue: 100,
+                        arc: { width: 0.3, gradient: true, subArcs: [
+                          { limit: 40, color: '#5BE12C' },
+                          { limit: 60, color: '#F5CD19' },
+                          { limit: 80, color: '#F58B19' },
+                          { color: '#EA4228' },
+                        ]},
+                        labels: {
+                          valueLabel: { formatTextValue: (v: number) => `${v.toFixed(0)}%` },
+                          tickLabels: { hideMinMax: true }
+                        },
+                        pointer: { type: 'blob' }
+                      } as any);
+                      setRandomValue(67);
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.edgeCaseButton}
+                    type="button"
+                  >
+                    💻 CPU
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRandomConfig({
+                        type: 'semicircle',
+                        minValue: 0,
+                        maxValue: 100,
+                        arc: { width: 0.15, subArcs: [
+                          { limit: 15, color: '#EA4228' },
+                          { limit: 25, color: '#F58B19' },
+                          { color: '#5BE12C' },
+                        ]},
+                        labels: {
+                          valueLabel: { hide: true },
+                          tickLabels: { type: 'outer', ticks: [
+                            { value: 0, valueConfig: { formatTextValue: () => 'E' } },
+                            { value: 50, valueConfig: { formatTextValue: () => '½' } },
+                            { value: 100, valueConfig: { formatTextValue: () => 'F' } },
+                          ]}
+                        },
+                        pointer: { type: 'needle', color: '#fff' }
+                      } as any);
+                      setRandomValue(35);
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.edgeCaseButton}
+                    type="button"
+                  >
+                    ⛽ Fuel
+                  </button>
+                </div>
+              </div>
+
+              {/* Row 1: Generate, Type & Value */}
+              <div style={styles.actionGroup}>
+                <span style={styles.actionLabel}>🎲 Generate</span>
+                <div style={styles.actionButtons}>
+                  <button onClick={handleRandomize} style={styles.actionButton} type="button">
+                    Random All
+                  </button>
+                </div>
+              </div>
+
+              <div style={styles.actionGroup}>
+                <span style={styles.actionLabel}>🎨 Gauge Type</span>
+                <div style={styles.actionButtons}>
+                  {(['semicircle', 'radial', 'grafana'] as const).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        setRandomConfig(prev => ({ ...prev, type }));
+                        setRandomKey(k => k + 1);
+                      }}
+                      style={{
+                        ...styles.presetButton,
+                        background: (randomConfig as any)?.type === type
+                          ? 'linear-gradient(90deg, #00d9ff, #00ff88)'
+                          : 'rgba(255, 255, 255, 0.1)',
+                        color: (randomConfig as any)?.type === type ? '#1a1a2e' : '#fff',
+                      }}
+                      type="button"
+                    >
+                      {type === 'semicircle' ? '◗ Semi' : type === 'radial' ? '◐ Radial' : '◔ Grafana'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={styles.actionGroup}>
+                <span style={styles.actionLabel}>🎯 Value</span>
+                <div style={styles.sliderRow}>
+                  {[0, 25, 50, 75, 100].map((val) => {
+                    const min = (randomConfig as any)?.minValue ?? 0;
+                    const max = (randomConfig as any)?.maxValue ?? 100;
+                    const actualValue = min + (val / 100) * (max - min);
+                    return (
+                      <button
+                        key={val}
+                        onClick={() => setRandomValue(actualValue)}
+                        style={{
+                          ...styles.miniButton,
+                          background: Math.abs(randomValue - actualValue) < 0.01
+                            ? 'linear-gradient(90deg, #00d9ff, #00ff88)'
+                            : 'rgba(255, 255, 255, 0.1)',
+                          color: Math.abs(randomValue - actualValue) < 0.01 ? '#1a1a2e' : '#fff',
+                        }}
+                        type="button"
+                      >
+                        {val}%
+                      </button>
+                    );
+                  })}
+                  <input
+                    type="range"
+                    min={(randomConfig as any)?.minValue ?? 0}
+                    max={(randomConfig as any)?.maxValue ?? 100}
+                    value={randomValue}
+                    onChange={(e) => setRandomValue(Number(e.target.value))}
+                    style={styles.slider}
+                    step="0.1"
+                  />
+                  <span style={styles.sliderValue}>{randomValue.toFixed(1)}</span>
+                </div>
+              </div>
+
+              {/* Row 2: Arc Width with Slider */}
+              <div style={styles.actionGroup}>
+                <span style={styles.actionLabel}>📊 Arc Width</span>
+                <div style={styles.sliderRow}>
+                  <input
+                    type="range"
+                    min="0.05"
+                    max="0.5"
+                    step="0.01"
+                    value={(randomConfig as any)?.arc?.width ?? 0.2}
+                    onChange={(e) => {
+                      setRandomConfig(prev => ({
+                        ...prev,
+                        arc: { ...(prev as any).arc, width: Number(e.target.value) }
+                      }));
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.slider}
+                  />
+                  <span style={styles.sliderValue}>{((randomConfig as any)?.arc?.width ?? 0.2).toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Ticks with custom interval */}
+              <div style={styles.actionGroup}>
+                <span style={styles.actionLabel}>📏 Tick Intervals</span>
+                <div style={styles.actionButtons}>
+                  {[
+                    { label: 'None', interval: 0 },
+                    { label: '10', interval: 10 },
+                    { label: '20', interval: 20 },
+                    { label: '25', interval: 25 },
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      onClick={() => {
+                        const min = (randomConfig as any)?.minValue ?? 0;
+                        const max = (randomConfig as any)?.maxValue ?? 100;
+                        const ticks = preset.interval === 0 ? [] : 
+                          Array.from({ length: Math.floor((max - min) / preset.interval) + 1 }, (_, i) => ({ value: min + i * preset.interval }));
+                        setRandomConfig(prev => ({
+                          ...prev,
+                          labels: {
+                            ...(prev as any).labels,
+                            tickLabels: {
+                              ...(prev as any).labels?.tickLabels,
+                              type: 'outer',
+                              ticks,
+                              hideMinMax: preset.interval === 0,
+                            }
+                          }
+                        }));
+                        setRandomKey(k => k + 1);
+                      }}
+                      style={styles.presetButton}
+                      type="button"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                  <input
+                    type="number"
+                    placeholder="Custom"
+                    min="1"
+                    style={styles.numberInput}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const interval = Number((e.target as HTMLInputElement).value);
+                        if (interval > 0) {
+                          const min = (randomConfig as any)?.minValue ?? 0;
+                          const max = (randomConfig as any)?.maxValue ?? 100;
+                          const ticks = Array.from({ length: Math.floor((max - min) / interval) + 1 }, (_, i) => ({ value: min + i * interval }));
+                          setRandomConfig(prev => ({
+                            ...prev,
+                            labels: {
+                              ...(prev as any).labels,
+                              tickLabels: {
+                                ...(prev as any).labels?.tickLabels,
+                                type: 'outer',
+                                ticks,
+                                hideMinMax: false,
+                              }
+                            }
+                          }));
+                          setRandomKey(k => k + 1);
+                        }
+                      }
+                    }}
+                  />
+                  {(['outer', 'inner'] as const).map((pos) => (
+                    <button
+                      key={pos}
+                      onClick={() => {
+                        setRandomConfig(prev => ({
+                          ...prev,
+                          labels: {
+                            ...(prev as any).labels,
+                            tickLabels: { ...(prev as any).labels?.tickLabels, type: pos }
+                          }
+                        }));
+                        setRandomKey(k => k + 1);
+                      }}
+                      style={{
+                        ...styles.presetButton,
+                        background: (randomConfig as any)?.labels?.tickLabels?.type === pos
+                          ? 'linear-gradient(90deg, #00d9ff, #00ff88)'
+                          : 'rgba(255, 255, 255, 0.1)',
+                        color: (randomConfig as any)?.labels?.tickLabels?.type === pos ? '#1a1a2e' : '#fff',
+                      }}
+                      type="button"
+                    >
+                      {pos === 'outer' ? '↗' : '↙'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tick Font Size with Slider */}
+              <div style={styles.actionGroup}>
+                <span style={styles.actionLabel}>🔤 Tick Font</span>
+                <div style={styles.sliderRow}>
+                  <input
+                    type="range"
+                    min="6"
+                    max="24"
+                    step="1"
+                    value={parseInt((randomConfig as any)?.labels?.tickLabels?.defaultTickValueConfig?.style?.fontSize || '12')}
+                    onChange={(e) => {
+                      setRandomConfig(prev => ({
+                        ...prev,
+                        labels: {
+                          ...(prev as any).labels,
+                          tickLabels: {
+                            ...(prev as any).labels?.tickLabels,
+                            defaultTickValueConfig: {
+                              ...(prev as any).labels?.tickLabels?.defaultTickValueConfig,
+                              style: {
+                                ...(prev as any).labels?.tickLabels?.defaultTickValueConfig?.style,
+                                fontSize: `${e.target.value}px`,
+                              }
+                            }
+                          }
+                        }
+                      }));
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.slider}
+                  />
+                  <span style={styles.sliderValue}>{parseInt((randomConfig as any)?.labels?.tickLabels?.defaultTickValueConfig?.style?.fontSize || '12')}px</span>
+                </div>
+              </div>
+
+              {/* Value Label Size with Slider */}
+              <div style={styles.actionGroup}>
+                <span style={styles.actionLabel}>🏷️ Value Label</span>
+                <div style={styles.sliderRow}>
+                  <button
+                    onClick={() => {
+                      setRandomConfig(prev => ({
+                        ...prev,
+                        labels: { ...(prev as any).labels, valueLabel: { ...(prev as any).labels?.valueLabel, hide: !(prev as any).labels?.valueLabel?.hide } }
+                      }));
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={{
+                      ...styles.miniButton,
+                      background: (randomConfig as any)?.labels?.valueLabel?.hide ? 'rgba(255,255,255,0.1)' : 'linear-gradient(90deg, #00d9ff, #00ff88)',
+                      color: (randomConfig as any)?.labels?.valueLabel?.hide ? '#fff' : '#1a1a2e',
+                    }}
+                    type="button"
+                  >
+                    {(randomConfig as any)?.labels?.valueLabel?.hide ? '👁️‍🗨️' : '👁️'}
+                  </button>
+                  <input
+                    type="range"
+                    min="12"
+                    max="72"
+                    step="1"
+                    value={parseInt((randomConfig as any)?.labels?.valueLabel?.style?.fontSize || '35')}
+                    onChange={(e) => {
+                      setRandomConfig(prev => ({
+                        ...prev,
+                        labels: {
+                          ...(prev as any).labels,
+                          valueLabel: {
+                            ...(prev as any).labels?.valueLabel,
+                            hide: false,
+                            style: { ...(prev as any).labels?.valueLabel?.style, fontSize: `${e.target.value}px` }
+                          }
+                        }
+                      }));
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={styles.slider}
+                  />
+                  <span style={styles.sliderValue}>{parseInt((randomConfig as any)?.labels?.valueLabel?.style?.fontSize || '35')}px</span>
+                  <button
+                    onClick={() => {
+                      setRandomConfig(prev => ({
+                        ...prev,
+                        labels: { ...(prev as any).labels, valueLabel: { ...(prev as any).labels?.valueLabel, matchColorWithArc: !(prev as any).labels?.valueLabel?.matchColorWithArc } }
+                      }));
+                      setRandomKey(k => k + 1);
+                    }}
+                    style={{
+                      ...styles.miniButton,
+                      background: (randomConfig as any)?.labels?.valueLabel?.matchColorWithArc ? 'linear-gradient(90deg, #00d9ff, #00ff88)' : 'rgba(255,255,255,0.1)',
+                      color: (randomConfig as any)?.labels?.valueLabel?.matchColorWithArc ? '#1a1a2e' : '#fff',
+                    }}
+                    type="button"
+                  >
+                    🌈
+                  </button>
+                </div>
+              </div>
+
+              {/* Pointer & Container */}
+              <div style={styles.actionGroup}>
+                <span style={styles.actionLabel}>🎭 Pointer</span>
+                <div style={styles.actionButtons}>
+                  {[
+                    { label: '📍', type: 'needle', hide: false },
+                    { label: '⚫', type: 'blob', hide: false },
+                    { label: '➤', type: 'arrow', hide: false },
+                    { label: '👻', type: 'needle', hide: true },
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      onClick={() => {
+                        setRandomConfig(prev => ({
+                          ...prev,
+                          pointer: { ...(prev as any).pointer, type: preset.type, hide: preset.hide }
+                        }));
+                        setRandomKey(k => k + 1);
+                      }}
+                      style={styles.presetButton}
+                      type="button"
+                      title={preset.type}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div style={styles.actionGroup}>
+                <span style={styles.actionLabel}>📐 Size</span>
+                <div style={styles.actionButtons}>
+                  {sizePresets.slice(0, 6).map((preset) => (
+                    <button
+                      key={preset.name}
+                      onClick={() => {
+                        setSandboxWidth(preset.width);
+                        setSandboxHeight(preset.height);
+                      }}
+                      style={{
+                        ...styles.presetButton,
+                        background: sandboxWidth === preset.width && sandboxHeight === preset.height
+                          ? 'linear-gradient(90deg, #00d9ff, #00ff88)'
+                          : 'rgba(255, 255, 255, 0.1)',
+                        color: sandboxWidth === preset.width && sandboxHeight === preset.height ? '#1a1a2e' : '#fff',
+                      }}
+                      type="button"
+                      title={`${preset.width} × ${preset.height}`}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Code Button */}
+              <div style={styles.actionGroup}>
+                <span style={styles.actionLabel}>📋 Code</span>
+                <div style={styles.actionButtons}>
+                  <button
+                    onClick={() => copyToClipboard(randomConfig, randomValue, 'random')}
+                    style={{
+                      ...styles.actionButton,
+                      background: copiedIndex === 'random' ? '#5BE12C' : 'linear-gradient(90deg, #00d9ff, #00ff88)',
+                    }}
+                    type="button"
+                  >
+                    {copiedIndex === 'random' ? '✓ Copied!' : '📋 Copy Code'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Sandbox Display - Just the Gauge */}
+            <div style={styles.sandboxContainer}>
+              {/* Gauge Preview */}
+              <div 
+                style={{
+                  ...themeStyles.randomizerCard,
+                  width: sandboxWidth,
+                  height: sandboxHeight,
+                  minWidth: '150px',
+                  minHeight: '100px',
+                  maxWidth: '100%',
+                  transition: 'all 0.3s ease',
+                  resize: 'both',
+                  overflow: 'hidden',
+                  cursor: 'default',
+                }}
+              >
+                <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                  <GaugeComponent key={randomKey} value={randomValue} {...randomConfig} />
+                </div>
+              </div>
+
+              {/* Config Editor */}
+              <div style={themeStyles.editorPanel}>
+                <div style={styles.editorHeader}>
+                  <span style={styles.editorTitle}>📝 Configuration</span>
+                  <div style={styles.editorActions}>
+                    <button 
+                      onClick={() => copyToClipboard(randomConfig, randomValue, 'random')} 
+                      style={styles.copyButton} 
+                      type="button"
+                    >
+                      {copiedIndex === 'random' ? '✓ Copied!' : '📋 Copy Code'}
+                    </button>
+                    <button onClick={applyEditorConfig} style={styles.applyButton} type="button">
+                      ▶ Apply
+                    </button>
+                  </div>
+                </div>
+                <div style={styles.editorInputRow}>
+                  <label style={styles.valueLabel}>Value:</label>
+                  <input
+                    type="range"
+                    min={(randomConfig as any)?.minValue ?? 0}
+                    max={(randomConfig as any)?.maxValue ?? 100}
+                    value={randomValue}
+                    onChange={(e) => setRandomValue(Number(e.target.value))}
+                    style={styles.valueSlider}
+                    step="0.1"
+                  />
+                  <input
+                    type="number"
+                    min={(randomConfig as any)?.minValue ?? 0}
+                    max={(randomConfig as any)?.maxValue ?? 100}
+                    value={Math.round(randomValue * 100) / 100}
+                    onChange={(e) => setRandomValue(Number(e.target.value))}
+                    style={styles.valueInput}
+                    step="any"
+                  />
+                </div>
+                <textarea
+                  value={editorValue}
+                  onChange={handleEditorChange}
+                  style={themeStyles.editorTextarea}
+                  spellCheck={false}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Footer */}
@@ -1417,6 +2087,116 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: '100vh',
     color: '#fff',
   },
+  // Fixed header styles
+  fixedHeader: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backdropFilter: 'blur(12px)',
+    padding: '12px 20px',
+  },
+  headerRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    maxWidth: '1400px',
+    margin: '0 auto',
+    gap: '20px',
+  },
+  headerBrand: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  headerLogo: {
+    fontSize: '1.5rem',
+  },
+  headerTitle: {
+    fontSize: '1.2rem',
+    fontWeight: 700,
+    background: 'linear-gradient(90deg, #00d9ff, #00ff88)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  },
+  headerControls: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap',
+  },
+  headerToggle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '8px 14px',
+    borderRadius: '20px',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    border: 'none',
+  },
+  headerColumnButtons: {
+    display: 'flex',
+    gap: '4px',
+    background: 'rgba(255, 255, 255, 0.05)',
+    padding: '4px',
+    borderRadius: '16px',
+  },
+  headerColButton: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '12px',
+    border: 'none',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerThemeToggle: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    border: 'none',
+    fontSize: '1.1rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerGithubLink: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    background: 'rgba(255, 255, 255, 0.1)',
+    color: '#fff',
+    transition: 'all 0.2s ease',
+  },
+  headerCheckbox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 14px',
+    borderRadius: '20px',
+    background: 'rgba(255, 255, 255, 0.1)',
+    cursor: 'pointer',
+    fontSize: '0.85rem',
+    fontWeight: 500,
+  },
+  headerSpacer: {
+    height: '70px', // Match header height
+  },
+  // Legacy header styles (kept for reference)
   header: {
     background: 'rgba(0, 0, 0, 0.3)',
     backdropFilter: 'blur(10px)',
@@ -1715,6 +2495,220 @@ const styles: Record<string, React.CSSProperties> = {
     minWidth: '180px',
     minHeight: '120px',
     maxWidth: '100%',
+  },
+  // Sandbox Editor Styles
+  accordionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '20px 25px',
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: '16px',
+    cursor: 'pointer',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    transition: 'all 0.3s ease',
+    marginBottom: '0',
+  },
+  accordionArrow: {
+    marginLeft: '12px',
+    fontSize: '0.8em',
+    opacity: 0.7,
+  },
+  accordionHint: {
+    fontSize: '0.85rem',
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+  sandboxContent: {
+    marginTop: '20px',
+    animation: 'fadeIn 0.3s ease',
+  },
+  sandboxActions: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '20px',
+    marginBottom: '25px',
+    padding: '20px',
+    background: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: '16px',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+  },
+  actionGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  actionGroupWide: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    width: '100%',
+    flexBasis: '100%',
+  },
+  actionLabel: {
+    fontSize: '0.8rem',
+    fontWeight: 600,
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  actionButtons: {
+    display: 'flex',
+    gap: '6px',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  sliderRow: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  slider: {
+    flex: 1,
+    minWidth: '80px',
+    maxWidth: '150px',
+    height: '6px',
+    borderRadius: '3px',
+    cursor: 'pointer',
+    accentColor: '#00d9ff',
+  },
+  sliderValue: {
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    color: '#00d9ff',
+    minWidth: '45px',
+    textAlign: 'right',
+  },
+  miniButton: {
+    padding: '6px 10px',
+    borderRadius: '12px',
+    border: 'none',
+    fontWeight: 500,
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  numberInput: {
+    width: '60px',
+    padding: '6px 8px',
+    borderRadius: '12px',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    background: 'rgba(255, 255, 255, 0.1)',
+    color: '#fff',
+    fontSize: '0.8rem',
+    textAlign: 'center',
+  },
+  edgeCaseButton: {
+    padding: '8px 12px',
+    borderRadius: '15px',
+    border: '1px solid rgba(0, 217, 255, 0.3)',
+    fontWeight: 500,
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(0, 255, 136, 0.2))',
+    color: '#fff',
+  },
+  actionButton: {
+    padding: '10px 18px',
+    borderRadius: '20px',
+    border: 'none',
+    background: 'linear-gradient(90deg, #00d9ff, #00ff88)',
+    color: '#1a1a2e',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  sizePresetGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '8px',
+  },
+  sizePresetButton: {
+    padding: '8px 12px',
+    borderRadius: '12px',
+    border: 'none',
+    fontWeight: 500,
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    whiteSpace: 'nowrap',
+  },
+  quickValueButton: {
+    padding: '8px 14px',
+    borderRadius: '15px',
+    border: 'none',
+    fontWeight: 600,
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  typeButton: {
+    padding: '10px 16px',
+    borderRadius: '20px',
+    border: 'none',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  presetButton: {
+    padding: '8px 14px',
+    borderRadius: '15px',
+    border: 'none',
+    fontWeight: 500,
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    background: 'rgba(255, 255, 255, 0.1)',
+    color: '#fff',
+  },
+  colorButton: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  sandboxContainer: {
+    display: 'flex',
+    gap: '25px',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+  },
+  editorActions: {
+    display: 'flex',
+    gap: '8px',
+  },
+  copyButton: {
+    background: 'rgba(255, 255, 255, 0.1)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    padding: '8px 16px',
+    borderRadius: '20px',
+    color: '#fff',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  valueSlider: {
+    flex: 1,
+    minWidth: '100px',
+    height: '6px',
+    borderRadius: '3px',
+    cursor: 'pointer',
+  },
+  sandboxToggleLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 18px',
+    borderRadius: '20px',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    border: 'none',
   },
   footer: {
     textAlign: 'center',
