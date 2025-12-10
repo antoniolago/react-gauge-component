@@ -9,7 +9,7 @@ import {
   Circle, Triangle, ArrowRight, EyeOff, GripHorizontal, Paintbrush,
   Eye, Rainbow, Plus, Minus, AlignLeft, AlignCenter, AlignRight,
   Gauge, Play, Pause, Shuffle, Hand, Hash, ArrowUpRight, ArrowDownLeft,
-  ToggleLeft, ToggleRight
+  ToggleLeft, ToggleRight, ClipboardPaste, Copy, Code
 } from 'lucide-react';
 
 // Mini gauge configs for type selector buttons
@@ -75,6 +75,8 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
         {/* Type - md-4, spans 2 rows visually with real gauge components */}
         <Col xs={4} md={2}>
           <div style={{ ...styles.toolbarGroup, height: '100%', minHeight: '140px' }}>
+          <Row className="g-3"> 
+            <Col md={12}>
             <span style={styles.groupLabel}><Palette size={14} /> Type</span>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
               {(['semicircle', 'radial', 'grafana'] as const).map((gaugeType) => (
@@ -112,6 +114,145 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 </button>
               ))}
             </div>
+            </Col>
+            <Col md={12}>
+            <span style={styles.groupLabel}><Palette size={14} /> Actions</span>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button 
+                onClick={onRandomize} 
+                style={{ ...styles.toolBtn, padding: '4px 8px' }} 
+                title="Randomize gauge - generate random configuration" 
+                type="button"
+              >
+                <Shuffle size={14} />
+                <span>Random</span>
+              </button>
+              <button 
+                onClick={async () => {
+                  try {
+                    const text = await navigator.clipboard.readText();
+                    let parsed: any;
+                    
+                    // Check if it's JSX component syntax
+                    if (text.includes('<GaugeComponent') || text.includes('<Gauge')) {
+                      // Parse JSX props to object
+                      parsed = {};
+                      
+                      // Extract props from JSX - handle both inline and multiline
+                      // Match prop="value", prop={value}, prop={number}, prop={{object}}
+                      const propRegex = /(\w+)=(?:{([^{}]*(?:{[^{}]*}[^{}]*)*)}|"([^"]*)"|'([^']*)')/g;
+                      let match;
+                      
+                      while ((match = propRegex.exec(text)) !== null) {
+                        const propName = match[1];
+                        const braceValue = match[2]; // Value inside {}
+                        const doubleQuoteValue = match[3]; // Value inside ""
+                        const singleQuoteValue = match[4]; // Value inside ''
+                        
+                        let propValue: any;
+                        
+                        if (doubleQuoteValue !== undefined) {
+                          propValue = doubleQuoteValue;
+                        } else if (singleQuoteValue !== undefined) {
+                          propValue = singleQuoteValue;
+                        } else if (braceValue !== undefined) {
+                          // Try to parse as JSON (handles objects, arrays, numbers, booleans)
+                          try {
+                            // Convert JS object syntax to JSON (add quotes to keys)
+                            let jsonStr = braceValue
+                              .replace(/(\w+):/g, '"$1":') // Add quotes to keys
+                              .replace(/'/g, '"') // Convert single quotes to double
+                              .replace(/,\s*}/g, '}') // Remove trailing commas
+                              .replace(/,\s*]/g, ']'); // Remove trailing commas in arrays
+                            propValue = JSON.parse(jsonStr);
+                          } catch {
+                            // If JSON parse fails, try eval for simple values
+                            try {
+                              // Handle arrow functions as strings
+                              if (braceValue.includes('=>')) {
+                                propValue = braceValue;
+                              } else {
+                                propValue = eval(`(${braceValue})`);
+                              }
+                            } catch {
+                              propValue = braceValue; // Keep as string
+                            }
+                          }
+                        }
+                        
+                        parsed[propName] = propValue;
+                      }
+                    } else {
+                      // Try to parse as JSON
+                      parsed = JSON.parse(text);
+                    }
+                    
+                    // Extract value if present
+                    if (parsed.value !== undefined) {
+                      onValueChange(Number(parsed.value));
+                      delete parsed.value;
+                    }
+                    onConfigChange(parsed);
+                  } catch (e) {
+                    console.error('Parse error:', e);
+                    alert('Could not parse clipboard content. Supports both JSON and <GaugeComponent /> JSX syntax.');
+                  }
+                }} 
+                style={{ ...styles.toolBtn, padding: '4px 8px' }} 
+                title="Paste gauge code from clipboard (JSON or JSX format)" 
+                type="button"
+              >
+                <ClipboardPaste size={14} />
+                <span>Paste</span>
+              </button>
+              <button 
+                onClick={() => {
+                  // Generate clean JSON for clipboard (easier to parse back)
+                  const cleanForExport = (obj: any): any => {
+                    if (obj === null || obj === undefined) return obj;
+                    if (typeof obj === 'function') {
+                      // Convert function to string representation
+                      return obj.toString();
+                    }
+                    if (Array.isArray(obj)) {
+                      return obj.map(cleanForExport);
+                    }
+                    if (typeof obj === 'object') {
+                      const result: any = {};
+                      for (const [k, v] of Object.entries(obj)) {
+                        if (v !== undefined) {
+                          result[k] = cleanForExport(v);
+                        }
+                      }
+                      return result;
+                    }
+                    return obj;
+                  };
+                  
+                  const exportObj = { value, ...cleanForExport(config) };
+                  const json = JSON.stringify(exportObj, null, 2);
+                  navigator.clipboard.writeText(json);
+                  
+                  // Visual feedback
+                  const btn = document.activeElement as HTMLButtonElement;
+                  const originalText = btn?.querySelector('span')?.textContent;
+                  if (btn?.querySelector('span')) {
+                    btn.querySelector('span')!.textContent = 'Copied!';
+                    setTimeout(() => {
+                      if (btn?.querySelector('span')) btn.querySelector('span')!.textContent = originalText || 'Copy';
+                    }, 1000);
+                  }
+                }} 
+                style={{ ...styles.toolBtn, padding: '4px 8px' }} 
+                title="Copy as <GaugeComponent /> JSX code" 
+                type="button"
+              >
+                <Code size={14} />
+                <span>Copy</span>
+              </button>
+              </div>
+            </Col>
+          </Row>
           </div>
         </Col>
         <Col xs={8} md={10}>
@@ -121,15 +262,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
             <span style={styles.groupLabel}><Package size={14} /> Presets</span>
             <div style={styles.buttonRow}>
-              <button 
-                onClick={onRandomize} 
-                style={{ ...styles.toolBtn, padding: '4px 8px' }} 
-                title="Randomize gauge - generate random configuration" 
-                type="button"
-              >
-                <Shuffle size={14} />
-                <span>Random</span>
-              </button>
+              
               {SANDBOX_PRESETS.map((p) => (
                 <button 
                   key={p.icon} 

@@ -15,7 +15,7 @@ export const SandboxEditor: React.FC<SandboxEditorProps> = ({ isLightTheme }) =>
   const [isOpen, setIsOpen] = useState(true);
   const [config, setConfig] = useState<Partial<GaugeComponentProps>>(() => generateRandomConfig());
   const [value, setValue] = useState(() => getInitialValue(config));
-  const [autoAnimate, setAutoAnimate] = useState(true);
+  const [autoAnimate, setAutoAnimate] = useState(false);
   const [sandboxWidth, setSandboxWidth] = useState('400px');
   const [sandboxHeight, setSandboxHeight] = useState('300px');
   const [gaugeAlign, setGaugeAlign] = useState<'left' | 'center' | 'right'>('left');

@@ -320,12 +320,21 @@ export const getColors = (nbArcsToDisplay: number, gauge: Gauge) => {
   //Otherwise make an interpolation
   let arcsEqualsColorsLength = nbArcsToDisplay === colorsValue?.length;
   if (arcsEqualsColorsLength) return colorsValue;
-  var colorScale = scaleLinear()
-    .domain([1, nbArcsToDisplay])
+  
+  // Create multi-stop color scale that interpolates through ALL colors
+  const numColors = colorsValue.length;
+  // Create domain points for each color (evenly distributed from 1 to nbArcsToDisplay)
+  const domainPoints = colorsValue.map((_, i) => 
+    1 + (i * (nbArcsToDisplay - 1)) / (numColors - 1)
+  );
+  
+  var colorScale = scaleLinear<string>()
+    .domain(domainPoints)
     //@ts-ignore
-    .range([colorsValue[0], colorsValue[colorsValue.length - 1]]) //Use the first and the last color as range
+    .range(colorsValue) // Use ALL colors in the range
     //@ts-ignore
     .interpolate(interpolateHsl);
+    
   var colorArray = [];
   for (var i = 1; i <= nbArcsToDisplay; i++) {
     colorArray.push(colorScale(i));

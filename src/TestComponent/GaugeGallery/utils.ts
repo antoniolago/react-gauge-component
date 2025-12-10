@@ -52,12 +52,14 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
     return tickOptions[Math.floor(Math.random() * tickOptions.length)];
   };
   
-  // SubArc count variation: from few segments to many
-  const nbSubArcs = Math.random() > 0.7 
-    ? 3 + Math.floor(Math.random() * 5)   // Few segments (3-7)
+  // SubArc count variation
+  // When using exact color count, colors will be distinct
+  // When using multiples or large numbers, colors interpolate smoothly
+  const nbSubArcs = Math.random() > 0.5 
+    ? numColors  // Exact color count - each segment gets one color (50% chance)
     : Math.random() > 0.5 
-      ? 10 + Math.floor(Math.random() * 20) // Medium (10-30)
-      : 30 + Math.floor(Math.random() * 120); // Many segments (30-150)
+      ? numColors * (2 + Math.floor(Math.random() * 3)) // Multiples of colors (2x-4x)
+      : 30 + Math.floor(Math.random() * 120); // Many segments - smooth gradient effect
   
   // Padding variation
   const padding = Math.random() > 0.7 
@@ -91,16 +93,12 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
     arc: {
       width: arcWidth,
       cornerRadius,
-      ...(useGradient ? {
-        gradient: true,
-        subArcs: gradientSubArcs,
-      } : {
-        gradient: false,
-        nbSubArcs,
-        colorArray: randomTheme.colors,
-        padding,
-        subArcs: [],
-      }),
+      // Clear ALL arc-related props and set fresh ones to avoid conflicts
+      gradient: useGradient,
+      subArcs: useGradient ? gradientSubArcs : [],
+      nbSubArcs: useGradient ? undefined : nbSubArcs,
+      colorArray: useGradient ? undefined : [...randomTheme.colors],
+      padding: useGradient ? undefined : padding,
     },
     pointer: hidePointer ? { hide: true } : {
       type: randomPointer,

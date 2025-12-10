@@ -31,13 +31,16 @@ export const createStyles = (isLightTheme: boolean) => ({
   },
   gaugeCard: {
     background: isLightTheme 
-      ? 'rgba(255, 255, 255, 0.95)'
+      ? 'rgba(0, 0, 0, 0.04)'
       : 'rgba(255, 255, 255, 0.08)',
     borderRadius: '16px',
     padding: '15px',
     border: isLightTheme 
-      ? '1px solid rgba(0, 0, 0, 0.1)'
+      ? '1px solid rgba(0, 0, 0, 0.08)'
       : '1px solid rgba(255, 255, 255, 0.1)',
+    boxShadow: isLightTheme
+      ? '0 2px 8px rgba(0, 0, 0, 0.06)'
+      : 'none',
     transition: 'all 0.3s ease',
     display: 'flex',
     flexDirection: 'column' as const,
@@ -45,13 +48,16 @@ export const createStyles = (isLightTheme: boolean) => ({
   },
   randomizerCard: {
     background: isLightTheme 
-      ? 'rgba(255, 255, 255, 0.98)'
+      ? 'rgba(0, 0, 0, 0.03)'
       : 'rgba(255, 255, 255, 0.08)',
     borderRadius: '20px',
     padding: '20px',
     border: isLightTheme 
-      ? '1px solid rgba(0, 0, 0, 0.1)'
+      ? '1px solid rgba(0, 0, 0, 0.08)'
       : '1px solid rgba(255, 255, 255, 0.1)',
+    boxShadow: isLightTheme
+      ? '0 2px 12px rgba(0, 0, 0, 0.08)'
+      : 'none',
     position: 'relative' as const,
   },
   cardTitle: {

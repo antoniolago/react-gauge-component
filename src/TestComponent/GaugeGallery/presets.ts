@@ -31,37 +31,6 @@ export const GAUGE_PRESETS: GaugePreset[] = [
     },
   },
   {
-    name: 'Temperature',
-    description: 'Temperature with inner ticks',
-    config: {
-      type: 'semicircle' as const,
-      minValue: -20,
-      maxValue: 50,
-      arc: {
-        width: 0.2,
-        padding: 0.005,
-        cornerRadius: 1,
-        subArcs: [
-          { limit: 0, color: '#00bcd4' },
-          { limit: 15, color: '#4caf50' },
-          { limit: 25, color: '#8bc34a' },
-          { limit: 35, color: '#ff9800' },
-          { color: '#f44336' },
-        ],
-      },
-      pointer: { type: 'blob' as const, animationDelay: 0 },
-      labels: {
-        valueLabel: { formatTextValue: (v: number) => `${v}°C`, style: { fontSize: '28px', fill: '#e0e0e0', fontWeight: 'bold' } },
-        tickLabels: {
-          type: 'inner' as const,
-          ticks: [{ value: -20 }, { value: 0 }, { value: 25 }, { value: 50 }],
-          defaultTickValueConfig: { formatTextValue: (v: number) => `${v}°`, style: { fontSize: '9px', fill: '#ccc' } },
-          defaultTickLineConfig: { color: '#888', length: 4, width: 1 },
-        },
-      },
-    },
-  },
-  {
     name: 'Battery',
     description: 'Battery with segment ticks',
     config: {
@@ -82,29 +51,6 @@ export const GAUGE_PRESETS: GaugePreset[] = [
         tickLabels: {
           type: 'outer' as const,
           defaultTickValueConfig: { style: { fontSize: '9px', fill: '#aaa' } },
-        },
-      },
-    },
-  },
-  {
-    name: 'CPU Usage',
-    description: 'CPU with inner percentage ticks',
-    config: {
-      type: 'radial' as const,
-      arc: {
-        width: 0.2,
-        nbSubArcs: 30,
-        colorArray: ['#00c853', '#ffeb3b', '#ff5722'],
-        padding: 0.01,
-      },
-      pointer: { type: 'needle' as const, color: '#e0e0e0', elastic: true, animationDelay: 0, width: 12 },
-      labels: {
-        valueLabel: { formatTextValue: (v: number) => `${v}%`, style: { fontSize: '24px', fill: '#e0e0e0', fontWeight: 'bold' } },
-        tickLabels: {
-          type: 'inner' as const,
-          ticks: [{ value: 0 }, { value: 50 }, { value: 100 }],
-          defaultTickValueConfig: { style: { fontSize: '10px', fill: '#bbb' } },
-          defaultTickLineConfig: { color: '#777', length: 5 },
         },
       },
     },
@@ -197,38 +143,6 @@ export const GAUGE_PRESETS: GaugePreset[] = [
     },
   },
   {
-    name: 'Barista Brew',
-    description: 'Coffee extraction timer',
-    config: {
-      type: 'grafana' as const,
-      minValue: 0,
-      maxValue: 40,
-      arc: {
-        width: 0.22,
-        padding: 0.02,
-        subArcs: [
-          { limit: 15, color: '#4a2c2a' },
-          { limit: 22, color: '#6f4e37' },
-          { limit: 30, color: '#a67c52' },
-          { color: '#d4a574' },
-        ],
-      },
-      pointer: { type: 'needle' as const, color: '#f5deb3', length: 0.75, width: 12 },
-      labels: {
-        valueLabel: { formatTextValue: (v: number) => `${Math.round(v)}s`, style: { fontSize: '26px', fill: '#d4a574', fontWeight: 'bold' } },
-        tickLabels: {
-          type: 'outer' as const,
-          ticks: [
-            { value: 0, valueConfig: { formatTextValue: () => '☕', style: { fontSize: '14px', fill: '#6f4e37' } } },
-            { value: 20, valueConfig: { formatTextValue: () => '✨', style: { fontSize: '14px', fill: '#c19a6b' } } },
-            { value: 40, valueConfig: { formatTextValue: () => '🔥', style: { fontSize: '14px', fill: '#d4a574' } } },
-          ],
-          defaultTickLineConfig: { color: '#8b6914', length: 5, width: 2 },
-        },
-      },
-    },
-  },
-  {
     name: 'Synthwave',
     description: 'Retro 80s neon style',
     config: {
@@ -256,96 +170,273 @@ export const GAUGE_PRESETS: GaugePreset[] = [
     },
   },
   {
-    name: 'Performance',
-    description: 'System performance meter',
+    name: 'Datacenter Temperature',
+    description: 'Server room monitoring with tooltips',
     config: {
       type: 'semicircle' as const,
+      minValue: 10,
+      maxValue: 35,
       arc: {
-        width: 0.12,
-        padding: 0.02,
+        width: 0.2,
+        padding: 0.005,
+        cornerRadius: 1,
         subArcs: [
-          { limit: 15, color: '#e91e63' },
-          { limit: 35, color: '#9c27b0' },
-          { limit: 55, color: '#673ab7' },
-          { limit: 75, color: '#3f51b5' },
-          { color: '#2196f3' },
+          { limit: 15, color: '#EA4228', showTick: true, tooltip: { text: 'Too low temperature!' } },
+          { limit: 17, color: '#F5CD19', showTick: true, tooltip: { text: 'Low temperature!' } },
+          { limit: 28, color: '#5BE12C', showTick: true, tooltip: { text: 'OK temperature!' } },
+          { limit: 30, color: '#F5CD19', showTick: true, tooltip: { text: 'High temperature!' } },
+          { color: '#EA4228', tooltip: { text: 'Too high temperature!' } },
         ],
       },
-      pointer: { type: 'blob' as const, color: '#e0e0e0', elastic: true, strokeWidth: 5 },
+      pointer: { type: 'needle' as const, color: '#345243', length: 0.8, width: 15, animationDelay: 200 },
       labels: {
-        valueLabel: { style: { fontSize: '26px', fill: '#e0e0e0', fontWeight: 'bold' } },
+        valueLabel: { formatTextValue: (v: number) => `${v}°C`, style: { fontSize: '28px', fill: '#e0e0e0', fontWeight: 'bold' } },
         tickLabels: {
           type: 'outer' as const,
-          ticks: [{ value: 0 }, { value: 25 }, { value: 50 }, { value: 75 }, { value: 100 }],
-          defaultTickValueConfig: { style: { fontSize: '9px', fill: '#bbb' } },
-          defaultTickLineConfig: { color: '#888', length: 4, width: 1 },
+          defaultTickValueConfig: { formatTextValue: (v: number) => `${v}°C`, style: { fontSize: '9px', fill: '#ccc' } },
+          ticks: [{ value: 13 }, { value: 22.5 }, { value: 32 }],
         },
       },
     },
   },
   {
-    name: 'Hacker Terminal',
-    description: 'Matrix-style green',
+    name: 'Network Speed',
+    description: 'Bandwidth with min/max values and formatted text',
     config: {
-      type: 'radial' as const,
+      type: 'semicircle' as const,
+      minValue: 0,
+      maxValue: 3000,
       arc: {
-        width: 0.08,
-        nbSubArcs: 40,
-        colorArray: ['#003300', '#00ff00'],
-        padding: 0.01,
+        nbSubArcs: 150,
+        colorArray: ['#EA4228', '#F5CD19', '#5BE12C'],
+        width: 0.2,
+        padding: 0.003,
       },
-      pointer: { type: 'needle' as const, color: '#00ff00', length: 0.9, width: 6 },
+      pointer: { type: 'needle' as const, color: '#e0e0e0' },
       labels: {
-        valueLabel: { formatTextValue: (v: number) => `0x${Math.round(v).toString(16).toUpperCase()}`, style: { fontSize: '20px', fill: '#00ff00', fontFamily: 'monospace' } },
+        valueLabel: { 
+          formatTextValue: (v: number) => {
+            if (v >= 1000) {
+              const mbits = v / 1000;
+              return Number.isInteger(mbits) ? `${mbits.toFixed(0)} mbit/s` : `${mbits.toFixed(1)} mbit/s`;
+            }
+            return `${v.toFixed(0)} kbit/s`;
+          }
+        },
         tickLabels: {
-          type: 'inner' as const,
-          ticks: [{ value: 0 }, { value: 50 }, { value: 100 }],
-          defaultTickValueConfig: { formatTextValue: (v: number) => `${v.toString(16)}`, style: { fontSize: '8px', fill: '#00ff00' } },
+          type: 'outer' as const,
+          ticks: [
+            { value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 },
+            { value: 600 }, { value: 700 }, { value: 800 }, { value: 900 }, { value: 1000 },
+            { value: 1500 }, { value: 2000 }, { value: 2500 }, { value: 3000 },
+          ],
+          defaultTickValueConfig: { 
+            formatTextValue: (v: number) => {
+              if (v >= 1000) {
+                const mbits = v / 1000;
+                return Number.isInteger(mbits) ? `${mbits.toFixed(0)} mbit/s` : `${mbits.toFixed(1)} mbit/s`;
+              }
+              return `${v.toFixed(0)} kbit/s`;
+            },
+            style: { fontSize: '8px', fill: '#aaa' } 
+          },
         },
       },
     },
   },
   {
-    name: 'Minimal White',
-    description: 'Clean minimalist design',
+    name: 'Elastic Blob',
+    description: 'Bouncy blob pointer animation',
     config: {
       type: 'semicircle' as const,
       arc: {
-        width: 0.05,
-        subArcs: [{ color: 'rgba(255,255,255,0.3)' }],
+        colorArray: ['#00FF15', '#FF2121'],
+        padding: 0.02,
+        subArcs: [{ limit: 40 }, { limit: 60 }, { limit: 70 }, {}, {}, {}, {}],
       },
-      pointer: { type: 'needle' as const, color: '#fff', length: 0.7, width: 8 },
+      pointer: { type: 'blob' as const, animationDelay: 0, elastic: true, strokeWidth: 7 },
       labels: {
-        valueLabel: { style: { fontSize: '32px', fill: '#fff', fontWeight: '300' } },
+        valueLabel: { style: { fontSize: '28px', fill: '#e0e0e0', fontWeight: 'bold' } },
         tickLabels: { hideMinMax: true },
       },
     },
   },
   {
-    name: 'Ocean Depth',
-    description: 'Deep sea pressure gauge',
+    name: 'Gradient Arrow',
+    description: 'Smooth gradient with arrow pointer',
+    config: {
+      type: 'semicircle' as const,
+      arc: {
+        gradient: true,
+        width: 0.15,
+        padding: 0,
+        subArcs: [
+          { limit: 5, color: '#EA4228' },
+          { limit: 20, color: '#F5CD19' },
+          { limit: 58, color: '#5BE12C' },
+          { limit: 75, color: '#F5CD19' },
+          { color: '#EA4228' },
+        ],
+      },
+      pointer: { type: 'arrow' as const, color: '#dfa810' },
+      labels: {
+        valueLabel: { style: { fontSize: '24px', fill: '#e0e0e0' } },
+        tickLabels: {
+          type: 'outer' as const,
+          ticks: [{ value: 0 }, { value: 20 }, { value: 40 }, { value: 60 }, { value: 80 }],
+          defaultTickValueConfig: { style: { fontSize: '9px', fill: '#aaa' } },
+        },
+      },
+    },
+  },
+  {
+    name: 'Radial Wide',
+    description: 'Wide radial arc with gradient',
+    config: {
+      type: 'radial' as const,
+      arc: {
+        colorArray: ['#00FF15', '#CE1F1F'],
+        nbSubArcs: 90,
+        padding: 0.01,
+        width: 0.4,
+      },
+      pointer: { type: 'needle' as const, color: '#e0e0e0', animationDelay: 0 },
+      labels: {
+        valueLabel: { style: { fontSize: '24px', fill: '#e0e0e0', fontWeight: 'bold' } },
+        tickLabels: {
+          type: 'inner' as const,
+          ticks: [{ value: 20 }, { value: 50 }, { value: 80 }, { value: 100 }],
+          defaultTickValueConfig: { style: { fontSize: '9px', fill: '#bbb' } },
+        },
+      },
+    },
+  },
+  {
+    name: 'Radial Elastic',
+    description: 'Elastic needle with inner ticks',
+    config: {
+      type: 'radial' as const,
+      arc: {
+        colorArray: ['#5BE12C', '#EA4228'],
+        subArcs: [{ limit: 10 }, { limit: 30 }, {}, {}, {}],
+        padding: 0.02,
+        width: 0.3,
+      },
+      pointer: { type: 'needle' as const, color: '#e0e0e0', elastic: true, animationDelay: 0 },
+      labels: {
+        valueLabel: { style: { fontSize: '26px', fill: '#e0e0e0', fontWeight: 'bold' } },
+        tickLabels: {
+          type: 'inner' as const,
+          ticks: [{ value: 20 }, { value: 40 }, { value: 60 }, { value: 80 }, { value: 100 }],
+          defaultTickValueConfig: { style: { fontSize: '9px', fill: '#bbb' } },
+        },
+      },
+    },
+  },
+  {
+    name: 'Grafana Interpolated',
+    description: 'Smooth color interpolation',
+    config: {
+      type: 'grafana' as const,
+      arc: {
+        colorArray: ['#1EFF00', '#CE1F1F'],
+        nbSubArcs: 80,
+        padding: 0.02,
+        width: 0.3,
+      },
+      pointer: { type: 'needle' as const, color: '#e0e0e0', animationDelay: 0 },
+      labels: {
+        valueLabel: { matchColorWithArc: true, style: { fontSize: '28px', fontWeight: 'bold' } },
+        tickLabels: { hideMinMax: true },
+      },
+    },
+  },
+  {
+    name: 'Pressure Gauge',
+    description: 'Industrial PSI meter',
+    config: {
+      type: 'radial' as const,
+      minValue: 0,
+      maxValue: 200,
+      arc: {
+        width: 0.15,
+        padding: 0.01,
+        subArcs: [
+          { limit: 50, color: '#2ecc71' },
+          { limit: 100, color: '#f1c40f' },
+          { limit: 150, color: '#e67e22' },
+          { color: '#e74c3c' },
+        ],
+      },
+      pointer: { type: 'needle' as const, color: '#ecf0f1', length: 0.85, width: 12 },
+      labels: {
+        valueLabel: { formatTextValue: (v: number) => `${Math.round(v)} PSI`, style: { fontSize: '20px', fill: '#ecf0f1', fontWeight: 'bold' } },
+        tickLabels: {
+          type: 'outer' as const,
+          ticks: [{ value: 0 }, { value: 50 }, { value: 100 }, { value: 150 }, { value: 200 }],
+          defaultTickValueConfig: { style: { fontSize: '9px', fill: '#bdc3c7' } },
+          defaultTickLineConfig: { color: '#7f8c8d', length: 4, width: 1 },
+        },
+      },
+    },
+  },
+  {
+    name: 'UV Index',
+    description: 'Sun exposure meter',
+    config: {
+      type: 'semicircle' as const,
+      minValue: 0,
+      maxValue: 11,
+      arc: {
+        width: 0.2,
+        padding: 0.01,
+        subArcs: [
+          { limit: 3, color: '#4caf50' },
+          { limit: 6, color: '#ffeb3b' },
+          { limit: 8, color: '#ff9800' },
+          { limit: 10, color: '#f44336' },
+          { color: '#9c27b0' },
+        ],
+      },
+      pointer: { type: 'blob' as const, elastic: true },
+      labels: {
+        valueLabel: { formatTextValue: (v: number) => v <= 2 ? 'Low' : v <= 5 ? 'Moderate' : v <= 7 ? 'High' : v <= 10 ? 'Very High' : 'Extreme', style: { fontSize: '22px', fill: '#e0e0e0', fontWeight: 'bold' } },
+        tickLabels: {
+          type: 'outer' as const,
+          ticks: [{ value: 0 }, { value: 3 }, { value: 6 }, { value: 8 }, { value: 11 }],
+          defaultTickValueConfig: { style: { fontSize: '10px', fill: '#aaa' } },
+        },
+      },
+    },
+  },
+  {
+    name: 'Decibel Meter',
+    description: 'Audio level indicator',
     config: {
       type: 'grafana' as const,
       minValue: 0,
-      maxValue: 1000,
+      maxValue: 120,
       arc: {
-        width: 0.25,
-        gradient: true,
+        width: 0.2,
+        padding: 0.01,
         subArcs: [
-          { limit: 200, color: '#74b9ff' },
-          { limit: 400, color: '#0984e3' },
-          { limit: 600, color: '#0652DD' },
-          { limit: 800, color: '#1B1464' },
-          { color: '#0c0c1d' },
+          { limit: 40, color: '#00e676' },
+          { limit: 70, color: '#76ff03' },
+          { limit: 85, color: '#ffea00' },
+          { limit: 100, color: '#ff9100' },
+          { color: '#ff1744' },
         ],
       },
-      pointer: { type: 'arrow' as const, color: '#74b9ff', width: 15 },
+      pointer: { type: 'arrow' as const, color: '#fff', width: 18 },
       labels: {
-        valueLabel: { formatTextValue: (v: number) => `${v}m`, matchColorWithArc: true, style: { fontWeight: 'bold' } },
+        valueLabel: { formatTextValue: (v: number) => `${Math.round(v)} dB`, matchColorWithArc: true, style: { fontWeight: 'bold' } },
         tickLabels: {
           type: 'outer' as const,
-          ticks: [{ value: 0 }, { value: 500 }, { value: 1000 }],
-          defaultTickValueConfig: { style: { fontSize: '10px', fill: '#74b9ff' } },
+          ticks: [
+            { value: 0, valueConfig: { formatTextValue: () => '🔇', style: { fontSize: '12px' } } },
+            { value: 60, valueConfig: { formatTextValue: () => '🔊', style: { fontSize: '12px' } } },
+            { value: 120, valueConfig: { formatTextValue: () => '🔥', style: { fontSize: '12px' } } },
+          ],
         },
       },
     },
@@ -410,19 +501,6 @@ export const SANDBOX_PRESETS: SandboxPreset[] = [
       pointer: { type: 'needle', color: '#EA4228' } 
     }, 
     value: 3500 
-  },
-  { 
-    icon: 'CPU', 
-    label: 'CPU', 
-    config: { 
-      type: 'semicircle', 
-      minValue: 0, 
-      maxValue: 100, 
-      arc: { width: 0.3, gradient: true, subArcs: [{ limit: 40, color: '#5BE12C' }, { limit: 60, color: '#F5CD19' }, { limit: 80, color: '#F58B19' }, { color: '#EA4228' }] }, 
-      labels: { valueLabel: { formatTextValue: (v: number) => `${v.toFixed(0)}%` }, tickLabels: { hideMinMax: true } }, 
-      pointer: { type: 'blob' } 
-    }, 
-    value: 67 
   },
   { 
     icon: 'GAS', 

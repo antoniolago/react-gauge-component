@@ -15,7 +15,7 @@ import { createStyles } from './styles';
  */
 const GaugeGallery: React.FC = () => {
   const [isLightTheme, setIsLightTheme] = useState(false);
-  const [autoAnimate, setAutoAnimate] = useState(true);
+  const [autoAnimate, setAutoAnimate] = useState(false);
   
   const themeStyles = createStyles(isLightTheme);
 
