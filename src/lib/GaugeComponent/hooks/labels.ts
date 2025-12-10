@@ -213,8 +213,9 @@ const applyTextStyles = (div: any, style: React.CSSProperties) => {
 export const addValueText = (gauge: Gauge) => {
   const { labels } = gauge.props;
   let value = gauge.props.value as number;
-  let valueLabel = labels?.valueLabel as ValueLabel;
-  let maxDecimalDigits = labels?.valueLabel?.maxDecimalDigits;
+  // Ensure valueLabel has default values if undefined
+  let valueLabel = (labels?.valueLabel || {}) as ValueLabel;
+  let maxDecimalDigits = valueLabel?.maxDecimalDigits;
   let floatValue = utils.floatingNumber(value, maxDecimalDigits);
   
   // Get arc color for the current value
@@ -261,8 +262,8 @@ export const addValueText = (gauge: Gauge) => {
   const maxLengthBeforeComputation = 4;
   const textLength = text?.length || 0;
   let fontRatio = textLength > maxLengthBeforeComputation ? maxLengthBeforeComputation / textLength * 1.5 : 1;
-  let valueFontSize = valueLabel?.style?.fontSize as string;
-  let valueTextStyle = { ...valueLabel.style };
+  let valueFontSize = (valueLabel?.style?.fontSize || '35px') as string;
+  let valueTextStyle = { ...(valueLabel.style || {}) };
   valueTextStyle.textAnchor = "middle";
   
   let widthFactor = gauge.props.type == GaugeType.Radial ? 0.003 : 0.003;
@@ -355,15 +356,17 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
       endAngle: 220
     },
     [GaugeType.Semicircle]: {
-      startAngle: 0,
-      endAngle: 180
+      startAngle: -6,
+      endAngle: 192
     },
     [GaugeType.Radial]: {
       startAngle: -42,
       endAngle: 266
     },
   };
-  let { startAngle, endAngle } = gaugeTypesAngles[gauge.props.type as string];
+  // Default to Grafana if type is undefined
+  const gaugeType = gauge.props.type || GaugeType.Grafana;
+  let { startAngle, endAngle } = gaugeTypesAngles[gaugeType as string];
 
   let angle = startAngle + (valuePercentage * 100) * endAngle / 100;
   let isValueLessThanHalf = valuePercentage < 0.5;

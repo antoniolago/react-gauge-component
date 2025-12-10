@@ -128,78 +128,114 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 <span>Random</span>
               </button>
               <button 
-                onClick={async () => {
-                  try {
-                    const text = await navigator.clipboard.readText();
-                    let parsed: any;
-                    
-                    // Check if it's JSX component syntax
-                    if (text.includes('<GaugeComponent') || text.includes('<Gauge')) {
-                      // Parse JSX props to object
-                      parsed = {};
+                onClick={() => {
+                  navigator.clipboard.readText().then(text => {
+                    try {
+                      let parsed: any = {};
                       
-                      // Extract props from JSX - handle both inline and multiline
-                      // Match prop="value", prop={value}, prop={number}, prop={{object}}
-                      const propRegex = /(\w+)=(?:{([^{}]*(?:{[^{}]*}[^{}]*)*)}|"([^"]*)"|'([^']*)')/g;
-                      let match;
-                      
-                      while ((match = propRegex.exec(text)) !== null) {
-                        const propName = match[1];
-                        const braceValue = match[2]; // Value inside {}
-                        const doubleQuoteValue = match[3]; // Value inside ""
-                        const singleQuoteValue = match[4]; // Value inside ''
-                        
-                        let propValue: any;
-                        
-                        if (doubleQuoteValue !== undefined) {
-                          propValue = doubleQuoteValue;
-                        } else if (singleQuoteValue !== undefined) {
-                          propValue = singleQuoteValue;
-                        } else if (braceValue !== undefined) {
-                          // Try to parse as JSON (handles objects, arrays, numbers, booleans)
-                          try {
-                            // Convert JS object syntax to JSON (add quotes to keys)
-                            let jsonStr = braceValue
-                              .replace(/(\w+):/g, '"$1":') // Add quotes to keys
-                              .replace(/'/g, '"') // Convert single quotes to double
-                              .replace(/,\s*}/g, '}') // Remove trailing commas
-                              .replace(/,\s*]/g, ']'); // Remove trailing commas in arrays
-                            propValue = JSON.parse(jsonStr);
-                          } catch {
-                            // If JSON parse fails, try eval for simple values
-                            try {
-                              // Handle arrow functions as strings
-                              if (braceValue.includes('=>')) {
-                                propValue = braceValue;
-                              } else {
-                                propValue = eval(`(${braceValue})`);
+                      // Check if it's JSX/hybrid format
+                      if (text.includes('<GaugeComponent') || text.includes('<Gauge')) {
+                        // Parse JSX props - match both prop={value} and prop="value"
+                        // This regex handles nested braces for objects/arrays
+                        const extractValue = (str: string, start: number): { value: string, end: number } => {
+                          if (str[start] === '"' || str[start] === "'") {
+                            const quote = str[start];
+                            let end = start + 1;
+                            while (end < str.length && str[end] !== quote) {
+                              if (str[end] === '\\') end++;
+                              end++;
+                            }
+                            return { value: str.slice(start + 1, end), end: end + 1 };
+                          }
+                          if (str[start] === '{') {
+                            let depth = 1;
+                            let end = start + 1;
+                            while (end < str.length && depth > 0) {
+                              if (str[end] === '{') depth++;
+                              if (str[end] === '}') depth--;
+                              if (str[end] === '"' || str[end] === "'") {
+                                const quote = str[end];
+                                end++;
+                                while (end < str.length && str[end] !== quote) {
+                                  if (str[end] === '\\') end++;
+                                  end++;
+                                }
                               }
-                            } catch {
-                              propValue = braceValue; // Keep as string
+                              end++;
+                            }
+                            return { value: str.slice(start + 1, end - 1), end };
+                          }
+                          return { value: '', end: start };
+                        };
+                        
+                        // Find all prop assignments
+                        const propPattern = /(\w+)=(?={|"|')/g;
+                        let match;
+                        while ((match = propPattern.exec(text)) !== null) {
+                          const propName = match[1];
+                          const startIdx = match.index + match[0].length; // Position of { or " or '
+                          const { value: rawValue } = extractValue(text, startIdx);
+                          
+                          let propValue: any = rawValue;
+                          
+                          // Try to parse the value
+                          if (text[startIdx] === '"' || text[startIdx] === "'") {
+                            propValue = rawValue; // String value
+                          } else {
+                            // If value contains functions, use eval directly (don't try JSON)
+                            const hasFunction = rawValue.includes('=>') || rawValue.includes('function');
+                            
+                            if (hasFunction) {
+                              // Use eval for objects with functions
+                              try {
+                                propValue = eval(`(${rawValue})`);
+                              } catch (e) {
+                                console.warn('Could not eval:', rawValue, e);
+                                propValue = rawValue; // Keep as string if eval fails
+                              }
+                            } else {
+                              // Try JSON parse for simple objects
+                              try {
+                                let jsonStr = rawValue
+                                  .replace(/(\w+)\s*:/g, '"$1":')
+                                  .replace(/'/g, '"')
+                                  .replace(/,(\s*[}\]])/g, '$1');
+                                propValue = JSON.parse(jsonStr);
+                              } catch {
+                                // Try eval for numbers, booleans, simple objects
+                                try {
+                                  propValue = eval(`(${rawValue})`);
+                                } catch {
+                                  propValue = rawValue;
+                                }
+                              }
                             }
                           }
+                          parsed[propName] = propValue;
                         }
-                        
-                        parsed[propName] = propValue;
+                      } else {
+                        // Try pure JSON
+                        parsed = JSON.parse(text);
                       }
-                    } else {
-                      // Try to parse as JSON
-                      parsed = JSON.parse(text);
+                      
+                      // Apply parsed config
+                      if (parsed.value !== undefined) {
+                        onValueChange(Number(parsed.value));
+                        delete parsed.value;
+                      }
+                      if (Object.keys(parsed).length > 0) {
+                        onConfigChange(parsed);
+                      }
+                    } catch (e) {
+                      console.error('Parse error:', e);
+                      alert('Could not parse clipboard. Use <GaugeComponent .../> JSX format.');
                     }
-                    
-                    // Extract value if present
-                    if (parsed.value !== undefined) {
-                      onValueChange(Number(parsed.value));
-                      delete parsed.value;
-                    }
-                    onConfigChange(parsed);
-                  } catch (e) {
-                    console.error('Parse error:', e);
-                    alert('Could not parse clipboard content. Supports both JSON and <GaugeComponent /> JSX syntax.');
-                  }
+                  }).catch(() => {
+                    alert('Could not read clipboard. Please allow clipboard access.');
+                  });
                 }} 
                 style={{ ...styles.toolBtn, padding: '4px 8px' }} 
-                title="Paste gauge code from clipboard (JSON or JSX format)" 
+                title="Paste gauge code from clipboard" 
                 type="button"
               >
                 <ClipboardPaste size={14} />
@@ -207,44 +243,63 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
               </button>
               <button 
                 onClick={() => {
-                  // Generate clean JSON for clipboard (easier to parse back)
-                  const cleanForExport = (obj: any): any => {
-                    if (obj === null || obj === undefined) return obj;
-                    if (typeof obj === 'function') {
-                      // Convert function to string representation
-                      return obj.toString();
-                    }
-                    if (Array.isArray(obj)) {
-                      return obj.map(cleanForExport);
-                    }
-                    if (typeof obj === 'object') {
-                      const result: any = {};
-                      for (const [k, v] of Object.entries(obj)) {
-                        if (v !== undefined) {
-                          result[k] = cleanForExport(v);
-                        }
-                      }
-                      return result;
-                    }
-                    return obj;
+                  // Generate proper JSX
+                  // Check if a string looks like JS code (object, array, function, number)
+                  const looksLikeCode = (s: string): boolean => {
+                    const trimmed = s.trim();
+                    return trimmed.startsWith('{') || trimmed.startsWith('[') || 
+                           trimmed.includes('=>') || trimmed.startsWith('function') ||
+                           /^-?\d+\.?\d*$/.test(trimmed) || trimmed === 'true' || trimmed === 'false';
                   };
                   
-                  const exportObj = { value, ...cleanForExport(config) };
-                  const json = JSON.stringify(exportObj, null, 2);
-                  navigator.clipboard.writeText(json);
+                  const formatVal = (v: any, ind: string = ''): string => {
+                    if (v === null || v === undefined) return String(v);
+                    if (typeof v === 'function') return v.toString();
+                    if (typeof v === 'string') {
+                      // If string looks like code (object, array, function), don't quote it
+                      if (looksLikeCode(v)) return v;
+                      return `"${v.replace(/"/g, '\\"')}"`;
+                    }
+                    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+                    if (Array.isArray(v)) {
+                      if (v.length === 0) return '[]';
+                      const items = v.map(x => formatVal(x, ind + '  '));
+                      if (items.join(', ').length < 60) return `[${items.join(', ')}]`;
+                      return `[\n${ind}    ${items.join(`,\n${ind}    `)}\n${ind}  ]`;
+                    }
+                    if (typeof v === 'object') {
+                      const entries = Object.entries(v).filter(([_, x]) => x !== undefined);
+                      if (entries.length === 0) return '{}';
+                      const formatted = entries.map(([k, x]) => `${k}: ${formatVal(x, ind + '  ')}`);
+                      if (formatted.join(', ').length < 50) return `{ ${formatted.join(', ')} }`;
+                      return `{\n${ind}    ${formatted.join(`,\n${ind}    `)}\n${ind}  }`;
+                    }
+                    return String(v);
+                  };
+                  
+                  const props: string[] = [`  value={${value}}`];
+                  Object.entries(config).forEach(([k, v]) => {
+                    if (v === undefined) return;
+                    // For strings that look like code, use {} not ""
+                    const isCodeString = typeof v === 'string' && looksLikeCode(v);
+                    const isSimpleString = typeof v === 'string' && !isCodeString;
+                    props.push(isSimpleString ? `  ${k}="${v}"` : `  ${k}={${formatVal(v, '  ')}}`);
+                  });
+                  
+                  const jsx = `<GaugeComponent\n${props.join('\n')}\n/>`;
+                  navigator.clipboard.writeText(jsx);
                   
                   // Visual feedback
                   const btn = document.activeElement as HTMLButtonElement;
-                  const originalText = btn?.querySelector('span')?.textContent;
                   if (btn?.querySelector('span')) {
                     btn.querySelector('span')!.textContent = 'Copied!';
                     setTimeout(() => {
-                      if (btn?.querySelector('span')) btn.querySelector('span')!.textContent = originalText || 'Copy';
+                      if (btn?.querySelector('span')) btn.querySelector('span')!.textContent = 'Copy';
                     }, 1000);
                   }
                 }} 
                 style={{ ...styles.toolBtn, padding: '4px 8px' }} 
-                title="Copy as <GaugeComponent /> JSX code" 
+                title="Copy as JSX code" 
                 type="button"
               >
                 <Code size={14} />
@@ -252,16 +307,9 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
               </button>
               </div>
             </Col>
-          </Row>
-          </div>
-        </Col>
-        <Col xs={8} md={10}>
-        <Row className="g-0">
-
-        <Col xs={12} md={4}>
-          <div style={{ ...styles.toolbarGroup, height: '100%' }}>
+        <Col xs={12} md={12}>
             <span style={styles.groupLabel}><Package size={14} /> Presets</span>
-            <div style={styles.buttonRow}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
               
               {SANDBOX_PRESETS.map((p) => (
                 <button 
@@ -275,10 +323,15 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 </button>
               ))}
             </div>
+        </Col>
+          </Row>
           </div>
         </Col>
+        <Col xs={8} md={10}>
+        <Row className="g-0">
 
-        <Col xs={12} md={4}>
+
+        <Col xs={12} md={8}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
             <span style={styles.groupLabel}><Layers size={14} /> Arc & Colors</span>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -404,13 +457,13 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
                   <input 
                     type="range" 
-                    min="0.02" 
-                    max="0.8" 
+                    min="0.01" 
+                    max="1" 
                     step="0.01" 
                     value={cfg?.arc?.width ?? 0.2} 
                     onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, width: Number(e.target.value) } })} 
                     style={{ ...styles.slider, flex: 1 }} 
-                    title="Arc width - thickness of the gauge arc"
+                    title="Arc width - thickness of the gauge arc (can exceed normal limits)"
                   />
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
@@ -418,7 +471,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   <input 
                     type="range" 
                     min="0" 
-                    max="20" 
+                    max="50" 
                     step="1" 
                     value={cfg?.arc?.cornerRadius ?? 7} 
                     onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, cornerRadius: Number(e.target.value) } })} 
@@ -431,7 +484,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   <input 
                     type="range" 
                     min="0" 
-                    max="0.15" 
+                    max="0.5" 
                     step="0.005" 
                     value={cfg?.arc?.padding ?? 0.05} 
                     onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, padding: Number(e.target.value) } })} 
@@ -522,7 +575,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                   <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Length</span>
                   <input 
-                    type="range" min="0.4" max="1" step="0.05" 
+                    type="range" min="0.1" max="2" step="0.05" 
                     value={cfg?.pointer?.length ?? 0.8} 
                     onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, length: Number(e.target.value) } })} 
                     style={{ ...styles.slider, flex: 1 }} 
@@ -532,13 +585,39 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                   <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
                   <input 
-                    type="range" min="4" max="30" step="1" 
+                    type="range" min="1" max="60" step="1" 
                     value={cfg?.pointer?.width ?? 15} 
                     onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, width: Number(e.target.value) } })} 
                     style={{ ...styles.slider, flex: 1 }} 
                     title="Pointer width" 
                   />
                 </div>
+                {/* Arrow offset slider - only show for arrow type */}
+                {cfg?.pointer?.type === 'arrow' && (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                    <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Offset</span>
+                    <input 
+                      type="range" min="0" max="1.5" step="0.02" 
+                      value={cfg?.pointer?.arrowOffset ?? 0.72} 
+                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, arrowOffset: Number(e.target.value) } })} 
+                      style={{ ...styles.slider, flex: 1 }} 
+                      title="Arrow offset - radial position (lower = closer to center, higher = beyond arc)" 
+                    />
+                  </div>
+                )}
+                {/* Blob offset slider - only show for blob type */}
+                {cfg?.pointer?.type === 'blob' && (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                    <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Offset</span>
+                    <input 
+                      type="range" min="-0.5" max="1.5" step="0.02" 
+                      value={cfg?.pointer?.blobOffset ?? 0.5} 
+                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, blobOffset: Number(e.target.value) } })} 
+                      style={{ ...styles.slider, flex: 1 }} 
+                      title="Blob offset - radial position (0 = inner edge, 0.5 = center, 1 = outer edge)" 
+                    />
+                  </div>
+                )}
               </div>
               {/* Color controls */}
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>

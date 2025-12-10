@@ -20,7 +20,11 @@ export interface PointerProps {
     /** Animation delay in ms */
     animationDelay?: number,
     /** Stroke width of the pointer */
-    strokeWidth?: number
+    strokeWidth?: number,
+    /** Arrow offset - controls radial position of arrow pointer (0-1, default 0.72). Lower = closer to center, higher = closer to arc edge */
+    arrowOffset?: number,
+    /** Blob offset - controls radial position of blob pointer (0-1, default 0.5 = centered on arc). Lower = inner edge, higher = outer edge */
+    blobOffset?: number
 }
 export interface PointerRef {
     element: any,
@@ -70,5 +74,7 @@ export const defaultPointer: PointerProps = {
     hide: false,
     animationDuration: 3000,
     animationDelay: 100,
-    strokeWidth: 8
+    strokeWidth: 8,
+    arrowOffset: 0.72,
+    blobOffset: 0.5
 }

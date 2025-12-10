@@ -15,10 +15,15 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
   const useGradient = Math.random() > 0.97; // 3% chance of gradient
   const hidePointer = Math.random() > 0.85;
   
-  // Arc width: allow full range from thin to thick
-  const arcWidth = Math.random() > 0.3 
-    ? 0.1 + Math.random() * 0.25  // Normal range
-    : 0.3 + Math.random() * 0.2;   // Thick arcs (30% chance)
+  // Arc width: variety from very thin to thick
+  const arcWidthRand = Math.random();
+  const arcWidth = arcWidthRand < 0.15
+    ? 0.05 + Math.random() * 0.05  // Very thin (5-10%) - 15% chance
+    : arcWidthRand < 0.4
+      ? 0.1 + Math.random() * 0.1  // Thin (10-20%) - 25% chance
+      : arcWidthRand < 0.75
+        ? 0.15 + Math.random() * 0.15  // Medium (15-30%) - 35% chance
+        : 0.3 + Math.random() * 0.25;   // Thick (30-55%) - 25% chance
   
   // Corner radius: sometimes add rounded corners
   const cornerRadius = Math.random() > 0.6 ? Math.floor(Math.random() * 10) : 0;
@@ -52,7 +57,69 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
     return tickOptions[Math.floor(Math.random() * tickOptions.length)];
   };
   
-  // SubArc count variation
+  // Arc mode: subArcs with limits (like fuel gauge) vs colorArray with nbSubArcs
+  const useSubArcsWithLimits = Math.random() > 0.6; // 40% chance of custom subArc limits
+  
+  // Generate subArcs with custom limits (unequal segments)
+  const generateSubArcsWithLimits = () => {
+    const { minValue, maxValue } = randomRange;
+    const range = maxValue - minValue;
+    const colors = randomTheme.colors;
+    
+    // Different limit patterns
+    const patterns = [
+      // Warning zone at start (like fuel gauge - red when low)
+      () => {
+        const warningLimit = minValue + range * (0.15 + Math.random() * 0.15); // 15-30%
+        return [
+          { limit: warningLimit, color: colors[0], showTick: true },
+          { color: colors[colors.length - 1] }
+        ];
+      },
+      // Warning zone at end (like speed - red when high)
+      () => {
+        const safeLimit = minValue + range * (0.7 + Math.random() * 0.15); // 70-85%
+        return [
+          { limit: safeLimit, color: colors[colors.length - 1], showTick: true },
+          { color: colors[0] }
+        ];
+      },
+      // Three zones (low/mid/high)
+      () => {
+        const lowLimit = minValue + range * (0.25 + Math.random() * 0.1);
+        const midLimit = minValue + range * (0.6 + Math.random() * 0.15);
+        return [
+          { limit: lowLimit, color: colors[0], showTick: true },
+          { limit: midLimit, color: colors[Math.floor(colors.length / 2)] || colors[1], showTick: true },
+          { color: colors[colors.length - 1] }
+        ];
+      },
+      // Performance zones (green/yellow/red)
+      () => {
+        const goodLimit = minValue + range * (0.4 + Math.random() * 0.2);
+        const warnLimit = minValue + range * (0.75 + Math.random() * 0.1);
+        return [
+          { limit: goodLimit, color: '#5BE12C', showTick: true },
+          { limit: warnLimit, color: '#F5CD19', showTick: true },
+          { color: '#EA4228' }
+        ];
+      },
+      // Inverse performance (red/yellow/green)
+      () => {
+        const badLimit = minValue + range * (0.2 + Math.random() * 0.1);
+        const warnLimit = minValue + range * (0.5 + Math.random() * 0.15);
+        return [
+          { limit: badLimit, color: '#EA4228', showTick: true },
+          { limit: warnLimit, color: '#F5CD19', showTick: true },
+          { color: '#5BE12C' }
+        ];
+      },
+    ];
+    
+    return patterns[Math.floor(Math.random() * patterns.length)]();
+  };
+  
+  // SubArc count variation (for colorArray mode)
   // When using exact color count, colors will be distinct
   // When using multiples or large numbers, colors interpolate smoothly
   const nbSubArcs = Math.random() > 0.5 
@@ -86,6 +153,40 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
     ...(ticks.length > 0 ? { ticks } : {}),
   } : { hideMinMax: true };
   
+  // Determine arc configuration mode
+  const getArcConfig = () => {
+    if (useGradient) {
+      // Gradient mode - smooth color transition
+      return {
+        gradient: true,
+        subArcs: gradientSubArcs,
+        nbSubArcs: undefined,
+        colorArray: undefined,
+        padding: undefined,
+      };
+    } else if (useSubArcsWithLimits) {
+      // SubArcs with limits - like fuel gauge, performance zones
+      return {
+        gradient: false,
+        subArcs: generateSubArcsWithLimits(),
+        nbSubArcs: undefined,
+        colorArray: undefined,
+        padding: padding > 0.015 ? padding * 0.5 : padding, // Less padding for few segments
+      };
+    } else {
+      // ColorArray with nbSubArcs - many segments with interpolated colors
+      return {
+        gradient: false,
+        subArcs: [],
+        nbSubArcs: nbSubArcs,
+        colorArray: [...randomTheme.colors],
+        padding: padding,
+      };
+    }
+  };
+  
+  const arcConfig = getArcConfig();
+  
   return {
     type: randomType,
     minValue: randomRange.minValue,
@@ -93,12 +194,7 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
     arc: {
       width: arcWidth,
       cornerRadius,
-      // Clear ALL arc-related props and set fresh ones to avoid conflicts
-      gradient: useGradient,
-      subArcs: useGradient ? gradientSubArcs : [],
-      nbSubArcs: useGradient ? undefined : nbSubArcs,
-      colorArray: useGradient ? undefined : [...randomTheme.colors],
-      padding: useGradient ? undefined : padding,
+      ...arcConfig,
     },
     pointer: hidePointer ? { hide: true } : {
       type: randomPointer,
@@ -122,26 +218,57 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
 };
 
 /**
- * Stringify config for clipboard copy
+ * Format a value for JSX output
+ */
+const formatJsxValue = (val: any, indent: string = ''): string => {
+  if (val === null) return 'null';
+  if (val === undefined) return 'undefined';
+  if (typeof val === 'function') {
+    // Keep function as-is
+    return val.toString();
+  }
+  if (typeof val === 'string') return `"${val.replace(/"/g, '\\"')}"`;
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+  if (Array.isArray(val)) {
+    if (val.length === 0) return '[]';
+    const items = val.map(v => formatJsxValue(v, indent + '  '));
+    // Keep arrays compact if they're simple
+    const isSimple = val.every(v => typeof v !== 'object' || v === null);
+    if (isSimple && items.join(', ').length < 60) {
+      return `[${items.join(', ')}]`;
+    }
+    return `[\n${indent}    ${items.join(`,\n${indent}    `)}\n${indent}  ]`;
+  }
+  if (typeof val === 'object') {
+    const entries = Object.entries(val).filter(([_, v]) => v !== undefined);
+    if (entries.length === 0) return '{}';
+    const formatted = entries.map(([k, v]) => `${k}: ${formatJsxValue(v, indent + '  ')}`);
+    // Keep objects compact if they're simple
+    if (formatted.join(', ').length < 50) {
+      return `{ ${formatted.join(', ')} }`;
+    }
+    return `{\n${indent}    ${formatted.join(`,\n${indent}    `)}\n${indent}  }`;
+  }
+  return String(val);
+};
+
+/**
+ * Stringify config for clipboard copy - outputs proper JSX
  */
 export const stringifyConfig = (config: any, value: number): string => {
-  const replacer = (_key: string, val: any) => {
-    if (typeof val === 'function') {
-      const fnStr = val.toString();
-      return fnStr.includes('=>') ? fnStr : `function ${fnStr}`;
-    }
-    return val;
-  };
+  const props: string[] = [];
+  props.push(`  value={${value}}`);
   
-  try {
-    const cleanConfig = JSON.parse(JSON.stringify(config, replacer));
-    return `<GaugeComponent
-  value={${value}}
-  ${JSON.stringify(cleanConfig, null, 2).slice(1, -1).trim().replace(/\n/g, '\n  ')}
-/>`;
-  } catch {
-    return `<GaugeComponent value={${value}} {...config} />`;
-  }
+  Object.entries(config).forEach(([key, val]) => {
+    if (val === undefined) return;
+    if (typeof val === 'string') {
+      props.push(`  ${key}="${val}"`);
+    } else {
+      props.push(`  ${key}={${formatJsxValue(val, '  ')}}`);
+    }
+  });
+  
+  return `<GaugeComponent\n${props.join('\n')}\n/>`;
 };
 
 /**

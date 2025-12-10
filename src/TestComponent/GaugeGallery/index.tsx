@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { SandboxEditor, GalleryGrid } from './components';
 import { createStyles } from './styles';
+import { Github, Sun, Moon } from 'lucide-react';
 
 /**
  * GaugeGallery - Interactive showcase for the GaugeComponent library
@@ -21,50 +22,46 @@ const GaugeGallery: React.FC = () => {
 
   return (
     <div style={themeStyles.container}>
-      {/* Header */}
-      <header style={themeStyles.header}>
-        <h1 style={themeStyles.title}>React Gauge Component</h1>
-        <p style={themeStyles.subtitle}>
-          A highly customizable gauge component for React applications
-        </p>
-        
-        {/* Controls */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => setIsLightTheme(!isLightTheme)}
-            style={{
-              padding: '10px 20px',
-              borderRadius: '20px',
-              border: 'none',
-              background: 'rgba(255, 255, 255, 0.1)',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
-            type="button"
-          >
-            {isLightTheme ? '🌙 Dark' : '☀️ Light'}
-          </button>
+      {/* Fixed Header */}
+      <header style={themeStyles.fixedHeader}>
+        <div style={themeStyles.headerContent}>
+          <h1 style={themeStyles.headerTitle}>React Gauge Component</h1>
           
-          <button
-            onClick={() => setAutoAnimate(!autoAnimate)}
-            style={{
-              padding: '10px 20px',
-              borderRadius: '20px',
-              border: 'none',
-              background: autoAnimate 
-                ? 'linear-gradient(90deg, #00d9ff, #00ff88)' 
-                : 'rgba(255, 255, 255, 0.1)',
-              color: autoAnimate ? '#1a1a2e' : '#fff',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
-            type="button"
-          >
-            {autoAnimate ? '⏸️ Pause' : '▶️ Animate'}
-          </button>
+          <div style={themeStyles.headerControls}>
+            <label style={themeStyles.animateCheckbox}>
+              <input
+                type="checkbox"
+                checked={autoAnimate}
+                onChange={(e) => setAutoAnimate(e.target.checked)}
+                style={{ marginRight: '6px', accentColor: '#3b82f6' }}
+              />
+              Animate
+            </label>
+            
+            <button
+              onClick={() => setIsLightTheme(!isLightTheme)}
+              style={themeStyles.iconButton}
+              title={isLightTheme ? 'Switch to dark mode' : 'Switch to light mode'}
+              type="button"
+            >
+              {isLightTheme ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+            
+            <a
+              href="https://github.com/antoniolago/react-gauge-component"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={themeStyles.iconButton}
+              title="View on GitHub"
+            >
+              <Github size={18} />
+            </a>
+          </div>
         </div>
       </header>
+      
+      {/* Spacer for fixed header */}
+      <div style={{ height: '56px' }} />
 
       {/* Sandbox Editor */}
       <SandboxEditor isLightTheme={isLightTheme} />

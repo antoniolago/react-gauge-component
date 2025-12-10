@@ -281,58 +281,67 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         
         // After first pass, measure the actual bounds and trigger second pass
         if (currentPass === 1) {
-            // Use requestAnimationFrame to ensure DOM is updated before measuring
-            requestAnimationFrame(() => {
-                const gElement = gauge.g.current?.node();
-                if (gElement) {
-                    try {
-                        const bbox = gElement.getBBox();
-                        gauge.measuredBounds!.current = {
-                            width: bbox.width,
-                            height: bbox.height,
-                            x: bbox.x,
-                            y: bbox.y
-                        };
-                        
-                        if (CONSTANTS.debugLogs) {
-                            console.log('[renderChart] Measured bounds:', gauge.measuredBounds!.current);
-                        }
-                        
-                        // Hide old content before pass 2 (don't remove yet - remove after new content is ready)
-                        gauge.svg.current.selectAll("g.gauge-content-old")
-                            .style("visibility", "hidden")
-                            .style("opacity", "0");
-                        
-                        // Trigger second pass
-                        gauge.renderPass!.current = 2;
-                        renderChart(gauge, true);
-                        
-                        // Now remove old content after new content is rendered
-                        gauge.svg.current.selectAll("g.gauge-content-old").remove();
-                        
-                        // Reset for next resize
-                        gauge.renderPass!.current = 1;
-                    } catch (e) {
-                        // getBBox can fail if element is not rendered - still make gauge visible
-                        if (CONSTANTS.debugLogs) {
-                            console.log('[renderChart] Could not measure bounds:', e);
-                        }
-                        // Make new content visible and remove old
+            // Measure bounds synchronously - the element exists even if hidden
+            const gElement = gauge.g.current?.node();
+            if (gElement) {
+                try {
+                    // Force layout calculation to get accurate bbox
+                    const bbox = gElement.getBBox();
+                    gauge.measuredBounds!.current = {
+                        width: bbox.width,
+                        height: bbox.height,
+                        x: bbox.x,
+                        y: bbox.y
+                    };
+                    
+                    if (CONSTANTS.debugLogs) {
+                        console.log('[renderChart] Measured bounds:', gauge.measuredBounds!.current);
+                    }
+                    
+                    // Hide old content before pass 2
+                    gauge.svg.current.selectAll("g.gauge-content-old")
+                        .style("visibility", "hidden")
+                        .style("opacity", "0");
+                    
+                    // Trigger second pass synchronously - no rAF delay
+                    gauge.renderPass!.current = 2;
+                    renderChart(gauge, true);
+                    
+                    // Remove old content after new content is rendered
+                    gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                    
+                    // Reset for next resize
+                    gauge.renderPass!.current = 1;
+                } catch (e) {
+                    // getBBox can fail if element is not rendered
+                    if (CONSTANTS.debugLogs) {
+                        console.log('[renderChart] Could not measure bounds:', e);
+                    }
+                    // Make visible anyway using rAF as fallback
+                    requestAnimationFrame(() => {
+                        gauge.svg.current
+                            ?.style("visibility", "visible")
+                            .style("opacity", "1");
                         gauge.g.current
                             ?.style("visibility", "visible")
                             .style("opacity", "1");
                         gauge.svg.current.selectAll("g.gauge-content-old").remove();
                         gauge.renderPass!.current = 1;
-                    }
-                } else {
-                    // gElement not available - make new content visible and remove old
+                    });
+                }
+            } else {
+                // gElement not available - use rAF as fallback
+                requestAnimationFrame(() => {
+                    gauge.svg.current
+                        ?.style("visibility", "visible")
+                        .style("opacity", "1");
                     gauge.g.current
                         ?.style("visibility", "visible")
                         .style("opacity", "1");
                     gauge.svg.current.selectAll("g.gauge-content-old").remove();
                     gauge.renderPass!.current = 1;
-                }
-            });
+                });
+            }
         }
     } else {
         // Non-resize updates (only data/props changed)

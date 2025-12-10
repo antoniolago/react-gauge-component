@@ -9,9 +9,72 @@ export const createStyles = (isLightTheme: boolean) => ({
     background: isLightTheme 
       ? 'linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%)'
       : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-    padding: '40px 20px',
+    padding: '20px 20px 40px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     color: isLightTheme ? '#333' : '#fff',
+  },
+  fixedHeader: {
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '48px',
+    background: isLightTheme 
+      ? 'rgba(255, 255, 255, 0.95)'
+      : 'rgba(15, 23, 42, 0.95)',
+    backdropFilter: 'blur(8px)',
+    borderBottom: isLightTheme 
+      ? '1px solid rgba(0, 0, 0, 0.1)'
+      : '1px solid rgba(255, 255, 255, 0.1)',
+    zIndex: 1000,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerContent: {
+    width: '100%',
+    maxWidth: '1400px',
+    padding: '0 20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 700,
+    background: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    margin: 0,
+  },
+  headerControls: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  animateCheckbox: {
+    display: 'flex',
+    alignItems: 'center',
+    fontSize: '0.85rem',
+    fontWeight: 500,
+    color: isLightTheme ? '#333' : 'rgba(255, 255, 255, 0.9)',
+    cursor: 'pointer',
+  },
+  iconButton: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '8px',
+    border: 'none',
+    background: isLightTheme 
+      ? 'rgba(0, 0, 0, 0.06)'
+      : 'rgba(255, 255, 255, 0.1)',
+    color: isLightTheme ? '#333' : '#fff',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.15s ease',
+    textDecoration: 'none',
   },
   header: {
     textAlign: 'center' as const,

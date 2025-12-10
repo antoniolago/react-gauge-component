@@ -53,7 +53,12 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                 };
             });
     } else {
-        updatePointer(currentPercent, gauge);
+        // For Grafana, update the arc fill; for others, update pointer position
+        if (gauge.props.type == GaugeType.Grafana) {
+            arcHooks.updateGrafanaArc(gauge, currentPercent);
+        } else {
+            updatePointer(currentPercent, gauge);
+        }
     }
 };
 const setupContext = (gauge: Gauge): PointerContext => {
@@ -128,10 +133,11 @@ const initPointer = (gauge: Gauge, useCurrentPercent: boolean = false) => {
     } else if (pointer.type == PointerType.Blob) {
         // For blob, stroke color always matches arc color
         const strokeColor = arcHooks.getColorByPercentage(currentPercent, gauge);
+        // Blob circle centered at (0,0) so translation places it exactly on target
         gauge.pointer.current.element
             .append("circle")
-            .attr("cx", centerPoint[0])
-            .attr("cy", centerPoint[1])
+            .attr("cx", 0)
+            .attr("cy", 0)
             .attr("r", pointerRadius)
             .attr("fill", pointer.baseColor)
             .attr("stroke", strokeColor)
@@ -191,15 +197,42 @@ const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gaug
             translatePointer(0, 0, gauge);
         },
         [PointerType.Arrow]: () => {
-            let { x, y } = getCoordByValue(value, gauge, "inner", 0, 0.70);
-            x -= 1;
-            y += pointerRadius-3;
+            // Position arrow based on arrowOffset (0 = center, 1 = outer edge of arc)
+            const arrowOffset = pointer.arrowOffset ?? 0.72;
+            const innerR = gauge.dimensions.current.innerRadius;
+            const outerR = gauge.dimensions.current.outerRadius;
+            // Arrow offset is relative to inner radius toward outer
+            const targetRadius = innerR * arrowOffset;
+            
+            // Use the SAME angles as the arc drawing
+            const { startAngle, endAngle } = gauge.dimensions.current.angles;
+            const angle = startAngle + progress * (endAngle - startAngle);
+            
+            // Convert d3 angle to x,y coordinates
+            const x = targetRadius * Math.sin(angle);
+            const y = -targetRadius * Math.cos(angle);
+            
             translatePointer(x, y, gauge);
         },
         [PointerType.Blob]: () => {
-            // Position blob at the center of the arc width
-            let { x, y } = getCoordByValue(value, gauge, "between", 0, 1);
-            // No offset needed - blob should be centered on the arc
+            // Position blob based on blobOffset (0 = inner edge, 0.5 = center, 1 = outer edge)
+            const blobOffset = pointer.blobOffset ?? 0.5;
+            const innerR = gauge.dimensions.current.innerRadius;
+            const outerR = gauge.dimensions.current.outerRadius;
+            // Interpolate between inner and outer radius based on offset
+            const targetRadius = innerR + (outerR - innerR) * blobOffset;
+            
+            // Use the SAME angles as the arc drawing (from gauge.dimensions.current.angles)
+            // These are d3 angles: 0 at top, positive clockwise
+            const { startAngle, endAngle } = gauge.dimensions.current.angles;
+            const angle = startAngle + progress * (endAngle - startAngle);
+            
+            // Convert d3 angle to x,y coordinates
+            // In d3 convention: 0 is at top, angles go clockwise
+            // x = radius * sin(angle), y = -radius * cos(angle)
+            const x = targetRadius * Math.sin(angle);
+            const y = -targetRadius * Math.cos(angle);
+            
             translatePointer(x, y, gauge);
         },
     };
@@ -245,34 +278,43 @@ const calculatePointerTipPosition = (gauge: Gauge, percent: number): { x: number
     const pointer = gauge.props.pointer as PointerProps;
     const pointerType = pointer.type as PointerType;
     const { centerPoint, pathLength, pointerRadius } = gauge.pointer.current.context;
+    const innerR = gauge.dimensions.current.innerRadius;
+    const outerR = gauge.dimensions.current.outerRadius;
     
-    let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -42);
-    let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 223);
-    const angle = startAngle + (percent) * (endAngle - startAngle);
+    // Use the SAME angles as the arc drawing
+    const { startAngle, endAngle } = gauge.dimensions.current.angles;
+    const angle = startAngle + percent * (endAngle - startAngle);
     
-    // For Arrow type, we need to add the translation offset to the local tip position
+    // For Arrow type, calculate position based on arrow offset
     if (pointerType === PointerType.Arrow) {
-        const minValue = gauge.props.minValue as number;
-        const maxValue = gauge.props.maxValue as number;
-        const value = minValue + percent * (maxValue - minValue);
-        // Get the translation position of the arrow element
-        let { x: transX, y: transY } = getCoordByValue(value, gauge, "inner", 0, 0.70);
-        transX -= 1;
-        transY += pointerRadius - 3;
-        // Calculate local tip position (topPoint from calculatePointerPath)
-        const localTipX = centerPoint[0] - pathLength * Math.cos(angle);
-        const localTipY = centerPoint[1] - pathLength * Math.sin(angle);
-        // Return global position = translation + local tip
+        const arrowOffset = pointer.arrowOffset ?? 0.72;
+        const targetRadius = innerR * arrowOffset;
+        
+        // Arrow translation position
+        const transX = targetRadius * Math.sin(angle);
+        const transY = -targetRadius * Math.cos(angle);
+        
+        // Local tip position (from calculatePointerPath, using old angle convention for path shape)
+        let pathStartAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -42);
+        let pathEndAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 223);
+        const pathAngle = pathStartAngle + percent * (pathEndAngle - pathStartAngle);
+        const localTipX = centerPoint[0] - pathLength * Math.cos(pathAngle);
+        const localTipY = centerPoint[1] - pathLength * Math.sin(pathAngle);
+        
         return {
             x: transX + localTipX,
             y: transY + localTipY,
         };
     }
     
-    // For Needle type, calculate from center using path length
+    // For Needle type, calculate from center using path length (uses old angle convention for path)
+    let pathStartAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -42);
+    let pathEndAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 223);
+    const pathAngle = pathStartAngle + percent * (pathEndAngle - pathStartAngle);
+    
     return {
-        x: centerPoint[0] - pathLength * Math.cos(angle),
-        y: centerPoint[1] - pathLength * Math.sin(angle),
+        x: centerPoint[0] - pathLength * Math.cos(pathAngle),
+        y: centerPoint[1] - pathLength * Math.sin(pathAngle),
     };
 };
 

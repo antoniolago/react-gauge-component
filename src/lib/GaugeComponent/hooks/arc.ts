@@ -108,11 +108,13 @@ export const setArcData = (gauge: Gauge) => {
       onMouseClick: subArcs[i].onClick
     }));
   } else {
-    const arcValue = maxValue / nbArcsToDisplay;
+    // Calculate arc value based on the RANGE, not maxValue
+    const range = maxValue - minValue;
+    const arcValue = range / nbArcsToDisplay;
 
     gauge.arcData.current = Array.from({ length: nbArcsToDisplay }, (_, i) => ({
       value: arcValue,
-      limit: (i + 1) * arcValue,
+      limit: minValue + (i + 1) * arcValue,  // Start from minValue
       color: colorArray[i],
       tooltip: undefined,
     }));
