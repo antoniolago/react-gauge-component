@@ -66,12 +66,16 @@ const setupContext = (gauge: Gauge): PointerContext => {
     var pointerRadius = getPointerRadius(gauge)
     let length = pointer.type == PointerType.Needle ? pointerLength : 0.2;
     let typesWithPath = [PointerType.Needle, PointerType.Arrow];
+    
+    // Handle prevValue properly - use nullish coalescing to allow 0 values
+    const prevValue = gauge.prevProps?.current.value ?? minValue;
+    
     let pointerContext: PointerContext = {
         centerPoint: [0, -pointerRadius / 2],
         pointerRadius: getPointerRadius(gauge),
         pathLength: gauge.dimensions.current.outerRadius * length,
         currentPercent: utils.calculatePercentage(minValue, maxValue, value as number),
-        prevPercent: utils.calculatePercentage(minValue, maxValue, gauge.prevProps?.current.value || minValue),
+        prevPercent: utils.calculatePercentage(minValue, maxValue, prevValue),
         prevProgress: 0,
         pathStr: "",
         shouldDrawPath: typesWithPath.includes(pointer.type as PointerType),
@@ -140,7 +144,7 @@ const initPointer = (gauge: Gauge, useCurrentPercent: boolean = false) => {
         }
     }
     //Translate the pointer starting point of the arc
-    setPointerPosition(pointerRadius, value, gauge);
+    setPointerPosition(pointerRadius, startPercent, gauge);
 }
 const updatePointer = (percentage: number, gauge: Gauge) => {
     let pointer = gauge.props.pointer as PointerProps;

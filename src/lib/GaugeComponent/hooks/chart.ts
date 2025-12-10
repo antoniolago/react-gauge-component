@@ -131,6 +131,8 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             );
             // Skip to showing the result directly (no need for pass 2)
             gauge.renderPass!.current = 2;
+            // Remove old content immediately since we're going straight to final render
+            gauge.svg.current.selectAll("g.gauge-content-old").remove();
         } else if (currentPass === 1) {
             // PASS 1: First render - use tight layout with minimal padding
             // This will likely clip some content, but we'll measure and fix it
@@ -290,12 +292,17 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                             console.log('[renderChart] Measured bounds:', gauge.measuredBounds!.current);
                         }
                         
-                        // Remove old content groups BEFORE pass 2 to prevent viewBox distortion
-                        gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                        // Hide old content before pass 2 (don't remove yet - remove after new content is ready)
+                        gauge.svg.current.selectAll("g.gauge-content-old")
+                            .style("visibility", "hidden")
+                            .style("opacity", "0");
                         
                         // Trigger second pass
                         gauge.renderPass!.current = 2;
                         renderChart(gauge, true);
+                        
+                        // Now remove old content after new content is rendered
+                        gauge.svg.current.selectAll("g.gauge-content-old").remove();
                         
                         // Reset for next resize
                         gauge.renderPass!.current = 1;
