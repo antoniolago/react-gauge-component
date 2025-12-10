@@ -14,6 +14,8 @@ This is forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/re
   <li>Added arrow pointer type</li>
   <li>Added tooltips on hover for the arcs</li>
   <li>Added arc with linear gradient colors</li>
+  <li>Added interactive input mode with pointer drag functionality</li>
+  <li>Added custom React content rendering for value labels</li>
   <li>Full responsive</li>
   <li>All render flow fixed and optimized avoiding unecessary resource usage. Performance test, left is original: https://user-images.githubusercontent.com/45375617/239447916-217630e7-8e34-4a3e-a59f-7301471b9855.png</li>
   <li>Refactored project structure to separated files</li>
@@ -346,6 +348,83 @@ const kbitsToMbits = (value) => {
 ```
 </details>
 
+### Interactive Gauge (Input Mode)
+Use the `onValueChange` callback to enable interactive mode where users can drag the pointer or click on the arc to set values.
+
+<details>
+  <summary>Show Interactive Gauge code</summary>
+
+  ### Interactive Gauge with Drag
+  
+```jsx
+import { useState } from 'react';
+
+function InteractiveGauge() {
+  const [value, setValue] = useState(50);
+  
+  return (
+    <div>
+      <GaugeComponent
+        value={value}
+        type="semicircle"
+        arc={{
+          width: 0.2,
+          subArcs: [
+            { limit: 40, color: '#5BE12C' },
+            { limit: 60, color: '#F5CD19' },
+            { color: '#EA4228' }
+          ]
+        }}
+        pointer={{
+          type: "needle",
+          elastic: true
+        }}
+        onValueChange={(newValue) => setValue(newValue)}
+      />
+      <p>Current Value: {value.toFixed(1)}</p>
+    </div>
+  );
+}
+```
+</details>
+
+### Custom React Content in Value Label
+Use `renderContent` to render custom React components instead of plain text for the value label.
+
+<details>
+  <summary>Show Custom Content code</summary>
+
+  ### Custom React Content
+  
+```jsx
+<GaugeComponent
+  value={75}
+  type="semicircle"
+  labels={{
+    valueLabel: {
+      renderContent: (value, arcColor) => (
+        <div style={{ textAlign: 'center' }}>
+          <span style={{ fontSize: '2rem', color: arcColor, fontWeight: 'bold' }}>
+            {value}
+          </span>
+          <span style={{ fontSize: '0.8rem', color: '#888' }}>km/h</span>
+        </div>
+      ),
+      contentWidth: 100,
+      contentHeight: 60
+    }
+  }}
+  arc={{
+    subArcs: [
+      { limit: 50, color: '#5BE12C' },
+      { limit: 80, color: '#F5CD19' },
+      { color: '#EA4228' }
+    ]
+  }}
+/>
+```
+</details>
+
 # API
 <h2>Props:</h2>
 <ul>
@@ -360,6 +439,7 @@ const kbitsToMbits = (value) => {
    <li><code>value: number</code>: The value of the gauge. Default: <code>33</code>.</li>
    <li><code>minValue: number</code>: The minimum value of the gauge. Default: <code>0</code>.</li>
    <li><code>maxValue: number</code>: The maximum value of the gauge. Default: <code>100</code>.</li>
+   <li><code>onValueChange: (value: number) => void</code>: Callback fired when value changes via pointer drag or arc click. When provided, enables interactive input mode where users can drag the pointer or click on the arc to set a value. Default: <code>undefined</code>.</li>
    <li><code>arc: object</code>: The arc of the gauge.
     <ul>
       <li><code>cornerRadius: number</code>: The corner radius of the arc. Default: <code>7</code>.</li>
@@ -420,9 +500,14 @@ const kbitsToMbits = (value) => {
             <ul>
                <li><code>matchColorWithArc: boolean</code>: when enabled valueLabel color will match current arc color</li>
                <li><code>formatTextValue: (value: any) => string</code>: The format of the value label. Default: <code>undefined</code>.</li>
+               <li><code>renderContent: (value: number, arcColor: string) => React.ReactNode</code>: Render a custom React element instead of text for the value label. When provided, this takes precedence over <code>formatTextValue</code>. Default: <code>undefined</code>.</li>
                <li><code>style: React.CSSProperties</code>: Overrides valueLabel styles. Default: <code>{fontSize: "35px", fill: "#fff", textShadow: "black 1px 1px 0px, black 0px 0px 2.5em, black 0px 0px 0.2em"}</code></li>
                <li><code>maxDecimalDigits: number</code>: this is the number of decimal digits the value will round up to. Default: <code>2</code></li>
                <li><code>hide: boolean</code>: Whether or not to hide the value label. Default: <code>false</code>.</li>
+               <li><code>offsetX: number</code>: Horizontal offset for the value label position. Positive moves right. Default: <code>0</code>.</li>
+               <li><code>offsetY: number</code>: Vertical offset for the value label position. Positive moves down. Default: <code>0</code>.</li>
+               <li><code>contentWidth: number</code>: Width of the foreignObject container for custom React content. Only used when <code>renderContent</code> is provided. Default: <code>100</code>.</li>
+               <li><code>contentHeight: number</code>: Height of the foreignObject container for custom React content. Only used when <code>renderContent</code> is provided. Default: <code>50</code>.</li>
             </ul></li>
           <li><code>tickLabels: object</code> The tickLabels of the gauge.
             <ul>
@@ -460,8 +545,9 @@ const kbitsToMbits = (value) => {
 
 ##### Colors for the chart
 
-The 'colorArray' prop could either be specified as an array of hex color values, such as `["#FF0000", "#00FF00", "#0000FF"]` where
-each arc would a color in the array (colors are assigned from left to right). If that is the case, then the **length of the array**
-must match the **number of levels** in the arc.
-If the number of colors does not match the number of levels, then the **first** and the **last** color from the colors array will
-be selected and the arcs will get colors that are interpolated between those. The interpolation is done using [d3.interpolateHsl](https://github.com/d3/d3-interpolate#interpolateHsl).
+The `colorArray` prop can be specified as an array of hex color values, such as `["#FF0000", "#00FF00", "#0000FF"]` where
+each arc would get a color in the array (colors are assigned from left to right). 
+
+If the **length of the array matches** the **number of levels** in the arc, each segment gets its exact color.
+
+If the number of colors does not match the number of levels, the colors will be **interpolated through ALL colors** in the array sequentially. For example, with colors `["#FF0000", "#FFFF00", "#00FF00"]` and 9 segments, the gauge will smoothly transition from red → yellow → green. The interpolation is done using [d3.interpolateHsl](https://github.com/d3/d3-interpolate#interpolateHsl).

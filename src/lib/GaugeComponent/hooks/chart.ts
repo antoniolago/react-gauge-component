@@ -46,7 +46,9 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     } else {
         // First render or no existing SVG - create new
         gauge.container.current.select("svg").remove();
-        gauge.svg.current = gauge.container.current.append("svg");
+        gauge.svg.current = gauge.container.current.append("svg")
+            .style("visibility", "hidden")  // Start hidden to prevent pass 1 flash
+            .style("opacity", "0");
         gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
         gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
     }
@@ -222,14 +224,18 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         const shouldHideNewContent = currentPass === 1 && gauge.renderPass!.current === 1;
         const hasOldContent = !gauge.svg.current.selectAll("g.gauge-content-old").empty();
         
+        // Only show SVG if we have old content to display OR we're on pass 2
+        // On first render pass 1, keep SVG hidden until pass 2
+        const shouldShowSvg = hasOldContent || !shouldHideNewContent;
+        
         gauge.svg.current
             .attr("width", "100%")
             .attr("height", "100%")
             .style("max-width", "100%")
             .style("max-height", "100%")
             .style("display", "block")
-            .style("visibility", "visible")
-            .style("opacity", "1")
+            .style("visibility", shouldShowSvg ? "visible" : "hidden")
+            .style("opacity", shouldShowSvg ? "1" : "0")
             .attr('preserveAspectRatio', 'xMidYMid meet');
         
         // Only update viewBox when showing new content (pass 2) or if no old content exists
