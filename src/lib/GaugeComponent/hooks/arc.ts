@@ -75,13 +75,11 @@ export const setArcData = (gauge: Gauge) => {
         limit = utils.getCurrentGaugeValueByPercentage(subArcLength + lastSubArcLimitPercentageAcc, gauge);
       } else if (subArc.limit == undefined) {
         subArcRange = lastSubArcLimit;
-        let remainingPercentageEquallyDivided: number | undefined = undefined;
         let remainingSubArcs = arc?.subArcs?.slice(i);
-        let remainingPercentage = (1 - utils.calculatePercentage(minValue, maxValue, lastSubArcLimit)) * 100;
-        if (!remainingPercentageEquallyDivided) {
-          remainingPercentageEquallyDivided = (remainingPercentage / Math.max(remainingSubArcs?.length || 1, 1)) / 100;
-        }
-        limit = lastSubArcLimit + (remainingPercentageEquallyDivided * 100);
+        let remainingPercentage = 1 - utils.calculatePercentage(minValue, maxValue, lastSubArcLimit);
+        let remainingPercentageEquallyDivided = remainingPercentage / Math.max(remainingSubArcs?.length || 1, 1);
+        // Convert from percentage space to value space correctly
+        limit = utils.getCurrentGaugeValueByPercentage(lastSubArcLimitPercentageAcc + remainingPercentageEquallyDivided, gauge);
         subArcLength = remainingPercentageEquallyDivided;
       } else {
         subArcRange = limit - lastSubArcLimit;
