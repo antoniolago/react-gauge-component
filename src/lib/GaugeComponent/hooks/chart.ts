@@ -19,11 +19,38 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         renderChart(gauge, false);
         return;
     }
-    gauge.container.current.select("svg").remove();
-    gauge.svg.current = gauge.container.current.append("svg");
-    gauge.g.current = gauge.svg.current.append("g"); //Used for margins
-    gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
-    //gauge.outerDougnut.current = gauge.g.current.append("g").attr("class", "doughnut");
+    
+    // Invalidate measured bounds when layout-affecting props change
+    // This forces a proper two-pass recalculation for accurate sizing
+    const layoutPropsChanged = 
+        JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc) ||
+        JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer) ||
+        JSON.stringify(gauge.prevProps.current.labels) !== JSON.stringify(gauge.props.labels) ||
+        gauge.prevProps.current.type !== gauge.props.type ||
+        gauge.prevProps.current.marginInPercent !== gauge.props.marginInPercent;
+    
+    if (layoutPropsChanged && gauge.measuredBounds) {
+        gauge.measuredBounds.current = null;
+    }
+    
+    // For subsequent renders (not first), reuse the existing SVG and create new groups
+    // IMPORTANT: Don't clear old content yet - keep it visible until new layout is ready
+    const existingSvg = gauge.container.current.select("svg");
+    if (!existingSvg.empty() && !isFirstRender) {
+        gauge.svg.current = existingSvg;
+        // Mark old groups for removal after new content is ready
+        gauge.svg.current.selectAll("g.gauge-content").classed("gauge-content-old", true);
+        // Create new groups (will be positioned correctly after measurement)
+        gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
+        gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
+    } else {
+        // First render or no existing SVG - create new
+        gauge.container.current.select("svg").remove();
+        gauge.svg.current = gauge.container.current.append("svg");
+        gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
+        gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
+    }
+    
     calculateAngles(gauge);
     gauge.pieChart.current
         .value((d: any) => d.value)
@@ -67,6 +94,8 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             if (CONSTANTS.debugLogs) {
                 console.log('[renderChart] Skipping render - invalid dimensions:', { width: parentWidth, height: parentHeight });
             }
+            // Ensure gauge is visible even if we skip (it may have been hidden before)
+            gauge.svg.current?.style("visibility", "visible").style("opacity", "1");
             return;
         }
         
@@ -167,10 +196,17 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                 0.005 // 0.5% tolerance
             );
             if (stable) {
-                // Layout hasn't changed significantly, skip re-render
+                // Layout hasn't changed significantly, skip re-render but ensure visibility
                 if (CONSTANTS.debugLogs) {
                     console.log('[renderChart] Layout stable, skipping re-render');
                 }
+                // Still ensure gauge is visible even when skipping
+                gauge.svg.current
+                    ?.style("visibility", "visible")
+                    .style("opacity", "1");
+                gauge.g.current
+                    ?.style("visibility", "visible")
+                    .style("opacity", "1");
                 return;
             }
         }
@@ -180,19 +216,32 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         coordinateSystem.updateDimensionsFromLayout(dimensions.current, layout);
         
         // Configure SVG with proper viewBox and dimensions
-        // Only hide during first pass if this is the absolute first render (no measured bounds yet)
-        // On resize, keep the previous content visible to avoid flicker
-        const isAbsoluteFirstRender = currentPass === 1 && !gauge.measuredBounds?.current;
+        // SVG is always visible - we hide/show the content groups instead
+        const shouldHideNewContent = currentPass === 1 && gauge.renderPass!.current === 1;
+        const hasOldContent = !gauge.svg.current.selectAll("g.gauge-content-old").empty();
+        
         gauge.svg.current
             .attr("width", "100%")
             .attr("height", "100%")
             .style("max-width", "100%")
             .style("max-height", "100%")
             .style("display", "block")
-            .style("visibility", isAbsoluteFirstRender ? "hidden" : "visible")
-            .style("opacity", isAbsoluteFirstRender ? "0" : "1")
-            .attr("viewBox", layout.viewBox.toString())
+            .style("visibility", "visible")
+            .style("opacity", "1")
             .attr('preserveAspectRatio', 'xMidYMid meet');
+        
+        // Only update viewBox when showing new content (pass 2) or if no old content exists
+        // This prevents distortion of old content during pass 1 measurement
+        if (!shouldHideNewContent || !hasOldContent) {
+            gauge.svg.current.attr("viewBox", layout.viewBox.toString());
+        }
+        
+        // Hide NEW content during pass 1 (old content stays visible)
+        // Show new content during pass 2
+        // Use visibility:hidden to ensure element is truly invisible (opacity:0 can still cause artifacts)
+        gauge.g.current
+            .style("visibility", shouldHideNewContent ? "hidden" : "visible")
+            .style("opacity", shouldHideNewContent ? "0" : "1");
         
         // Position the main gauge group at the calculated center
         gauge.g.current
@@ -226,7 +275,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         if (currentPass === 1) {
             // Use requestAnimationFrame to ensure DOM is updated before measuring
             requestAnimationFrame(() => {
-                const gElement = gauge.g.current.node();
+                const gElement = gauge.g.current?.node();
                 if (gElement) {
                     try {
                         const bbox = gElement.getBBox();
@@ -241,6 +290,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                             console.log('[renderChart] Measured bounds:', gauge.measuredBounds!.current);
                         }
                         
+                        // Remove old content groups BEFORE pass 2 to prevent viewBox distortion
+                        gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                        
                         // Trigger second pass
                         gauge.renderPass!.current = 2;
                         renderChart(gauge, true);
@@ -248,11 +300,24 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                         // Reset for next resize
                         gauge.renderPass!.current = 1;
                     } catch (e) {
-                        // getBBox can fail if element is not rendered
+                        // getBBox can fail if element is not rendered - still make gauge visible
                         if (CONSTANTS.debugLogs) {
                             console.log('[renderChart] Could not measure bounds:', e);
                         }
+                        // Make new content visible and remove old
+                        gauge.g.current
+                            ?.style("visibility", "visible")
+                            .style("opacity", "1");
+                        gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                        gauge.renderPass!.current = 1;
                     }
+                } else {
+                    // gElement not available - make new content visible and remove old
+                    gauge.g.current
+                        ?.style("visibility", "visible")
+                        .style("opacity", "1");
+                    gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                    gauge.renderPass!.current = 1;
                 }
             });
         }

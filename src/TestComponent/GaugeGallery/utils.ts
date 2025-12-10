@@ -12,9 +12,16 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
   const randomPointer = pointerTypes[Math.floor(Math.random() * pointerTypes.length)];
   const randomTheme = COLOR_THEMES[Math.floor(Math.random() * COLOR_THEMES.length)];
   const randomRange = RANDOM_RANGES[Math.floor(Math.random() * RANDOM_RANGES.length)];
-  const useGradient = Math.random() > 0.4;
-  const arcWidth = 0.1 + Math.random() * 0.25;
+  const useGradient = Math.random() > 0.97; // 3% chance of gradient
   const hidePointer = Math.random() > 0.85;
+  
+  // Arc width: allow full range from thin to thick
+  const arcWidth = Math.random() > 0.3 
+    ? 0.1 + Math.random() * 0.25  // Normal range
+    : 0.3 + Math.random() * 0.2;   // Thick arcs (30% chance)
+  
+  // Corner radius: sometimes add rounded corners
+  const cornerRadius = Math.random() > 0.6 ? Math.floor(Math.random() * 10) : 0;
   
   const numColors = randomTheme.colors.length;
   
@@ -24,20 +31,74 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
     color,
   }));
   
+  // Generate random tick intervals
+  const generateTicks = (): { value: number }[] => {
+    const { minValue, maxValue } = randomRange;
+    const range = maxValue - minValue;
+    const numTicks = Math.floor(Math.random() * 4) + 3;
+    const tickOptions: { value: number }[][] = [
+      [], // No ticks
+      [{ value: minValue }, { value: maxValue }], // Min/Max only
+      [{ value: minValue }, { value: minValue + range * 0.5 }, { value: maxValue }], // Min/Mid/Max
+      // Custom intervals
+      Array.from({ length: numTicks }, (_: unknown, i: number) => ({
+        value: minValue + (range * i) / (numTicks - 1)
+      })),
+      // Random positions
+      Array.from({ length: Math.floor(Math.random() * 5) + 2 }, () => ({
+        value: Math.round(minValue + Math.random() * range)
+      })).sort((a, b) => a.value - b.value),
+    ];
+    return tickOptions[Math.floor(Math.random() * tickOptions.length)];
+  };
+  
+  // SubArc count variation: from few segments to many
+  const nbSubArcs = Math.random() > 0.7 
+    ? 3 + Math.floor(Math.random() * 5)   // Few segments (3-7)
+    : Math.random() > 0.5 
+      ? 10 + Math.floor(Math.random() * 20) // Medium (10-30)
+      : 30 + Math.floor(Math.random() * 120); // Many segments (30-150)
+  
+  // Padding variation
+  const padding = Math.random() > 0.7 
+    ? 0  // No padding
+    : Math.random() > 0.5 
+      ? 0.002 + Math.random() * 0.008  // Small padding
+      : 0.01 + Math.random() * 0.03;    // Large padding
+  
+  // Pointer customization
+  const pointerLength = 0.5 + Math.random() * 0.4; // 0.5 to 0.9
+  const pointerWidth = 8 + Math.floor(Math.random() * 20); // 8 to 28
+  const pointerBaseColor = Math.random() > 0.5 
+    ? '#ffffff' 
+    : randomTheme.colors[Math.floor(Math.random() * randomTheme.colors.length)];
+  
+  // Value label font size variation
+  const fontSize = 18 + Math.floor(Math.random() * 30); // 18 to 48
+  
+  // Ticks configuration
+  const ticks = generateTicks();
+  const ticksConfig = Math.random() > 0.4 ? {
+    type: Math.random() > 0.5 ? ('outer' as const) : ('inner' as const),
+    hideMinMax: Math.random() > 0.5,
+    ...(ticks.length > 0 ? { ticks } : {}),
+  } : { hideMinMax: true };
+  
   return {
     type: randomType,
     minValue: randomRange.minValue,
     maxValue: randomRange.maxValue,
     arc: {
       width: arcWidth,
+      cornerRadius,
       ...(useGradient ? {
         gradient: true,
         subArcs: gradientSubArcs,
       } : {
         gradient: false,
-        nbSubArcs: 12 + Math.floor(Math.random() * 30),
+        nbSubArcs,
         colorArray: randomTheme.colors,
-        padding: 0.008 + Math.random() * 0.015,
+        padding,
         subArcs: [],
       }),
     },
@@ -45,18 +106,19 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
       type: randomPointer,
       elastic: Math.random() > 0.5,
       animationDelay: Math.random() > 0.5 ? 0 : 150,
-      color: Math.random() > 0.5 ? '#fff' : randomTheme.colors[randomTheme.colors.length - 1],
+      length: pointerLength,
+      width: pointerWidth,
+      color: Math.random() > 0.6 ? undefined : (Math.random() > 0.5 ? '#fff' : randomTheme.colors[randomTheme.colors.length - 1]),
+      baseColor: pointerBaseColor,
     },
     labels: {
       valueLabel: {
         formatTextValue: randomRange.format,
         matchColorWithArc: Math.random() > 0.4,
-        style: { fontSize: '22px', fontWeight: 'bold' },
+        style: { fontSize: `${fontSize}px`, fontWeight: 'bold' },
+        hide: Math.random() > 0.9, // 10% chance to hide value label
       },
-      tickLabels: Math.random() > 0.5 ? {
-        type: Math.random() > 0.5 ? ('outer' as const) : ('inner' as const),
-        hideMinMax: Math.random() > 0.6,
-      } : { hideMinMax: true },
+      tickLabels: ticksConfig,
     },
   };
 };

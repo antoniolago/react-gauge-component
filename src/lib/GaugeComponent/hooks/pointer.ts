@@ -87,10 +87,12 @@ const initPointer = (gauge: Gauge) => {
         gauge.pointer.current.path = gauge.pointer.current.element.append("path").attr("d", gauge.pointer.current.context.pathStr).attr("fill", initialColor);
         
         // Add grab handle at pointer tip if onValueChange is provided
+        // Note: The handle will be raised to top after all elements are rendered in drawPointer
         if (gauge.props.onValueChange) {
             const tipPosition = calculatePointerTipPosition(gauge, prevPercent || currentPercent);
             const handleRadius = Math.max(6, pointerRadius * 0.8);
-            gauge.pointer.current.element
+            // Append to the main g element (not pointer element) so it renders on top of everything
+            gauge.g.current
                 .append("circle")
                 .attr("class", "pointer-grab-handle")
                 .attr("cx", tipPosition.x)
@@ -109,7 +111,7 @@ const initPointer = (gauge: Gauge) => {
             .attr("cx", centerPoint[0])
             .attr("cy", centerPoint[1])
             .attr("r", pointerRadius)
-            .attr("fill", initialColor);
+            .attr("fill", pointer.baseColor || initialColor);
     } else if (pointer.type == PointerType.Blob) {
         // For blob, stroke color always matches arc color
         const strokeColor = arcHooks.getColorByPercentage(currentPercent, gauge);
@@ -138,12 +140,22 @@ const updatePointer = (percentage: number, gauge: Gauge) => {
     if(shouldDrawPath && gauge.props.type != GaugeType.Grafana) {
         gauge.pointer.current.path.attr("d", calculatePointerPath(gauge, percentage));
         
-        // Update grab handle position if it exists
-        const grabHandle = gauge.pointer.current.element.select(".pointer-grab-handle");
+        // Update grab handle position if it exists (grab handle is on g.current, not pointer element)
+        const grabHandle = gauge.g.current.select(".pointer-grab-handle");
         if (!grabHandle.empty()) {
             const tipPosition = calculatePointerTipPosition(gauge, percentage);
             grabHandle.attr("cx", tipPosition.x).attr("cy", tipPosition.y);
         }
+    }
+    // Update arrow color - use fixed color if set, otherwise match arc color
+    if(pointer.type == PointerType.Arrow && gauge.pointer.current.path) {
+        let currentColor = pointer.color || arcHooks.getColorByPercentage(percentage, gauge);
+        gauge.pointer.current.path.attr("fill", currentColor);
+    }
+    // Update needle color as well
+    if(pointer.type == PointerType.Needle && shouldDrawPath && gauge.pointer.current.path) {
+        let currentColor = pointer.color || arcHooks.getColorByPercentage(percentage, gauge);
+        gauge.pointer.current.path.attr("fill", currentColor);
     }
     if(pointer.type == PointerType.Blob) {
         // Use getColorByPercentage which handles both gradient and non-gradient modes
@@ -217,10 +229,34 @@ const calculatePointerPath = (gauge: Gauge, percent: number) => {
  * Calculate the position of the pointer tip for the grab handle
  */
 const calculatePointerTipPosition = (gauge: Gauge, percent: number): { x: number, y: number } => {
-    const { centerPoint, pathLength } = gauge.pointer.current.context;
+    const pointer = gauge.props.pointer as PointerProps;
+    const pointerType = pointer.type as PointerType;
+    const { centerPoint, pathLength, pointerRadius } = gauge.pointer.current.context;
+    
     let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -42);
     let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 223);
     const angle = startAngle + (percent) * (endAngle - startAngle);
+    
+    // For Arrow type, we need to add the translation offset to the local tip position
+    if (pointerType === PointerType.Arrow) {
+        const minValue = gauge.props.minValue as number;
+        const maxValue = gauge.props.maxValue as number;
+        const value = minValue + percent * (maxValue - minValue);
+        // Get the translation position of the arrow element
+        let { x: transX, y: transY } = getCoordByValue(value, gauge, "inner", 0, 0.70);
+        transX -= 1;
+        transY += pointerRadius - 3;
+        // Calculate local tip position (topPoint from calculatePointerPath)
+        const localTipX = centerPoint[0] - pathLength * Math.cos(angle);
+        const localTipY = centerPoint[1] - pathLength * Math.sin(angle);
+        // Return global position = translation + local tip
+        return {
+            x: transX + localTipX,
+            y: transY + localTipY,
+        };
+    }
+    
+    // For Needle type, calculate from center using path length
     return {
         x: centerPoint[0] - pathLength * Math.cos(angle),
         y: centerPoint[1] - pathLength * Math.sin(angle),
@@ -235,7 +271,11 @@ const getPointerRadius = (gauge: Gauge) => {
 
 export const translatePointer = (x: number, y: number, gauge: Gauge) => gauge.pointer.current.element.attr("transform", "translate(" + x + ", " + y + ")");
 export const addPointerElement = (gauge: Gauge) => gauge.pointer.current.element = gauge.g.current.append("g").attr("class", "pointer");
-export const clearPointerElement = (gauge: Gauge) => gauge.pointer.current.element.selectAll("*").remove();
+export const clearPointerElement = (gauge: Gauge) => {
+    gauge.pointer.current.element.selectAll("*").remove();
+    // Also remove grab handle which is on g.current
+    gauge.g.current.select(".pointer-grab-handle").remove();
+};
 
 /**
  * Calculate value from mouse/touch position on the gauge arc
@@ -274,75 +314,37 @@ export const getValueFromPosition = (gauge: Gauge, clientX: number, clientY: num
     const dx = svgX - centerX;
     const dy = svgY - centerY;
     
-    // The gauge pointer path uses: -pathLength * cos(angle), -pathLength * sin(angle)
-    // This means:
-    //   angle = 0    → pointer points LEFT  (x = -pathLength, y = 0)
-    //   angle = 90°  → pointer points DOWN  (x = 0, y = -pathLength... wait, sin(90°)=1, so y = -pathLength)
-    //   angle = 180° → pointer points RIGHT (x = pathLength, y = 0)
+    // D3 arc uses angles where:
+    //   0 = TOP (12 o'clock), positive angles go CLOCKWISE
+    //   -PI/2 = LEFT (9 o'clock)
+    //   PI/2 = RIGHT (3 o'clock)
+    //   PI or -PI = BOTTOM (6 o'clock)
     //
-    // So the gauge coordinate system has:
-    //   0° = LEFT, 90° = UP (negative Y in SVG), 180° = RIGHT
-    //
-    // But wait, the path calculation is: topPoint = [centerX - pathLength * cos(angle), centerY - pathLength * sin(angle)]
-    // At angle=0: [-pathLength, 0] = LEFT ✓
-    // At angle=90° (PI/2): [0, -pathLength] = UP (negative Y) ✓
-    // At angle=180° (PI): [pathLength, 0] = RIGHT ✓
-    //
-    // So to convert from mouse position to gauge angle:
-    // We need to find the angle such that (-cos(angle), -sin(angle)) points from center to mouse
-    // That means: -cos(angle) = dx/dist, -sin(angle) = dy/dist
-    // So: cos(angle) = -dx/dist, sin(angle) = -dy/dist
-    // angle = atan2(-dy, -dx) = atan2(dy, dx) + PI
+    // To convert from mouse (dx, dy) to D3 arc angle:
+    // atan2(dx, -dy) gives angle from top, clockwise positive
     
-    let angle = Math.atan2(-dy, -dx);
+    let angle = Math.atan2(dx, -dy);
     
-    // Normalize to 0 to 2*PI range for easier handling
-    if (angle < 0) angle += 2 * Math.PI;
+    // Get the actual gauge angles from dimensions
+    const { startAngle, endAngle } = gauge.dimensions.current.angles;
     
-    // Define gauge angle ranges (in radians)
-    let startAngle: number, endAngle: number;
+    // Calculate the dead zone (where there's no arc)
+    // The arc goes from startAngle to endAngle
+    // The dead zone is from endAngle to startAngle (going the long way around)
+    const arcSpan = endAngle - startAngle;
+    const deadZoneSpan = 2 * Math.PI - arcSpan;
+    const deadZoneCenter = endAngle + deadZoneSpan / 2;
     
-    if (gauge.props.type === GaugeType.Semicircle) {
-        // Semicircle: 0° to 180° (0 to PI radians)
-        // 0° = left edge, 180° = right edge
-        startAngle = 0;
-        endAngle = Math.PI;
-        
-        // For semicircle, valid angles are 0 to PI
-        // Angles > PI are in the bottom half - clamp to nearest edge
-        if (angle > Math.PI) {
-            // Bottom half - clamp to nearest edge
-            if (angle < 1.5 * Math.PI) {
-                angle = Math.PI; // Closer to right
-            } else {
-                angle = 0; // Closer to left
-            }
-        }
-    } else {
-        // Radial/Grafana: -42° to 223°
-        // Convert to radians: -42° = -0.733 rad, 223° = 3.89 rad
-        // In 0-2PI space: -42° = 2PI - 0.733 = 5.55 rad
-        startAngle = utils.degToRad(-42);  // -0.733 rad
-        endAngle = utils.degToRad(223);    // 3.89 rad
-        
-        // The arc spans 265° from upper-left through bottom to upper-right
-        // Dead zone is from 223° to 318° (in 0-2PI: 3.89 to 5.55)
-        
-        // First, handle angles in the dead zone (top of gauge)
-        const deadZoneStart = endAngle;  // 223° = 3.89 rad
-        const deadZoneEnd = 2 * Math.PI + startAngle;  // 318° = 5.55 rad
-        
-        if (angle > deadZoneStart && angle < deadZoneEnd) {
-            // In dead zone - snap to nearest valid edge
-            const midDeadZone = (deadZoneStart + deadZoneEnd) / 2;
-            angle = angle < midDeadZone ? deadZoneStart : deadZoneEnd;
-        }
-        
-        // Convert angle to the -42° to 223° range for percentage calculation
-        if (angle > Math.PI) {
-            // Angle is in upper-left quadrant (e.g., 318° = 5.55 rad → -42° = -0.733 rad)
-            angle = angle - 2 * Math.PI;
-        }
+    // Normalize angle to be relative to deadZoneCenter for easier comparison
+    let relativeAngle = angle - deadZoneCenter;
+    // Normalize to -PI to PI range
+    while (relativeAngle > Math.PI) relativeAngle -= 2 * Math.PI;
+    while (relativeAngle < -Math.PI) relativeAngle += 2 * Math.PI;
+    
+    // If in dead zone (within deadZoneSpan/2 of deadZoneCenter), snap to nearest edge
+    if (Math.abs(relativeAngle) < deadZoneSpan / 2) {
+        // Snap to nearest valid edge
+        angle = relativeAngle < 0 ? endAngle : startAngle;
     }
     
     // Clamp angle to valid range
@@ -417,6 +419,12 @@ export const setupPointerDrag = (gauge: Gauge) => {
     // Apply drag to pointer
     pointerElement.call(dragBehavior);
     pointerElement.style("cursor", "grab");
+    
+    // Apply drag to grab handle (which is on g.current)
+    const grabHandle = gauge.g.current.select(".pointer-grab-handle");
+    if (!grabHandle.empty()) {
+        grabHandle.call(dragBehavior);
+    }
     
     // Also apply drag to the arc for easier interaction
     if (arcElement) {

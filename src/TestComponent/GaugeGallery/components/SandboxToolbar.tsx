@@ -4,6 +4,13 @@ import GaugeComponent from '../../../lib';
 import { styles } from '../styles';
 import { SANDBOX_PRESETS, COLOR_PRESETS } from '../presets';
 import { GaugeComponentProps } from '../../../lib/GaugeComponent/types/GaugeComponentProps';
+import { 
+  Palette, Package, Layers, Target, Tag, Ruler, Move, Sliders,
+  Circle, Triangle, ArrowRight, EyeOff, GripHorizontal, Paintbrush,
+  Eye, Rainbow, Plus, Minus, AlignLeft, AlignCenter, AlignRight,
+  Gauge, Play, Pause, Shuffle, Hand, Hash, ArrowUpRight, ArrowDownLeft,
+  ToggleLeft, ToggleRight
+} from 'lucide-react';
 
 // Mini gauge configs for type selector buttons
 const TYPE_GAUGE_CONFIGS: Record<string, Partial<GaugeComponentProps>> = {
@@ -68,15 +75,15 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
         {/* Type - md-4, spans 2 rows visually with real gauge components */}
         <Col xs={4} md={2}>
           <div style={{ ...styles.toolbarGroup, height: '100%', minHeight: '140px' }}>
-            <span style={styles.groupLabel}>🎨 Type</span>
+            <span style={styles.groupLabel}><Palette size={14} /> Type</span>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
               {(['semicircle', 'radial', 'grafana'] as const).map((gaugeType) => (
                 <button 
                   key={gaugeType}
                   onClick={() => onConfigChange({ ...config, type: gaugeType })} 
                   style={{ 
-                    background: cfg?.type === gaugeType ? 'rgba(0, 217, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                    border: cfg?.type === gaugeType ? '2px solid #00d9ff' : '2px solid transparent',
+                    background: cfg?.type === gaugeType ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    border: cfg?.type === gaugeType ? '2px solid #3b82f6' : '2px solid transparent',
                     borderRadius: '8px',
                     padding: '6px',
                     cursor: 'pointer',
@@ -97,7 +104,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   <span style={{ 
                     fontSize: '0.65rem', 
                     fontWeight: cfg?.type === gaugeType ? 600 : 400,
-                    color: cfg?.type === gaugeType ? '#00d9ff' : 'rgba(255,255,255,0.6)',
+                    color: cfg?.type === gaugeType ? '#60a5fa' : 'rgba(255,255,255,0.6)',
                     marginTop: '2px',
                   }}>
                     {gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)}
@@ -107,41 +114,40 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
             </div>
           </div>
         </Col>
-        <Col xs={4} md={8}>
-        <Row  className="g-0">
+        <Col xs={8} md={10}>
+        <Row className="g-0">
 
-        <Col xs={12} md={3}>
+        <Col xs={12} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
-            <span style={styles.groupLabel}>📦 Presets</span>
+            <span style={styles.groupLabel}><Package size={14} /> Presets</span>
             <div style={styles.buttonRow}>
               <button 
                 onClick={onRandomize} 
-                style={{ ...styles.toolBtn, padding: '4px 8px', flexDirection: 'column' as const, fontSize: '0.65rem' }} 
+                style={{ ...styles.toolBtn, padding: '4px 8px' }} 
                 title="Randomize gauge - generate random configuration" 
                 type="button"
               >
-                <span>🎲</span>
+                <Shuffle size={14} />
                 <span>Random</span>
               </button>
               {SANDBOX_PRESETS.map((p) => (
                 <button 
                   key={p.icon} 
                   onClick={() => { onConfigChange(p.config as any); onValueChange(p.value); }} 
-                  style={{ ...styles.toolBtn, padding: '4px 8px', flexDirection: 'column' as const, fontSize: '0.65rem' }} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px' }} 
                   title={p.label} 
                   type="button"
                 >
-                  <span>{p.icon}</span>
-                  <span>{p.label}</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, opacity: 0.7 }}>{p.icon}</span>
                 </button>
               ))}
             </div>
           </div>
         </Col>
 
-        <Col xs={12} md={5}>
+        <Col xs={12} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
-            <span style={styles.groupLabel}>🌈 Arc & Colors</span>
+            <span style={styles.groupLabel}><Layers size={14} /> Arc & Colors</span>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
               {/* Color presets group */}
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
@@ -259,159 +265,199 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   +
                 </button>
               </div>
-              {/* Arc width and corner radius sliders */}
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
-                <span style={styles.sliderLabel}>Width</span>
-                <input 
-                  type="range" 
-                  min="0.02" 
-                  max="0.8" 
-                  step="0.01" 
-                  value={cfg?.arc?.width ?? 0.2} 
-                  onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, width: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, width: '90px' }} 
-                  title="Arc width - thickness of the gauge arc"
-                />
-                <span style={styles.sliderLabel}>Radius</span>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="20" 
-                  step="1" 
-                  value={cfg?.arc?.cornerRadius ?? 7} 
-                  onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, cornerRadius: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, width: '90px' }} 
-                  title="Corner radius - roundness of arc segment edges"
-                />
+              {/* Arc width, corner radius and padding sliders - each on own line */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
+                  <input 
+                    type="range" 
+                    min="0.02" 
+                    max="0.8" 
+                    step="0.01" 
+                    value={cfg?.arc?.width ?? 0.2} 
+                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, width: Number(e.target.value) } })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Arc width - thickness of the gauge arc"
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Corner</span>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="20" 
+                    step="1" 
+                    value={cfg?.arc?.cornerRadius ?? 7} 
+                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, cornerRadius: Number(e.target.value) } })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Corner radius - roundness of arc segment edges"
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Pad</span>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="0.15" 
+                    step="0.005" 
+                    value={cfg?.arc?.padding ?? 0.05} 
+                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, padding: Number(e.target.value) } })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Padding between subarcs"
+                  />
+                </div>
               </div>
             </div>
           </div>
         </Col>
 
-        <Col xs={6} md={3}>
+        <Col xs={6} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
-            <span style={styles.groupLabel}>🎯 Pointer</span>
+            <span style={styles.groupLabel}><Target size={14} /> Pointer</span>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
               {/* Type buttons */}
               <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexShrink: 0 }}>
-                {[
-                  { icon: '📍', type: 'needle', hide: false, title: 'Needle pointer - classic gauge needle style', label: 'Needle' },
-                  { icon: '⚫', type: 'blob', hide: false, title: 'Blob pointer - circular indicator on arc', label: 'Blob' },
-                  { icon: '➤', type: 'arrow', hide: false, title: 'Arrow pointer - directional arrow indicator', label: 'Arrow' },
-                  { icon: '👻', type: 'needle', hide: true, title: 'Hidden pointer - no pointer visible', label: 'Hide' },
-                ].map((p) => (
-                  <button 
-                    key={p.icon} 
-                    onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, type: p.type, hide: p.hide } })} 
-                    style={{ 
-                      ...styles.toolBtn, 
-                      padding: '4px 8px', 
-                      flexDirection: 'column' as const,
-                      fontSize: '0.65rem',
-                      ...(cfg?.pointer?.type === p.type && cfg?.pointer?.hide === p.hide ? styles.toolBtnActive : {}) 
-                    }} 
-                    title={p.title}
-                    type="button"
-                  >
-                    <span>{p.icon}</span>
-                    <span>{p.label}</span>
-                  </button>
-                ))}
+                <button 
+                  onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, type: 'needle', hide: false } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.type === 'needle' && !cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
+                  title="Needle pointer - classic gauge needle style"
+                  type="button"
+                >
+                  <Triangle size={14} style={{ transform: 'rotate(180deg)' }} />
+                  <span>Needle</span>
+                </button>
+                <button 
+                  onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, type: 'blob', hide: false } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.type === 'blob' && !cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
+                  title="Blob pointer - circular indicator on arc"
+                  type="button"
+                >
+                  <Circle size={14} />
+                  <span>Blob</span>
+                </button>
+                <button 
+                  onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, type: 'arrow', hide: false } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.type === 'arrow' && !cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
+                  title="Arrow pointer - directional arrow indicator"
+                  type="button"
+                >
+                  <ArrowRight size={14} />
+                  <span>Arrow</span>
+                </button>
+                <button 
+                  onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, hide: true } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
+                  title="Hidden pointer - no pointer visible"
+                  type="button"
+                >
+                  <EyeOff size={14} />
+                  <span>Hide</span>
+                </button>
               </div>
               {/* Options */}
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
                 <button 
                   onClick={() => onInteractionChange(!interactionEnabled)} 
-                  style={{ ...styles.toolBtn, padding: '4px 8px', flexDirection: 'column' as const, fontSize: '0.65rem', ...(interactionEnabled ? styles.toolBtnActive : {}) }} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(interactionEnabled ? styles.toolBtnActive : {}) }} 
                   title={interactionEnabled ? 'Drag interaction enabled - click to disable' : 'Drag interaction disabled - click to enable grabbing pointer'}
                   type="button"
                 >
-                  <span>{interactionEnabled ? '✋' : '🚫'}</span>
+                  <Hand size={14} />
                   <span>Drag</span>
                 </button>
                 <button 
                   onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, elastic: !cfg?.pointer?.elastic } })} 
-                  style={{ ...styles.toolBtn, padding: '4px 8px', flexDirection: 'column' as const, fontSize: '0.65rem', ...(cfg?.pointer?.elastic ? styles.toolBtnActive : {}) }} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.elastic ? styles.toolBtnActive : {}) }} 
                   title="Elastic bounce animation - pointer bounces when reaching target value"
                   type="button"
                 >
-                  <span>🎹</span>
+                  <Move size={14} />
                   <span>Elastic</span>
                 </button>
                 <button 
                   onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationDelay: cfg?.pointer?.animationDelay === 0 ? 200 : 0 } })} 
-                  style={{ ...styles.toolBtn, padding: '4px 8px', flexDirection: 'column' as const, fontSize: '0.65rem', ...(cfg?.pointer?.animationDelay === 0 ? styles.toolBtnActive : {}) }} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.animationDelay === 0 ? styles.toolBtnActive : {}) }} 
                   title="Instant animation - no delay before pointer starts moving"
                   type="button"
                 >
-                  <span>⚡</span>
+                  <Play size={14} />
                   <span>Instant</span>
                 </button>
               </div>
-              {/* Sliders */}
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
-                <span style={styles.sliderLabel}>Length</span>
-                <input 
-                  type="range" min="0.4" max="1" step="0.05" 
-                  value={cfg?.pointer?.length ?? 0.8} 
-                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, length: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, width: '90px' }} 
-                  title="Pointer length" 
-                />
-                <span style={styles.sliderLabel}>Width</span>
-                <input 
-                  type="range" min="4" max="30" step="1" 
-                  value={cfg?.pointer?.width ?? 15} 
-                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, width: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, width: '90px' }} 
-                  title="Pointer width" 
-                />
+              {/* Length and width sliders - each on own line */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Length</span>
+                  <input 
+                    type="range" min="0.4" max="1" step="0.05" 
+                    value={cfg?.pointer?.length ?? 0.8} 
+                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, length: Number(e.target.value) } })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Pointer length" 
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
+                  <input 
+                    type="range" min="4" max="30" step="1" 
+                    value={cfg?.pointer?.width ?? 15} 
+                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, width: Number(e.target.value) } })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Pointer width" 
+                  />
+                </div>
               </div>
               {/* Color controls */}
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
                 <button 
                   onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: cfg?.pointer?.color ? undefined : '#464A4F' } })} 
-                  style={{ ...styles.toolBtn, padding: '4px 8px', flexDirection: 'column' as const, fontSize: '0.65rem', ...(!cfg?.pointer?.color ? styles.toolBtnActive : {}) }} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.pointer?.color ? styles.toolBtnActive : {}) }} 
                   title="Match pointer color with arc - pointer follows current value color"
                   type="button"
                 >
-                  <span>🌈</span>
+                  <Rainbow size={14} />
                   <span>Arc</span>
                 </button>
                 {cfg?.pointer?.color && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={styles.sliderLabel}>Color</span>
+                    <input 
+                      type="color" 
+                      value={cfg?.pointer?.color || '#464A4F'} 
+                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: e.target.value } })} 
+                      style={styles.colorPicker} 
+                      title="Pointer color" 
+                    />
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={styles.sliderLabel}>Base</span>
                   <input 
                     type="color" 
-                    value={cfg?.pointer?.color || '#464A4F'} 
-                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: e.target.value } })} 
+                    value={cfg?.pointer?.baseColor || '#ffffff'} 
+                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, baseColor: e.target.value } })} 
                     style={styles.colorPicker} 
-                    title="Pointer color" 
+                    title="Pointer base/center color" 
                   />
-                )}
-                <input 
-                  type="color" 
-                  value={cfg?.pointer?.baseColor || '#ffffff'} 
-                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, baseColor: e.target.value } })} 
-                  style={styles.colorPicker} 
-                  title="Pointer base/center color" 
-                />
+                </div>
               </div>
             </div>
           </div>
         </Col>
-        <Col xs={6} md={3}>
+        <Col xs={6} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
-            <span style={styles.groupLabel}>🏷️ Label</span>
+            <span style={styles.groupLabel}><Tag size={14} /> Label</span>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button 
                 onClick={() => onConfigChange({ 
                   ...config, 
                   labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: !cfg?.labels?.valueLabel?.hide } } 
                 })} 
-                style={{ ...styles.toolBtn, padding: '4px 8px', flexDirection: 'column' as const, fontSize: '0.65rem', ...(!cfg?.labels?.valueLabel?.hide ? styles.toolBtnActive : {}) }} 
+                style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.labels?.valueLabel?.hide ? styles.toolBtnActive : {}) }} 
                 title="Toggle value label visibility - show or hide the center number"
                 type="button"
               >
-                <span>{cfg?.labels?.valueLabel?.hide ? '🙈' : '👁️'}</span>
+                {cfg?.labels?.valueLabel?.hide ? <EyeOff size={14} /> : <Eye size={14} />}
                 <span>Show</span>
               </button>
               <button 
@@ -419,62 +465,80 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   ...config, 
                   labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, matchColorWithArc: !cfg?.labels?.valueLabel?.matchColorWithArc } } 
                 })} 
-                style={{ ...styles.toolBtn, padding: '4px 8px', flexDirection: 'column' as const, fontSize: '0.65rem', ...(cfg?.labels?.valueLabel?.matchColorWithArc ? styles.toolBtnActive : {}) }} 
+                style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.labels?.valueLabel?.matchColorWithArc ? styles.toolBtnActive : {}) }} 
                 title="Match label color with arc - label follows current value color"
                 type="button"
               >
-                <span>🌈</span>
+                <Rainbow size={14} />
                 <span>Arc</span>
               </button>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <span style={styles.sliderLabel}>Font Size</span>
-                <input 
-                  type="range" 
-                  min="12" 
-                  max="72" 
-                  step="1" 
-                  value={parseInt(cfg?.labels?.valueLabel?.style?.fontSize || '35')} 
-                  onChange={(e) => onConfigChange({ 
-                    ...config, 
-                    labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: false, style: { ...cfg?.labels?.valueLabel?.style, fontSize: `${e.target.value}px` } } } 
-                  })} 
-                  style={{ ...styles.slider, width: '120px' }} 
-                  title="Font size" 
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <span style={styles.sliderLabel}>Y Offset</span>
-                <input 
-                  type="range" 
-                  min="-30" 
-                  max="30" 
-                  step="1" 
-                  value={cfg?.labels?.valueLabel?.style?.textShadow ? 0 : (cfg?.labels?.valueLabel?.offsetY ?? 0)} 
-                  onChange={(e) => onConfigChange({ 
-                    ...config, 
-                    labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetY: Number(e.target.value) } } 
-                  })} 
-                  style={{ ...styles.slider, width: '120px' }} 
-                  title="Vertical offset" 
-                />
+              {/* Label sliders - each on own line */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Size</span>
+                  <input 
+                    type="range" 
+                    min="12" 
+                    max="72" 
+                    step="1" 
+                    value={parseInt(cfg?.labels?.valueLabel?.style?.fontSize || '35')} 
+                    onChange={(e) => onConfigChange({ 
+                      ...config, 
+                      labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: false, style: { ...cfg?.labels?.valueLabel?.style, fontSize: `${e.target.value}px` } } } 
+                    })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Font size" 
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>X Offset</span>
+                  <input 
+                    type="range" 
+                    min="-50" 
+                    max="50" 
+                    step="1" 
+                    value={cfg?.labels?.valueLabel?.offsetX ?? 0} 
+                    onChange={(e) => onConfigChange({ 
+                      ...config, 
+                      labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetX: Number(e.target.value) } } 
+                    })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Horizontal offset" 
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Y Offset</span>
+                  <input 
+                    type="range" 
+                    min="-100" 
+                    max="50" 
+                    step="1" 
+                    value={cfg?.labels?.valueLabel?.offsetY ?? 0} 
+                    onChange={(e) => onConfigChange({ 
+                      ...config, 
+                      labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetY: Number(e.target.value) } } 
+                    })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Vertical offset (negative = up)" 
+                  />
+                </div>
               </div>
             </div>
           </div>
         </Col>
 
-        {/* Ticks - md-3 */}
-        <Col xs={6} md={3}>
+        {/* Ticks - md-4 for more controls */}
+        <Col xs={12} md={5}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
-            <span style={styles.groupLabel}>📏 Ticks</span>
+            <span style={styles.groupLabel}><Ruler size={14} /> Tick Marks</span>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
               {/* Interval buttons */}
               <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexShrink: 0 }}>
                 {[
-                  { label: '∅', interval: 0 },
+                  { label: 'None', interval: 0 },
                   { label: '5', interval: 5 },
                   { label: '10', interval: 10 },
                   { label: '25', interval: 25 },
-                  { label: '50', interval: 50 },
                 ].map((t) => (
                   <button 
                     key={t.label} 
@@ -490,49 +554,154 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                         labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, type: cfg?.labels?.tickLabels?.type || 'outer', ticks, hideMinMax: t.interval === 0 } } 
                       });
                     }} 
-                    style={{ ...styles.toolBtn, padding: '3px 5px', fontSize: '0.7rem' }} 
-                    title={t.interval === 0 ? 'No ticks' : `Every ${t.interval}`}
+                    style={{ ...styles.toolBtn, padding: '4px 8px' }} 
+                    title={t.interval === 0 ? 'Hide all tick marks' : `Show tick marks every ${t.interval} units`}
                     type="button"
                   >
                     {t.label}
                   </button>
                 ))}
               </div>
-              {/* Position & options */}
+              {/* Position buttons */}
               <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexShrink: 0 }}>
                 <button 
                   onClick={() => onConfigChange({ 
                     ...config, 
                     labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, type: 'outer' } } 
                   })} 
-                  style={{ ...styles.toolBtn, padding: '3px 5px', ...(cfg?.labels?.tickLabels?.type === 'outer' ? styles.toolBtnActive : {}) }} 
-                  title="Outer ticks"
+                  style={{ ...styles.toolBtn, padding: '4px 8px', ...(cfg?.labels?.tickLabels?.type === 'outer' || !cfg?.labels?.tickLabels?.type ? styles.toolBtnActive : {}) }} 
+                  title="Position ticks outside the arc"
                   type="button"
                 >
-                  ↗
+                  <ArrowUpRight size={12} />
+                  <span>Out</span>
                 </button>
                 <button 
                   onClick={() => onConfigChange({ 
                     ...config, 
                     labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, type: 'inner' } } 
                   })} 
-                  style={{ ...styles.toolBtn, padding: '3px 5px', ...(cfg?.labels?.tickLabels?.type === 'inner' ? styles.toolBtnActive : {}) }} 
-                  title="Inner ticks"
+                  style={{ ...styles.toolBtn, padding: '4px 8px', ...(cfg?.labels?.tickLabels?.type === 'inner' ? styles.toolBtnActive : {}) }} 
+                  title="Position ticks inside the arc"
                   type="button"
                 >
-                  ↙
+                  <ArrowDownLeft size={12} />
+                  <span>In</span>
                 </button>
                 <button 
                   onClick={() => onConfigChange({ 
                     ...config, 
                     labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, hideMinMax: !cfg?.labels?.tickLabels?.hideMinMax } } 
                   })} 
-                  style={{ ...styles.toolBtn, padding: '3px 5px', ...(cfg?.labels?.tickLabels?.hideMinMax ? {} : styles.toolBtnActive) }} 
-                  title="Show min/max"
+                  style={{ ...styles.toolBtn, padding: '4px 8px', ...(cfg?.labels?.tickLabels?.hideMinMax ? {} : styles.toolBtnActive) }} 
+                  title={cfg?.labels?.tickLabels?.hideMinMax ? 'Show min/max values' : 'Hide min/max values'}
                   type="button"
                 >
-                  0↔100
+                  <Hash size={12} />
                 </button>
+              </div>
+              {/* Toggle buttons for visibility */}
+              <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexShrink: 0 }}>
+                <button 
+                  onClick={() => onConfigChange({ 
+                    ...config, 
+                    labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickLineConfig: { ...cfg?.labels?.tickLabels?.defaultTickLineConfig, hide: !cfg?.labels?.tickLabels?.defaultTickLineConfig?.hide } } } 
+                  })} 
+                  style={{ ...styles.toolBtn, padding: '4px 8px', ...(cfg?.labels?.tickLabels?.defaultTickLineConfig?.hide ? {} : styles.toolBtnActive) }} 
+                  title={cfg?.labels?.tickLabels?.defaultTickLineConfig?.hide ? 'Show tick lines' : 'Hide tick lines'}
+                  type="button"
+                >
+                  <Minus size={12} />
+                  <span>Lines</span>
+                </button>
+                <button 
+                  onClick={() => onConfigChange({ 
+                    ...config, 
+                    labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickValueConfig: { ...cfg?.labels?.tickLabels?.defaultTickValueConfig, hide: !cfg?.labels?.tickLabels?.defaultTickValueConfig?.hide } } } 
+                  })} 
+                  style={{ ...styles.toolBtn, padding: '4px 8px', ...(cfg?.labels?.tickLabels?.defaultTickValueConfig?.hide ? {} : styles.toolBtnActive) }} 
+                  title={cfg?.labels?.tickLabels?.defaultTickValueConfig?.hide ? 'Show tick labels' : 'Hide tick labels'}
+                  type="button"
+                >
+                  <Hash size={12} />
+                  <span>Labels</span>
+                </button>
+              </div>
+              {/* Colors */}
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
+                <span style={styles.sliderLabel}>Line</span>
+                <input 
+                  type="color" 
+                  value={cfg?.labels?.tickLabels?.defaultTickLineConfig?.color || '#ada9ab'} 
+                  onChange={(e) => onConfigChange({ 
+                    ...config, 
+                    labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickLineConfig: { ...cfg?.labels?.tickLabels?.defaultTickLineConfig, color: e.target.value } } } 
+                  })} 
+                  style={styles.colorPicker} 
+                  title="Tick line color" 
+                />
+                <span style={styles.sliderLabel}>Text</span>
+                <input 
+                  type="color" 
+                  value={cfg?.labels?.tickLabels?.defaultTickValueConfig?.style?.fill as string || '#ada9ab'} 
+                  onChange={(e) => onConfigChange({ 
+                    ...config, 
+                    labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickValueConfig: { ...cfg?.labels?.tickLabels?.defaultTickValueConfig, style: { ...cfg?.labels?.tickLabels?.defaultTickValueConfig?.style, fill: e.target.value } } } } 
+                  })} 
+                  style={styles.colorPicker} 
+                  title="Tick label color" 
+                />
+              </div>
+              {/* Sliders - each on own line */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Line W</span>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="5" 
+                    step="1" 
+                    value={cfg?.labels?.tickLabels?.defaultTickLineConfig?.width ?? 1} 
+                    onChange={(e) => onConfigChange({ 
+                      ...config, 
+                      labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickLineConfig: { ...cfg?.labels?.tickLabels?.defaultTickLineConfig, width: Number(e.target.value) } } } 
+                    })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Tick line width" 
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Line L</span>
+                  <input 
+                    type="range" 
+                    min="3" 
+                    max="20" 
+                    step="1" 
+                    value={cfg?.labels?.tickLabels?.defaultTickLineConfig?.length ?? 7} 
+                    onChange={(e) => onConfigChange({ 
+                      ...config, 
+                      labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickLineConfig: { ...cfg?.labels?.tickLabels?.defaultTickLineConfig, length: Number(e.target.value) } } } 
+                    })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Tick line length" 
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Text Size</span>
+                  <input 
+                    type="range" 
+                    min="8" 
+                    max="20" 
+                    step="1" 
+                    value={parseInt(cfg?.labels?.tickLabels?.defaultTickValueConfig?.style?.fontSize as string || '12')} 
+                    onChange={(e) => onConfigChange({ 
+                      ...config, 
+                      labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickValueConfig: { ...cfg?.labels?.tickLabels?.defaultTickValueConfig, style: { ...cfg?.labels?.tickLabels?.defaultTickValueConfig?.style, fontSize: `${e.target.value}px` } } } } 
+                    })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Tick label font size" 
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -540,10 +709,10 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
 
         <Col xs={6} md={3}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
-            <span style={styles.groupLabel}>📐 Size & Align</span>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <span style={styles.sliderLabel}>Width</span>
+            <span style={styles.groupLabel}><Move size={14} /> Size & Align</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
                 <input 
                   type="range" 
                   min="150" 
@@ -551,12 +720,12 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   step="10" 
                   value={parseInt(sandboxWidth)} 
                   onChange={(e) => onSizeChange(`${e.target.value}px`, sandboxHeight)} 
-                  style={{ ...styles.slider, width: '120px' }} 
+                  style={{ ...styles.slider, flex: 1 }} 
                   title={`Width: ${parseInt(sandboxWidth)}px`} 
                 />
               </div>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <span style={styles.sliderLabel}>Height</span>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Height</span>
                 <input 
                   type="range" 
                   min="100" 
@@ -564,33 +733,44 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   step="10" 
                   value={parseInt(sandboxHeight)} 
                   onChange={(e) => onSizeChange(sandboxWidth, `${e.target.value}px`)} 
-                  style={{ ...styles.slider, width: '120px' }} 
+                  style={{ ...styles.slider, flex: 1 }} 
                   title={`Height: ${parseInt(sandboxHeight)}px`} 
                 />
               </div>
-              {[
-                { icon: '⬅', v: 'left' as const, desc: 'Align gauge to left', label: 'Left' },
-                { icon: '⬛', v: 'center' as const, desc: 'Center gauge', label: 'Center' },
-              ].map((a) => (
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                 <button 
-                  key={a.v} 
-                  onClick={() => onAlignChange(a.v)} 
-                  style={{ ...styles.toolBtn, padding: '4px 8px', flexDirection: 'column' as const, fontSize: '0.65rem', ...(gaugeAlign === a.v ? styles.toolBtnActive : {}) }} 
-                  title={a.desc}
+                  onClick={() => onAlignChange('left')} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', flex: 1, ...(gaugeAlign === 'left' ? styles.toolBtnActive : {}) }} 
+                  title="Align gauge to left"
                   type="button"
                 >
-                  <span>{a.icon}</span>
-                  <span>{a.label}</span>
+                  <AlignLeft size={14} />
                 </button>
-              ))}
+                <button 
+                  onClick={() => onAlignChange('center')} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', flex: 1, ...(gaugeAlign === 'center' ? styles.toolBtnActive : {}) }} 
+                  title="Center gauge"
+                  type="button"
+                >
+                  <AlignCenter size={14} />
+                </button>
+                <button 
+                  onClick={() => onAlignChange('right')} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', flex: 1, ...(gaugeAlign === 'right' ? styles.toolBtnActive : {}) }} 
+                  title="Align gauge to right"
+                  type="button"
+                >
+                  <AlignRight size={14} />
+                </button>
+              </div>
             </div>
           </div>
         </Col>
         </Row>
         </Col>
         <Col xs={12}>
-          <div style={{ ...styles.toolbarGroup, borderColor: '#2ecc71' }}>
-            <span style={styles.groupLabel}>🎚️ Value</span>
+          <div style={{ ...styles.toolbarGroup, borderColor: '#3b82f6' }}>
+            <span style={styles.groupLabel}><Sliders size={14} /> Value</span>
             <div style={styles.buttonRow}>
               <label style={styles.inlineLabel}>
                 <input 
@@ -628,7 +808,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 style={{ ...styles.slider, flex: 1, minWidth: '150px' }} 
                 step="0.1" 
               />
-              <span style={{ ...styles.sliderValue, fontWeight: 700, color: '#00d9ff' }}>
+              <span style={{ ...styles.sliderValue, fontWeight: 700, color: '#60a5fa' }}>
                 {value.toFixed(1)}
               </span>
             </div>

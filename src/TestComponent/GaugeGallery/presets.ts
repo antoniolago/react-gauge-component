@@ -357,8 +357,8 @@ export const GAUGE_PRESETS: GaugePreset[] = [
  */
 export const SANDBOX_PRESETS: SandboxPreset[] = [
   { 
-    icon: '🌐', 
-    label: 'Net', 
+    icon: 'NET', 
+    label: 'Network', 
     config: { 
       type: 'grafana', 
       minValue: 0, 
@@ -373,8 +373,8 @@ export const SANDBOX_PRESETS: SandboxPreset[] = [
     value: 900 
   },
   { 
-    icon: '🌡️', 
-    label: 'Temp', 
+    icon: 'TMP', 
+    label: 'Temperature', 
     config: { 
       type: 'semicircle', 
       minValue: -40, 
@@ -386,8 +386,8 @@ export const SANDBOX_PRESETS: SandboxPreset[] = [
     value: 23 
   },
   { 
-    icon: '🔋', 
-    label: 'Batt', 
+    icon: 'BAT', 
+    label: 'Battery', 
     config: { 
       type: 'grafana', 
       minValue: 0, 
@@ -399,7 +399,7 @@ export const SANDBOX_PRESETS: SandboxPreset[] = [
     value: 73 
   },
   { 
-    icon: '⚙️', 
+    icon: 'RPM', 
     label: 'RPM', 
     config: { 
       type: 'grafana', 
@@ -412,7 +412,7 @@ export const SANDBOX_PRESETS: SandboxPreset[] = [
     value: 3500 
   },
   { 
-    icon: '💻', 
+    icon: 'CPU', 
     label: 'CPU', 
     config: { 
       type: 'semicircle', 
@@ -425,7 +425,7 @@ export const SANDBOX_PRESETS: SandboxPreset[] = [
     value: 67 
   },
   { 
-    icon: '⛽', 
+    icon: 'GAS', 
     label: 'Fuel', 
     config: { 
       type: 'semicircle', 
@@ -453,10 +453,10 @@ export const COLOR_PRESETS: ColorPreset[] = [
  * Size presets for sandbox container
  */
 export const SIZE_PRESETS: SizePreset[] = [
-  { name: '📱 Mobile', width: '280px', height: '200px', icon: '📱' },
-  { name: '💻 Desktop', width: '400px', height: '300px', icon: '💻' },
-  { name: '🖥️ Large', width: '600px', height: '400px', icon: '🖥️' },
-  { name: '📊 Dashboard', width: '250px', height: '180px', icon: '📊' },
+  { name: 'Mobile', width: '280px', height: '200px', icon: 'SM' },
+  { name: 'Desktop', width: '400px', height: '300px', icon: 'MD' },
+  { name: 'Large', width: '600px', height: '400px', icon: 'LG' },
+  { name: 'Dashboard', width: '250px', height: '180px', icon: 'XS' },
 ];
 
 /**

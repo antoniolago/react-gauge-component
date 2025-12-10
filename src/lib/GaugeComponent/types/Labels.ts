@@ -32,6 +32,10 @@ export interface ValueLabel {
     style?: React.CSSProperties;
     /** This hides the central value label if true */
     hide?: boolean;
+    /** Horizontal offset for the value label position. Positive moves right. */
+    offsetX?: number;
+    /** Vertical offset for the value label position. Positive moves down. */
+    offsetY?: number;
     /** 
      * Width of the foreignObject container for custom React content.
      * Only used when renderContent is provided. Defaults to 100.
@@ -53,7 +57,9 @@ export const defaultValueLabel: ValueLabel = {
         fill: '#fff',
         textShadow: "black 1px 0.5px 0px, black 0px 0px 0.03em, black 0px 0px 0.01em"
     },
-    hide: false
+    hide: false,
+    offsetX: 0,
+    offsetY: 0
 }
 export const defaultLabels: Labels = {
     valueLabel: defaultValueLabel,

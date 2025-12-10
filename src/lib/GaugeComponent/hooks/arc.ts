@@ -137,7 +137,7 @@ const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undef
   //This is the grey arc that will be displayed when the gauge is not full
   let secondSubArc = {
     value: 1 - currentPercentage,
-    color: gauge.props.arc?.emptyColor,
+    color: gauge.props.arc?.emptyColor || '#3a3a3a',
   }
   return [firstSubArc, secondSubArc];
 }
@@ -173,7 +173,7 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
   const { padding, cornerRadius } = gauge.props.arc as Arc;
   const { innerRadius, outerRadius } = gauge.dimensions.current;
 
-  let data = {}
+  let data: any = {}
   //When gradient enabled, it'll have only 1 arc
   if (gauge.props?.arc?.gradient) {
     data = [{ value: 1 }];
@@ -183,13 +183,14 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
   if (gauge.props.type == GaugeType.Grafana) {
     data = getGrafanaMainArcData(gauge, percent);
   }
-  let arcPadding = gauge.props.type == GaugeType.Grafana ? 0 : padding;
+  let arcPadding = gauge.props.type == GaugeType.Grafana ? 0 : (padding || 0);
   let arcCornerRadius = gauge.props.type == GaugeType.Grafana ? 0 : cornerRadius;
   let arcObj = arc()
     .outerRadius(outerRadius)
     .innerRadius(innerRadius)
     .cornerRadius(arcCornerRadius as number)
     .padAngle(arcPadding);
+    
   var arcPaths = gauge.doughnut.current
     .selectAll("anyString")
     .data(gauge.pieChart.current(data as any))
@@ -404,7 +405,7 @@ export const clearArcs = (gauge: Gauge) => {
 export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
   const { innerRadius, outerRadius } = gauge.dimensions.current;
   
-  // Get the new arc data
+  // Get the new arc data (returns [filledArc, emptyArc])
   const data = getGrafanaMainArcData(gauge, percent);
   
   // Create the arc generator
@@ -414,22 +415,29 @@ export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
     .cornerRadius(0)
     .padAngle(0);
   
-  // Get existing arcs
-  const existingArcs = gauge.doughnut.current.selectAll(".subArc");
+  // Get existing arc groups
+  const existingArcGroups = gauge.doughnut.current.selectAll(".subArc");
   
   // If arcs don't exist yet, create them (first render)
-  if (existingArcs.empty()) {
+  if (existingArcGroups.empty()) {
     drawArc(gauge, percent);
     return;
   }
   
-  // Update existing arc paths with new data - this is MUCH faster than recreating
+  // Generate pie data from our arc data
   const pieData = gauge.pieChart.current(data);
-  const paths = existingArcs.selectAll("path");
   
-  paths.data(pieData)
-    .attr("d", arcObj)
-    .style("fill", (d: any) => d.data.color);
+  // Update each arc group's path with the corresponding pie data
+  // We need to iterate and update each path individually since D3 data binding
+  // doesn't work well with nested selections
+  existingArcGroups.each(function(this: any, _d: any, i: number) {
+    if (i < pieData.length) {
+      select(this).select("path")
+        .datum(pieData[i])
+        .attr("d", arcObj as any)
+        .style("fill", pieData[i].data.color);
+    }
+  });
 }
 export const clearOuterArcs = (gauge: Gauge) => {
   gauge.doughnut.current.selectAll(".outerSubArc").remove();

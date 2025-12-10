@@ -88,8 +88,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     const valueChanged = JSON.stringify(prevProps.current.value) !== JSON.stringify(mergedProps.current.value);
     const minValueChanged = JSON.stringify(prevProps.current.minValue) !== JSON.stringify(mergedProps.current.minValue);
     const maxValueChanged = JSON.stringify(prevProps.current.maxValue) !== JSON.stringify(mergedProps.current.maxValue);
+    // Check if onValueChange callback changed (for drag interaction toggle)
+    const interactionChanged = (prevProps.current.onValueChange !== undefined) !== (mergedProps.current.onValueChange !== undefined);
     
-    return arcsPropsChanged || pointerPropsChanged || valueChanged || minValueChanged || maxValueChanged;
+    return arcsPropsChanged || pointerPropsChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged;
   };
 
   const isHeightProvidedByUser = () => mergedProps.current.style?.height !== undefined;

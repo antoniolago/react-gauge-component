@@ -226,13 +226,20 @@ export const addValueText = (gauge: Gauge) => {
   let x = 0;
   let y = 0;
   
+  // Default positioning - moved lower to avoid overlapping with needle
   if (gauge.props.type == GaugeType.Semicircle) {
-    y = -innerRadius * 0.1;
+    y = innerRadius * -0.15;  // Higher position for semicircle
   } else if (gauge.props.type == GaugeType.Radial) {
-    y = innerRadius * 0.15;
+    y = innerRadius * 0.4;   // Moved lower (was 0.15)
   } else if (gauge.props.type == GaugeType.Grafana) {
-    y = innerRadius * 0.1;
+    y = innerRadius * 0.35;  // Moved lower (was 0.1)
   }
+  
+  // Apply user offsets
+  const offsetX = valueLabel.offsetX ?? 0;
+  const offsetY = valueLabel.offsetY ?? 0;
+  x += offsetX;
+  y += offsetY;
   
   // Check if user wants to render custom React content
   if (valueLabel.renderContent) {

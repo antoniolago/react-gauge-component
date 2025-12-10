@@ -61,7 +61,7 @@ export const defaultPointerRef: PointerRef = {
 }
 export const defaultPointer: PointerProps = {
     type: PointerType.Needle,
-    color: "#5A5A5A",
+    color: undefined, // undefined = use arc color by default
     baseColor: "white",
     length: 0.70,
     width: 20, // this is a factor to multiply by the width of the gauge
