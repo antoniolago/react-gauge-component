@@ -310,7 +310,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
           </Row>
           </div>
         </Col>
-        <Col xs={12} md={3}>
+        <Col xs={12} md={5}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
             <Row>
               <Col md={12}>
@@ -498,10 +498,12 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
         <Col xs={6} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
             <span style={styles.groupLabel}><Target size={14} /> Pointer</span>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-              {/* Type buttons */}
-              <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexShrink: 0 }}>
-                <span>Pointer type:</span>
+            <Row>
+              <Col md={12}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Type buttons */}
+                  <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexShrink: 0 }}>
+                    <span>Pointer type:</span>
                 <button 
                   onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, type: 'needle', hide: false } })} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.type === 'needle' && !cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
@@ -537,11 +539,14 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 >
                   <EyeOff size={14} />
                   <span>Hide</span>
-                </button>
-              </div>
-              {/* Options */}
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
-                <span>Movement:</span>
+                    </button>
+                  </div>
+                </div>
+              </Col>
+              <Col md={12}>
+                {/* Options */}
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
+                  <span>Movement:</span>
                 <button 
                   onClick={() => onInteractionChange(!interactionEnabled)} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(interactionEnabled ? styles.toolBtnActive : {}) }} 
@@ -569,10 +574,12 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   <Play size={14} />
                   <span>Instant</span>
                 </button>
-              </div>
-              {/* Color controls */}
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
-                <span>Colors:</span>
+                </div>
+              </Col>
+              <Col md={12}>
+                {/* Color controls */}
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
+                  <span>Colors:</span>
                 <button 
                   onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: cfg?.pointer?.color ? undefined : '#464A4F' } })} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.pointer?.color ? styles.toolBtnActive : {}) }} 
@@ -679,8 +686,8 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   </div>
                 )}
               </div>
-              
-            </div>
+              </Col>
+            </Row>
           </div>
         </Col>
         <Col xs={6} md={4}>
