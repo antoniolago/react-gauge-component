@@ -4,7 +4,7 @@
   "main": "dist/lib/index.js",
   "module": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
-  "homepage": ".",
+  "homepage": "https://antoniolago.github.io/react-gauge-component/",
   "keywords": [
     "gauge",
     "chart",
@@ -32,15 +32,18 @@
     "start": "react-scripts start",
     "dev": "react-scripts start",
     "prebuild": "rimraf dist",
-    "build": "set NODE_ENV=production babel src/lib --out-dir dist --copy-files",
+    "build": "cross-env NODE_ENV=production babel src/lib --out-dir dist --copy-files",
     "build:types": "tsc",
-    "build-package": "yarn run build && yarn run build:types",
-    "build-page": "react-scripts build",
-    "test": "react-scripts test",
+    "build:package": "bun run build && bun run build:types",
+    "build:demo": "react-scripts build",
+    "test": "react-scripts test --watchAll=false",
+    "test:watch": "react-scripts test",
+    "test:coverage": "react-scripts test --watchAll=false --coverage",
+    "lint": "eslint src/",
     "eject": "react-scripts eject",
-    "predeploy": "yarn run build-page",
+    "predeploy": "bun run build:demo",
     "deploy": "gh-pages -d build",
-    "test-local": "yarn run build && npm pack --pack-destination ./"
+    "pack:local": "bun run build:package && npm pack --pack-destination ./"
   },
   "resolutions": {
     "@types/react": "~17.0.1"
@@ -107,6 +110,5 @@
   "bugs": {
     "url": "https://github.com/antoniolago/react-gauge-component/issues"
   },
-  "author": "Antônio Lago",
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "author": "Antônio Lago"
 }

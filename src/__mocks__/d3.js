@@ -212,6 +212,18 @@ export const quantize = (interpolator, n) => {
   return result;
 };
 
+// Drag behavior
+export const drag = () => {
+  const dragBehavior = () => dragBehavior;
+  dragBehavior.on = () => dragBehavior;
+  dragBehavior.filter = () => dragBehavior;
+  dragBehavior.subject = () => dragBehavior;
+  dragBehavior.container = () => dragBehavior;
+  dragBehavior.touchable = () => dragBehavior;
+  dragBehavior.clickDistance = () => dragBehavior;
+  return dragBehavior;
+};
+
 export default {
   pie,
   arc,
@@ -252,4 +264,5 @@ export default {
   min,
   extent,
   quantize,
+  drag,
 };

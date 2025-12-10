@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { Copy, Check } from 'lucide-react';
 import GaugeComponent from '../../../lib';
 import { SandboxToolbar } from './SandboxToolbar';
 import { styles, createStyles } from '../styles';
@@ -132,7 +133,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                 title="Copy code"
                 type="button"
               >
-                {copied ? '✓' : '📋'}
+                {copied ? <Check size={12} /> : <Copy size={12} />}
               </button>
               
               <div style={{ width: '100%', height: 'calc(100% - 30px)' }}>

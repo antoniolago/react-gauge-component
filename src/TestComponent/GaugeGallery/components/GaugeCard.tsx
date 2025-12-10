@@ -4,7 +4,7 @@ import { styles, createStyles } from '../styles';
 import { copyToClipboard } from '../utils';
 import { GaugePreset } from '../types';
 import { GaugeComponentProps } from '../../../lib/GaugeComponent/types/GaugeComponentProps';
-import { Send, Copy, Check } from 'lucide-react';
+import { Pencil, Copy, Check } from 'lucide-react';
 
 interface GaugeCardProps {
   preset: GaugePreset;
@@ -56,7 +56,7 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
           title="Send to Editor"
           type="button"
         >
-          <Send size={12} />
+          <Pencil size={12} />
         </button>
         <button
           onClick={handleCopy}

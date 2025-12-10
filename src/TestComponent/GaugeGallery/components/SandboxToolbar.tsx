@@ -73,7 +73,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
     <Container fluid style={styles.editorToolbar} className="p-0">
       <Row className="g-0">
         {/* Type - md-4, spans 2 rows visually with real gauge components */}
-        <Col xs={4} md={2}>
+        <Col xs={8} md={3}>
           <div style={{ ...styles.toolbarGroup, height: '100%', minHeight: '140px' }}>
           <Row className="g-3"> 
             <Col md={12}>
@@ -310,145 +310,158 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
           </Row>
           </div>
         </Col>
-        <Col xs={8} md={10}>
-        <Row className="g-0">
-
-
-        <Col xs={12} md={8}>
+        <Col xs={12} md={3}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
-            <span style={styles.groupLabel}><Layers size={14} /> Arc & Colors</span>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-              {/* Color presets group */}
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
-                {COLOR_PRESETS.map((preset) => (
-                  <button 
-                    key={preset.label} 
-                    onClick={() => {
-                      const nbArcs = cfg?.arc?.nbSubArcs || 3;
-                      onConfigChange({ ...config, arc: { ...cfg?.arc, colorArray: preset.colors, nbSubArcs: nbArcs, subArcs: [] } });
-                    }} 
-                    style={styles.toolBtn} 
-                    title={preset.label} 
-                    type="button"
-                  >
-                    <span style={{ display: 'flex', gap: '1px' }}>
-                      {preset.colors.map((c, i) => (
-                        <span key={i} style={{ width: '8px', height: '8px', borderRadius: '1px', background: c }} />
-                      ))}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              {/* Count buttons group */}
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
-                {[3, 10, 50, 100].map((n) => (
-                  <button 
-                    key={n} 
-                    onClick={() => {
-                      const colors = cfg?.arc?.colorArray || ['#5BE12C', '#F5CD19', '#EA4228'];
-                      onConfigChange({ ...config, arc: { ...cfg?.arc, nbSubArcs: n, colorArray: colors, subArcs: [] } });
-                    }} 
-                    style={{ ...styles.toolBtn, ...(cfg?.arc?.nbSubArcs === n ? styles.toolBtnActive : {}) }} 
-                    type="button"
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-              {/* Gradient + color pickers group */}
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
-                <label style={styles.inlineLabel}>
-                  <input 
-                    type="checkbox" 
-                    checked={cfg?.arc?.gradient || false} 
-                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, gradient: e.target.checked } })} 
-                    style={styles.inlineCheckbox} 
-                  />
-                  Grad
-                </label>
-                {(cfg?.arc?.colorArray || ['#5BE12C', '#F5CD19', '#EA4228']).map((color: string, i: number) => {
-                  const colors = cfg?.arc?.colorArray || ['#5BE12C', '#F5CD19', '#EA4228'];
-                  return (
-                    <div key={i} style={{ position: 'relative', display: 'inline-block' }}>
-                      <input 
-                        type="color" 
-                        value={color || '#ffffff'} 
-                        onChange={(e) => {
-                          const newColors = [...colors];
-                          newColors[i] = e.target.value;
-                          onConfigChange({ ...config, arc: { ...cfg?.arc, colorArray: newColors, nbSubArcs: newColors.length, subArcs: [] } });
-                        }}
-                        style={styles.colorPicker}
-                        title={`Color ${i + 1}`}
-                      />
-                      {colors.length > 2 && (
-                        <button
-                          onClick={() => {
-                            const newColors = colors.filter((_: string, idx: number) => idx !== i);
+            <Row>
+              <Col md={12}>
+                <span style={styles.groupLabel}><Layers size={14} /> Arc & Colors</span>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Color presets group */}
+                  Color presets: 
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
+                    {COLOR_PRESETS.map((preset) => (
+                      <button 
+                        key={preset.label} 
+                        onClick={() => {
+                          const nbArcs = cfg?.arc?.nbSubArcs || 3;
+                          onConfigChange({ ...config, arc: { ...cfg?.arc, colorArray: preset.colors, nbSubArcs: nbArcs, subArcs: [] } });
+                        }} 
+                        style={styles.toolBtn} 
+                        title={preset.label} 
+                        type="button"
+                      >
+                        <span style={{ display: 'flex', gap: '1px' }}>
+                          {preset.colors.map((c, i) => (
+                            <span key={i} style={{ width: '8px', height: '8px', borderRadius: '1px', background: c }} />
+                          ))}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </Col>
+              <Col md={12}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  Number of arcs: 
+                  {/* Count buttons group */}
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
+                    {[3, 10, 50, 100].map((n) => (
+                      <button 
+                        key={n} 
+                        onClick={() => {
+                          const colors = cfg?.arc?.colorArray || ['#5BE12C', '#F5CD19', '#EA4228'];
+                          onConfigChange({ ...config, arc: { ...cfg?.arc, nbSubArcs: n, colorArray: colors, subArcs: [] } });
+                        }} 
+                        style={{ ...styles.toolBtn, ...(cfg?.arc?.nbSubArcs === n ? styles.toolBtnActive : {}) }} 
+                        type="button"
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </Col>
+              <Col md={12}>
+                Colors: 
+                {/* Gradient + color pickers group */}
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
+                  <label style={styles.inlineLabel}>
+                    <input 
+                      type="checkbox" 
+                      checked={cfg?.arc?.gradient || false} 
+                      onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, gradient: e.target.checked } })} 
+                      style={styles.inlineCheckbox} 
+                    />
+                    Grad
+                  </label>
+                  {(cfg?.arc?.colorArray || ['#5BE12C', '#F5CD19', '#EA4228']).map((color: string, i: number) => {
+                    const colors = cfg?.arc?.colorArray || ['#5BE12C', '#F5CD19', '#EA4228'];
+                    return (
+                      <div key={i} style={{ position: 'relative', display: 'inline-block' }}>
+                        <input 
+                          type="color" 
+                          value={color || '#ffffff'} 
+                          onChange={(e) => {
+                            const newColors = [...colors];
+                            newColors[i] = e.target.value;
                             onConfigChange({ ...config, arc: { ...cfg?.arc, colorArray: newColors, nbSubArcs: newColors.length, subArcs: [] } });
                           }}
-                          style={{
-                            position: 'absolute',
-                            top: '-4px',
-                            right: '-4px',
-                            width: '14px',
-                            height: '14px',
-                            borderRadius: '50%',
-                            border: 'none',
-                            background: 'rgba(255, 80, 80, 0.9)',
-                            color: '#fff',
-                            fontSize: '10px',
-                            lineHeight: '12px',
-                            cursor: 'pointer',
-                            padding: 0,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                          title="Remove color"
-                          type="button"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-                <button
-                  onClick={() => {
-                    const colors = cfg?.arc?.colorArray || ['#5BE12C', '#F5CD19', '#EA4228'];
-                    const newColors = [...colors, '#888888'];
-                    onConfigChange({ ...config, arc: { ...cfg?.arc, colorArray: newColors, nbSubArcs: newColors.length, subArcs: [] } });
-                  }}
-                  style={{
-                    ...styles.toolBtn,
-                    width: '24px',
-                    height: '24px',
-                    padding: 0,
-                    fontSize: '16px',
-                    lineHeight: '22px',
-                  }}
-                  title="Add color"
-                  type="button"
-                >
-                  +
-                </button>
-              </div>
-              {/* Arc width, corner radius and padding sliders - each on own line */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
-                  <input 
-                    type="range" 
-                    min="0.01" 
-                    max="1" 
-                    step="0.01" 
-                    value={cfg?.arc?.width ?? 0.2} 
-                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, width: Number(e.target.value) } })} 
-                    style={{ ...styles.slider, flex: 1 }} 
-                    title="Arc width - thickness of the gauge arc (can exceed normal limits)"
-                  />
+                          style={styles.colorPicker}
+                          title={`Color ${i + 1}`}
+                        />
+                        {colors.length > 2 && (
+                          <button
+                            onClick={() => {
+                              const newColors = colors.filter((_: string, idx: number) => idx !== i);
+                              onConfigChange({ ...config, arc: { ...cfg?.arc, colorArray: newColors, nbSubArcs: newColors.length, subArcs: [] } });
+                            }}
+                            style={{
+                              position: 'absolute',
+                              top: '-4px',
+                              right: '-4px',
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              border: 'none',
+                              background: 'rgba(255, 80, 80, 0.9)',
+                              color: '#fff',
+                              fontSize: '10px',
+                              lineHeight: '12px',
+                              cursor: 'pointer',
+                              padding: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                            title="Remove color"
+                            type="button"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <button
+                    onClick={() => {
+                      const colors = cfg?.arc?.colorArray || ['#5BE12C', '#F5CD19', '#EA4228'];
+                      const newColors = [...colors, '#888888'];
+                      onConfigChange({ ...config, arc: { ...cfg?.arc, colorArray: newColors, nbSubArcs: newColors.length, subArcs: [] } });
+                    }}
+                    style={{
+                      ...styles.toolBtn,
+                      width: '24px',
+                      height: '24px',
+                      padding: 0,
+                      fontSize: '16px',
+                      lineHeight: '22px',
+                    }}
+                    title="Add color"
+                    type="button"
+                  >
+                    +
+                  </button>
                 </div>
+              </Col>
+              <Col md={12}>
+                  {/* Arc width, corner radius and padding sliders - each on own line */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                    <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
+                    <input 
+                      type="range" 
+                      min="0.01" 
+                      max="1" 
+                      step="0.01" 
+                      value={cfg?.arc?.width ?? 0.2} 
+                      onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, width: Number(e.target.value) } })} 
+                      style={{ ...styles.slider, flex: 1 }} 
+                      title="Arc width - thickness of the gauge arc (can exceed normal limits)"
+                    />
+                  </div>
+                </div>
+              </Col>
+              <Col md={12}>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                   <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Corner</span>
                   <input 
@@ -462,6 +475,8 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                     title="Corner radius - roundness of arc segment edges"
                   />
                 </div>
+              </Col>
+              <Col md={12}>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                   <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Pad</span>
                   <input 
@@ -475,8 +490,8 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                     title="Padding between subarcs"
                   />
                 </div>
-              </div>
-            </div>
+              </Col>
+            </Row>
           </div>
         </Col>
 
@@ -486,6 +501,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
               {/* Type buttons */}
               <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexShrink: 0 }}>
+                <span>Pointer type:</span>
                 <button 
                   onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, type: 'needle', hide: false } })} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.type === 'needle' && !cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
@@ -525,6 +541,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
               </div>
               {/* Options */}
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
+                <span>Movement:</span>
                 <button 
                   onClick={() => onInteractionChange(!interactionEnabled)} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(interactionEnabled ? styles.toolBtnActive : {}) }} 
@@ -552,6 +569,66 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   <Play size={14} />
                   <span>Instant</span>
                 </button>
+              </div>
+              {/* Color controls */}
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
+                <span>Colors:</span>
+                <button 
+                  onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: cfg?.pointer?.color ? undefined : '#464A4F' } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.pointer?.color ? styles.toolBtnActive : {}) }} 
+                  title="Match pointer color with arc - pointer follows current value color"
+                  type="button"
+                >
+                  <Rainbow size={14} />
+                  <span>Arc</span>
+                </button>
+                {cfg?.pointer?.color && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={styles.sliderLabel}>Color</span>
+                    <input 
+                      type="color" 
+                      value={cfg?.pointer?.color || '#464A4F'} 
+                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: e.target.value } })} 
+                      style={styles.colorPicker} 
+                      title="Pointer color" 
+                    />
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={styles.sliderLabel}>Base</span>
+                  <input 
+                    type="color" 
+                    value={cfg?.pointer?.baseColor || '#ffffff'} 
+                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, baseColor: e.target.value } })} 
+                    style={styles.colorPicker} 
+                    title="Pointer base/center color" 
+                  />
+                </div>
+              </div>
+              {/* Stroke/border controls */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '6px' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: 1 }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Border</span>
+                  <input 
+                    type="range" min="0" max="5" step="0.5" 
+                    value={cfg?.pointer?.strokeWidth ?? 0} 
+                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, strokeWidth: Number(e.target.value) } })} 
+                    style={{ ...styles.slider, flex: 1 }} 
+                    title="Pointer border/stroke width" 
+                  />
+                </div>
+                {(cfg?.pointer?.strokeWidth ?? 0) > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={styles.sliderLabel}>Stroke</span>
+                    <input 
+                      type="color" 
+                      value={cfg?.pointer?.strokeColor || '#ffffff'} 
+                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, strokeColor: e.target.value } })} 
+                      style={styles.colorPicker} 
+                      title="Pointer stroke/border color" 
+                    />
+                  </div>
+                )}
               </div>
               {/* Length and width sliders - each on own line */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
@@ -602,40 +679,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   </div>
                 )}
               </div>
-              {/* Color controls */}
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
-                <button 
-                  onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: cfg?.pointer?.color ? undefined : '#464A4F' } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.pointer?.color ? styles.toolBtnActive : {}) }} 
-                  title="Match pointer color with arc - pointer follows current value color"
-                  type="button"
-                >
-                  <Rainbow size={14} />
-                  <span>Arc</span>
-                </button>
-                {cfg?.pointer?.color && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={styles.sliderLabel}>Color</span>
-                    <input 
-                      type="color" 
-                      value={cfg?.pointer?.color || '#464A4F'} 
-                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: e.target.value } })} 
-                      style={styles.colorPicker} 
-                      title="Pointer color" 
-                    />
-                  </div>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={styles.sliderLabel}>Base</span>
-                  <input 
-                    type="color" 
-                    value={cfg?.pointer?.baseColor || '#ffffff'} 
-                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, baseColor: e.target.value } })} 
-                    style={styles.colorPicker} 
-                    title="Pointer base/center color" 
-                  />
-                </div>
-              </div>
+              
             </div>
           </div>
         </Col>
@@ -960,8 +1004,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
               </div>
             </div>
           </div>
-        </Col>
-        </Row>
         </Col>
         <Col xs={12}>
           <div style={{ ...styles.toolbarGroup, borderColor: '#3b82f6' }}>
