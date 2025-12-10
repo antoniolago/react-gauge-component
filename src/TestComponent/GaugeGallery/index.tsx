@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { SandboxEditor, GalleryGrid } from './components';
 import { createStyles } from './styles';
 import { Github, Sun, Moon } from 'lucide-react';
+import { GaugeComponentProps } from '../../lib/GaugeComponent/types/GaugeComponentProps';
 
 /**
  * GaugeGallery - Interactive showcase for the GaugeComponent library
@@ -17,8 +18,15 @@ import { Github, Sun, Moon } from 'lucide-react';
 const GaugeGallery: React.FC = () => {
   const [isLightTheme, setIsLightTheme] = useState(false);
   const [autoAnimate, setAutoAnimate] = useState(false);
+  const sandboxEditorRef = useRef<{ loadConfig: (config: Partial<GaugeComponentProps>, value: number) => void }>(null);
   
   const themeStyles = createStyles(isLightTheme);
+
+  const handleSendToEditor = (config: Partial<GaugeComponentProps>, value: number) => {
+    sandboxEditorRef.current?.loadConfig(config, value);
+    // Scroll to top to show editor
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div style={themeStyles.container}>
@@ -64,10 +72,14 @@ const GaugeGallery: React.FC = () => {
       <div style={{ height: '56px' }} />
 
       {/* Sandbox Editor */}
-      <SandboxEditor isLightTheme={isLightTheme} />
+      <SandboxEditor ref={sandboxEditorRef} isLightTheme={isLightTheme} />
 
       {/* Gallery Grid */}
-      <GalleryGrid isLightTheme={isLightTheme} autoAnimate={autoAnimate} />
+      <GalleryGrid 
+        isLightTheme={isLightTheme} 
+        autoAnimate={autoAnimate} 
+        onSendToEditor={handleSendToEditor}
+      />
     </div>
   );
 };

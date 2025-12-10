@@ -3,10 +3,12 @@ import { GaugeCard } from './GaugeCard';
 import { styles } from '../styles';
 import { GAUGE_PRESETS } from '../presets';
 import { ColumnCount } from '../types';
+import { GaugeComponentProps } from '../../../lib/GaugeComponent/types/GaugeComponentProps';
 
 interface GalleryGridProps {
   isLightTheme: boolean;
   autoAnimate: boolean;
+  onSendToEditor?: (config: Partial<GaugeComponentProps>, value: number) => void;
 }
 
 const GRID_CONFIGS = {
@@ -16,7 +18,7 @@ const GRID_CONFIGS = {
   4: { columns: 'repeat(4, 1fr)', cardHeight: '220px' },
 };
 
-export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnimate }) => {
+export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnimate, onSendToEditor }) => {
   const [columnCount, setColumnCount] = useState<ColumnCount>(4);
   const [values, setValues] = useState<number[]>(() => 
     GAUGE_PRESETS.map(preset => {
@@ -107,6 +109,7 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnim
             value={values[index]}
             cardHeight={gridConfig.cardHeight}
             isLightTheme={isLightTheme}
+            onSendToEditor={onSendToEditor}
           />
         ))}
       </div>

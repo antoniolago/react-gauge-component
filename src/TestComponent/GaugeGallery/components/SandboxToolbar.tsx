@@ -2,10 +2,10 @@ import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import GaugeComponent from '../../../lib';
 import { styles } from '../styles';
-import { SANDBOX_PRESETS, COLOR_PRESETS } from '../presets';
+import { COLOR_PRESETS } from '../presets';
 import { GaugeComponentProps } from '../../../lib/GaugeComponent/types/GaugeComponentProps';
 import { 
-  Palette, Package, Layers, Target, Tag, Ruler, Move, Sliders,
+  Palette, Layers, Target, Tag, Ruler, Move, Sliders,
   Circle, Triangle, ArrowRight, EyeOff, GripHorizontal, Paintbrush,
   Eye, Rainbow, Plus, Minus, AlignLeft, AlignCenter, AlignRight,
   Gauge, Play, Pause, Shuffle, Hand, Hash, ArrowUpRight, ArrowDownLeft,
@@ -307,23 +307,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
               </button>
               </div>
             </Col>
-        <Col xs={12} md={12}>
-            <span style={styles.groupLabel}><Package size={14} /> Presets</span>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              
-              {SANDBOX_PRESETS.map((p) => (
-                <button 
-                  key={p.icon} 
-                  onClick={() => { onConfigChange(p.config as any); onValueChange(p.value); }} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px' }} 
-                  title={p.label} 
-                  type="button"
-                >
-                  <span style={{ fontSize: '0.65rem', fontWeight: 700, opacity: 0.7 }}>{p.icon}</span>
-                </button>
-              ))}
-            </div>
-        </Col>
           </Row>
           </div>
         </Col>

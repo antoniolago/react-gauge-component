@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import GaugeComponent from '../../../lib';
 import { SandboxToolbar } from './SandboxToolbar';
 import { styles, createStyles } from '../styles';
@@ -9,7 +9,11 @@ interface SandboxEditorProps {
   isLightTheme: boolean;
 }
 
-export const SandboxEditor: React.FC<SandboxEditorProps> = ({ isLightTheme }) => {
+export interface SandboxEditorHandle {
+  loadConfig: (config: Partial<GaugeComponentProps>, value: number) => void;
+}
+
+export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>(({ isLightTheme }, ref) => {
   const themeStyles = createStyles(isLightTheme);
   
   const [isOpen, setIsOpen] = useState(true);
@@ -22,6 +26,16 @@ export const SandboxEditor: React.FC<SandboxEditorProps> = ({ isLightTheme }) =>
   const [copied, setCopied] = useState(false);
   const [key, setKey] = useState(0);
   const [interactionEnabled, setInteractionEnabled] = useState(true);
+
+  // Expose loadConfig method via ref
+  useImperativeHandle(ref, () => ({
+    loadConfig: (newConfig: Partial<GaugeComponentProps>, newValue: number) => {
+      setConfig(newConfig);
+      setValue(newValue);
+      setKey(k => k + 1);
+      setIsOpen(true); // Ensure editor is open
+    },
+  }));
 
   // Auto-animate value
   useEffect(() => {
@@ -153,4 +167,4 @@ export const SandboxEditor: React.FC<SandboxEditorProps> = ({ isLightTheme }) =>
       )}
     </div>
   );
-};
+});
