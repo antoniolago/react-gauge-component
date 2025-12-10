@@ -17,8 +17,13 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     const { prevPercent, currentPercent, prevProgress } = gauge.pointer.current.context;
     let pointer = gauge.props.pointer as PointerProps;
     let isFirstTime = gauge.prevProps?.current.value == undefined;
+    
+    // When resize=true (config change, not value change), draw directly at currentPercent
+    // to avoid the pointer jumping from prevPercent to currentPercent
+    const useCurrentPercent = resize && !isFirstTime;
+    
     if ((isFirstTime || resize) && gauge.props.type != GaugeType.Grafana) 
-        initPointer(gauge);
+        initPointer(gauge, useCurrentPercent);
     let shouldAnimate = (!resize || isFirstTime) && pointer.animate;
     if (shouldAnimate) {
         // For Grafana type, animate the doughnut (arc fill animation)
@@ -74,7 +79,7 @@ const setupContext = (gauge: Gauge): PointerContext => {
     }
     return pointerContext;
 }
-const initPointer = (gauge: Gauge) => {
+const initPointer = (gauge: Gauge, useCurrentPercent: boolean = false) => {
     let value = gauge.props.value as number;
     let pointer = gauge.props.pointer as PointerProps;
     const { shouldDrawPath, centerPoint, pointerRadius, pathStr, currentPercent, prevPercent, pathLength } = gauge.pointer.current.context;
@@ -82,14 +87,18 @@ const initPointer = (gauge: Gauge) => {
     // Get the initial color based on current value - this makes pointer color match arc by default
     const initialColor = pointer.color || arcHooks.getColorByPercentage(currentPercent, gauge);
     
+    // Use currentPercent when reinitializing due to config changes (not value changes)
+    // This prevents the pointer from jumping from old value to new value
+    const startPercent = useCurrentPercent ? currentPercent : (prevPercent || currentPercent);
+    
     if(shouldDrawPath){
-        gauge.pointer.current.context.pathStr = calculatePointerPath(gauge, prevPercent || currentPercent);
+        gauge.pointer.current.context.pathStr = calculatePointerPath(gauge, startPercent);
         gauge.pointer.current.path = gauge.pointer.current.element.append("path").attr("d", gauge.pointer.current.context.pathStr).attr("fill", initialColor);
         
         // Add grab handle at pointer tip if onValueChange is provided
         // Note: The handle will be raised to top after all elements are rendered in drawPointer
         if (gauge.props.onValueChange) {
-            const tipPosition = calculatePointerTipPosition(gauge, prevPercent || currentPercent);
+            const tipPosition = calculatePointerTipPosition(gauge, startPercent);
             const handleRadius = Math.max(6, pointerRadius * 0.8);
             // Append to the main g element (not pointer element) so it renders on top of everything
             gauge.g.current
