@@ -185,6 +185,8 @@ export const styles: Record<string, React.CSSProperties> = {
     background: 'rgba(0, 0, 0, 0.3)',
     borderRadius: '12px',
     padding: '12px',
+    overflow: 'hidden',
+    maxWidth: '100%',
   },
   toolbarGroup: {
     background: 'rgba(255, 255, 255, 0.05)',
@@ -192,6 +194,8 @@ export const styles: Record<string, React.CSSProperties> = {
     padding: '8px 10px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
     margin: '2px',
+    overflow: 'hidden',
+    wordBreak: 'break-word' as const,
   },
   groupLabel: {
     display: 'flex',
@@ -225,6 +229,8 @@ export const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '5px',
+    flexShrink: 0,
+    whiteSpace: 'nowrap' as const,
   },
   toolBtnActive: {
     background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
@@ -234,7 +240,9 @@ export const styles: Record<string, React.CSSProperties> = {
   
   // Sliders
   slider: {
-    width: '120px',
+    minWidth: '80px',
+    maxWidth: '100%',
+    flex: 1,
     height: '8px',
     borderRadius: '3px',
     cursor: 'pointer',

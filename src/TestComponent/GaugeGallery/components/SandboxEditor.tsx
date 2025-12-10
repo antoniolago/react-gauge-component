@@ -80,7 +80,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       <div style={styles.accordionHeader} onClick={() => setIsOpen(!isOpen)}>
         <div>
           <h2 style={styles.accordionTitle}>
-            🧪 Sandbox Editor
+            Sandbox Editor
             <span style={styles.accordionArrow}>{isOpen ? '▼' : '▶'}</span>
           </h2>
           <span style={styles.accordionHint}>

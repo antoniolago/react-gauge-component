@@ -73,7 +73,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
     <Container fluid style={styles.editorToolbar} className="p-0">
       <Row className="g-0">
         {/* Type - md-4, spans 2 rows visually with real gauge components */}
-        <Col xs={8} md={3}>
+        <Col xs={12} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%', minHeight: '140px' }}>
           <Row className="g-3"> 
             <Col md={12}>
@@ -116,7 +116,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
             </div>
             </Col>
             <Col md={12}>
-            <span style={styles.groupLabel}><Palette size={14} /> Actions</span>
+            <span style={styles.groupLabel}>Actions</span>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <button 
                 onClick={onRandomize} 
@@ -310,7 +310,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
           </Row>
           </div>
         </Col>
-        <Col xs={12} md={5}>
+        <Col xs={12} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
             <Row>
               <Col md={12}>
@@ -495,7 +495,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
           </div>
         </Col>
 
-        <Col xs={6} md={4}>
+        <Col xs={12} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
             <span style={styles.groupLabel}><Target size={14} /> Pointer</span>
             <Row>
@@ -690,7 +690,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
             </Row>
           </div>
         </Col>
-        <Col xs={6} md={4}>
+        <Col xs={12} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
             <span style={styles.groupLabel}><Tag size={14} /> Label</span>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -774,7 +774,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
         </Col>
 
         {/* Ticks - md-4 for more controls */}
-        <Col xs={12} md={5}>
+        <Col xs={12} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
             <span style={styles.groupLabel}><Ruler size={14} /> Tick Marks</span>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -953,7 +953,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
           </div>
         </Col>
 
-        <Col xs={6} md={3}>
+        <Col xs={12} md={4}>
           <div style={{ ...styles.toolbarGroup, height: '100%' }}>
             <span style={styles.groupLabel}><Move size={14} /> Size & Align</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

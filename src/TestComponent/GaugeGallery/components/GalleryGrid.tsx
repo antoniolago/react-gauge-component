@@ -12,10 +12,10 @@ interface GalleryGridProps {
 }
 
 const GRID_CONFIGS = {
-  1: { columns: 'repeat(1, 1fr)', cardHeight: '350px' },
-  2: { columns: 'repeat(2, 1fr)', cardHeight: '280px' },
-  3: { columns: 'repeat(3, 1fr)', cardHeight: '260px' },
-  4: { columns: 'repeat(4, 1fr)', cardHeight: '220px' },
+  1: { columns: 'repeat(1, 1fr)', cardHeight: '450px' },
+  2: { columns: 'repeat(2, 1fr)', cardHeight: '380px' },
+  3: { columns: 'repeat(3, 1fr)', cardHeight: '320px' },
+  4: { columns: 'repeat(4, 1fr)', cardHeight: '280px' },
 };
 
 export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnimate, onSendToEditor }) => {
@@ -79,7 +79,7 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnim
   return (
     <div style={styles.gallerySection}>
       <div style={styles.galleryHeader}>
-        <h2 style={styles.galleryTitle}>📊 Gauge Gallery</h2>
+        <h2 style={styles.galleryTitle}>Gauge Gallery</h2>
         <div style={styles.galleryControls}>
           {([1, 2, 3, 4] as ColumnCount[]).map((count) => (
             <button
