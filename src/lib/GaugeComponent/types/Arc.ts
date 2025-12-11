@@ -24,7 +24,11 @@ export interface Arc {
         cornerRadius?: number,
         /** Padding between outer arc segments */
         padding?: number
-    }
+    },
+    /** Stroke/border width for all subArcs */
+    subArcsStrokeWidth?: number,
+    /** Stroke/border color for all subArcs */
+    subArcsStrokeColor?: string
 }
 export interface SubArc {
     /** The limit of the subArc, in accord to the gauge value. */
@@ -68,5 +72,7 @@ export const defaultArc: Arc = {
     emptyColor: "#5C5C5C",
     colorArray: undefined,
     subArcs: defaultSubArcs,
-    gradient: false
+    gradient: false,
+    subArcsStrokeWidth: 0,
+    subArcsStrokeColor: undefined
 };

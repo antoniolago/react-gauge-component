@@ -246,6 +246,17 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, padding: Number(e.target.value) } })} 
                   style={{ ...styles.slider, flex: 1 }} title="Padding" />
               </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Border</span>
+                <input type="range" min="0" max="5" step="0.5" value={cfg?.arc?.subArcsStrokeWidth ?? 0} 
+                  onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, subArcsStrokeWidth: Number(e.target.value) } })} 
+                  style={{ ...styles.slider, flex: 1 }} title="SubArc border width" />
+                {(cfg?.arc?.subArcsStrokeWidth ?? 0) > 0 && (
+                  <input type="color" value={cfg?.arc?.subArcsStrokeColor || '#ffffff'} 
+                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, subArcsStrokeColor: e.target.value } })} 
+                    style={styles.colorPicker} title="SubArc border color" />
+                )}
+              </div>
               {/* Grafana-specific: outer arc & empty color */}
               {cfg?.type === 'grafana' && (
                 <>
@@ -566,7 +577,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                 <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Y Offset</span>
-                <input type="range" min="-100" max="50" step="1" value={cfg?.labels?.valueLabel?.offsetY ?? 0} 
+                <input type="range" min="-150" max="150" step="1" value={cfg?.labels?.valueLabel?.offsetY ?? 0} 
                   onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetY: Number(e.target.value) } } })} 
                   style={{ ...styles.slider, flex: 1 }} />
               </div>
@@ -609,17 +620,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
         <Col xs={12}>
           <CollapsibleGroup title="Value & Range" icon={<Sliders size={14} />} isMobile={isMobile} defaultOpen={true}>
             <div style={styles.buttonRow}>
-              <input 
-                type="number" 
-                value={cfg?.minValue ?? 0} 
-                onChange={(e) => {
-                  const newMin = Number(e.target.value);
-                  onConfigChange({ ...config, minValue: newMin });
-                  if (value < newMin) onValueChange(newMin);
-                }}
-                style={{ ...styles.toolBtn, width: '55px', padding: '4px 6px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
-                title="Min value"
-              />
               {[0, 25, 50, 75, 100].map((val) => {
                 const min = cfg?.minValue ?? 0; const max = cfg?.maxValue ?? 100;
                 const actualValue = min + (val / 100) * (max - min);
@@ -630,17 +630,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   </button>
                 );
               })}
-              <input 
-                type="number" 
-                value={cfg?.maxValue ?? 100} 
-                onChange={(e) => {
-                  const newMax = Number(e.target.value);
-                  onConfigChange({ ...config, maxValue: newMax });
-                  if (value > newMax) onValueChange(newMax);
-                }}
-                style={{ ...styles.toolBtn, width: '55px', padding: '4px 6px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
-                title="Max value"
-              />
               <input type="range" min={cfg?.minValue ?? 0} max={cfg?.maxValue ?? 100} value={value} 
                 onChange={(e) => { onValueChange(Number(e.target.value)); if (autoAnimate) onAutoAnimateChange(false); }} 
                 style={{ ...styles.slider, flex: 1, minWidth: '120px' }} step="0.1" />
@@ -649,6 +638,32 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 <input type="checkbox" checked={autoAnimate} onChange={(e) => onAutoAnimateChange(e.target.checked)} style={styles.inlineCheckbox} />
                 Auto
               </label>
+              <span style={{ marginLeft: '12px', borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Min</span>
+                <input 
+                  type="number" 
+                  value={cfg?.minValue ?? 0} 
+                  onChange={(e) => {
+                    const newMin = Number(e.target.value);
+                    onConfigChange({ ...config, minValue: newMin });
+                    if (value < newMin) onValueChange(newMin);
+                  }}
+                  style={{ ...styles.toolBtn, width: '60px', padding: '4px 6px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
+                  title="Min value"
+                />
+                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Max</span>
+                <input 
+                  type="number" 
+                  value={cfg?.maxValue ?? 100} 
+                  onChange={(e) => {
+                    const newMax = Number(e.target.value);
+                    onConfigChange({ ...config, maxValue: newMax });
+                    if (value > newMax) onValueChange(newMax);
+                  }}
+                  style={{ ...styles.toolBtn, width: '60px', padding: '4px 6px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
+                  title="Max value"
+                />
+              </span>
             </div>
           </CollapsibleGroup>
         </Col>

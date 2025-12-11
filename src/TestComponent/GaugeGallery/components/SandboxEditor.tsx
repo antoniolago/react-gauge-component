@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle, useRef } from 'react';
 import { Copy, Check, Shuffle, ClipboardPaste } from 'lucide-react';
 import GaugeComponent from '../../../lib';
 import { SandboxToolbar } from './SandboxToolbar';
@@ -12,10 +12,12 @@ interface SandboxEditorProps {
 
 export interface SandboxEditorHandle {
   loadConfig: (config: Partial<GaugeComponentProps>, value: number) => void;
+  scrollToEditor: () => void;
 }
 
 export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>(({ isLightTheme }, ref) => {
   const themeStyles = createStyles(isLightTheme);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   const [isOpen, setIsOpen] = useState(true);
   const [config, setConfig] = useState<Partial<GaugeComponentProps>>(() => generateRandomConfig());
@@ -28,13 +30,18 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const [key, setKey] = useState(0);
   const [interactionEnabled, setInteractionEnabled] = useState(false);
 
-  // Expose loadConfig method via ref
+  // Expose methods via ref
   useImperativeHandle(ref, () => ({
     loadConfig: (newConfig: Partial<GaugeComponentProps>, newValue: number) => {
       setConfig(newConfig);
       setValue(newValue);
       setKey(k => k + 1);
       setIsOpen(true); // Ensure editor is open
+    },
+    scrollToEditor: () => {
+      if (containerRef.current) {
+        containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     },
   }));
 
@@ -165,7 +172,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   }, []);
 
   return (
-    <div style={styles.sandboxSection}>
+    <div ref={containerRef} style={styles.sandboxSection}>
       <div style={styles.accordionHeader} onClick={() => setIsOpen(!isOpen)}>
         <div>
           <h2 style={styles.accordionTitle}>

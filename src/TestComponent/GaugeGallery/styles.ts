@@ -114,7 +114,6 @@ export const createStyles = (isLightTheme: boolean) => ({
       ? 'rgba(0, 0, 0, 0.03)'
       : 'rgba(255, 255, 255, 0.08)',
     borderRadius: '20px',
-    padding: '20px',
     border: isLightTheme 
       ? '1px solid rgba(0, 0, 0, 0.08)'
       : '1px solid rgba(255, 255, 255, 0.1)',

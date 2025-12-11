@@ -44,6 +44,9 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   // State to trigger re-render when custom content needs to be rendered
   const [customContentNode, setCustomContentNode] = useState<HTMLElement | null>(null);
 
+  // Use a ref for gauge so the ResizeObserver always has access to current props
+  const gaugeRef = useRef<Gauge | null>(null);
+  
   const gauge: Gauge = {
     props: mergedProps.current,
     prevProps,
@@ -63,6 +66,9 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     maxGHeight,
     customContent,
   };
+  
+  // Keep gaugeRef updated with current gauge (including current props)
+  gaugeRef.current = gauge;
 
   // Merge default props with user-provided props
   const updateMergedProps = () => {
@@ -153,7 +159,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
       // Use a small delay to ensure layout is stable
       resizeTimeout = setTimeout(() => {
         requestAnimationFrame(() => {
-          chartHooks.renderChart(gauge, true);
+          // Use gaugeRef.current to always get the latest gauge with current props
+          if (gaugeRef.current) {
+            chartHooks.renderChart(gaugeRef.current, true);
+          }
         });
       }, 16); // ~1 frame
     };

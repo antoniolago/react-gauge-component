@@ -277,9 +277,12 @@ export const addValueText = (gauge: Gauge) => {
     y = innerRadius * 0.35;  // Moved lower (was 0.1)
   }
   
-  // Apply user offsets
-  const offsetX = valueLabel.offsetX ?? 0;
-  const offsetY = valueLabel.offsetY ?? 0;
+  // Apply user offsets - scale proportionally with gauge size
+  // Reference size is 100px radius, offsets are relative to that
+  const referenceRadius = 100;
+  const scaleFactor = innerRadius / referenceRadius;
+  const offsetX = (valueLabel.offsetX ?? 0) * scaleFactor;
+  const offsetY = (valueLabel.offsetY ?? 0) * scaleFactor;
   x += offsetX;
   y += offsetY;
   

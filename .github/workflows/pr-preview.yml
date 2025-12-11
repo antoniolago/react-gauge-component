@@ -58,9 +58,10 @@ jobs:
               issue_number: prNumber,
             });
             
+            // Find existing bot comment by login name (more reliable than type)
             const botComment = comments.data.find(comment => 
-              comment.user.type === 'Bot' && 
-              comment.body.includes('🚀 PR Preview deployed!')
+              comment.user.login === 'github-actions[bot]' && 
+              comment.body.includes('PR Preview deployed')
             );
             
             const body = `🚀 **PR Preview deployed!**\n\n` +

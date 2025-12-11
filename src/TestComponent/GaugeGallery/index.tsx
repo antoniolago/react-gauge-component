@@ -120,8 +120,8 @@ const GaugeGallery: React.FC = () => {
 
   const handleSendToEditor = (config: Partial<GaugeComponentProps>, value: number) => {
     sandboxEditorRef.current?.loadConfig(config, value);
-    // Scroll to top to show editor
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll to editor section and center it in the viewport
+    sandboxEditorRef.current?.scrollToEditor();
   };
 
   return (

@@ -45,7 +45,15 @@ export const hideTooltip = (gauge: Gauge) => {
   gauge.tooltip.current.html(" ").style("display", "none");
 }
 const onArcMouseOut = (event: any, d: any, gauge: Gauge) => {
-  event.target.style.stroke = "none";
+  // Restore configured stroke instead of removing it
+  const strokeWidth = gauge.props?.arc?.subArcsStrokeWidth || 0;
+  if (strokeWidth > 0) {
+    const strokeColor = gauge.props?.arc?.subArcsStrokeColor || '#ffffff';
+    event.target.style.stroke = strokeColor;
+    event.target.style.strokeWidth = strokeWidth;
+  } else {
+    event.target.style.stroke = "none";
+  }
 }
 const onArcMouseClick = (event: any, d: any) => {
   if (d.data.onMouseClick != undefined) d.data.onMouseClick(event);
@@ -243,6 +251,15 @@ export const applyColors = (subArcsPath: any, gauge: Gauge) => {
     subArcsPath.style("fill", (d: any) => `url(#${uniqueId})`);
   } else {
     subArcsPath.style("fill", (d: any) => d.data.color);
+  }
+  
+  // Apply stroke/border to subArcs if configured
+  const strokeWidth = gauge.props?.arc?.subArcsStrokeWidth || 0;
+  if (strokeWidth > 0) {
+    const strokeColor = gauge.props?.arc?.subArcsStrokeColor || '#ffffff';
+    subArcsPath
+      .attr("stroke", strokeColor)
+      .attr("stroke-width", strokeWidth);
   }
 }
 
@@ -469,10 +486,17 @@ export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
   // doesn't work well with nested selections
   existingArcGroups.each(function(this: any, _d: any, i: number) {
     if (i < pieData.length) {
-      select(this).select("path")
+      const pathEl = select(this).select("path")
         .datum(pieData[i])
         .attr("d", arcObj as any)
         .style("fill", pieData[i].data.color);
+      
+      // Apply stroke if configured
+      const strokeWidth = gauge.props?.arc?.subArcsStrokeWidth || 0;
+      if (strokeWidth > 0) {
+        const strokeColor = gauge.props?.arc?.subArcsStrokeColor || '#ffffff';
+        pathEl.attr("stroke", strokeColor).attr("stroke-width", strokeWidth);
+      }
     }
   });
 }

@@ -349,6 +349,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
         let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
         let ticksChanged = (JSON.stringify(gauge.prevProps.current.labels?.tickLabels) !== JSON.stringify(labels.tickLabels));
+        let valueLabelChanged = (JSON.stringify(gauge.prevProps.current.labels?.valueLabel) !== JSON.stringify(labels.valueLabel));
         let shouldRedrawArcs = arcsPropsChanged;
         if (shouldRedrawArcs) {
             arcHooks.clearArcs(gauge);
@@ -363,7 +364,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             labelsHooks.clearTicks(gauge);
             labelsHooks.setupTicks(gauge);
         }
-        if (valueChanged) {
+        if (valueChanged || valueLabelChanged) {
             labelsHooks.clearValueLabel(gauge);
             labelsHooks.setupValueLabel(gauge);
         }
