@@ -103,18 +103,25 @@ const calculateDynamicPadding = (
   config: PaddingConfig,
   outerRadius: number
 ): { top: number; bottom: number; side: number } => {
+  // Calculate scale factor for tick elements (same as in labels.ts)
+  // Reference radius is 100px - ticks scale proportionally
+  const tickScaleFactor = Math.max(0.5, Math.min(1.5, outerRadius / 100));
+  
   // Base padding - minimal padding for the arc itself
   // This accounts for stroke width and small visual margins
-  const basePadding = Math.max(8, outerRadius * 0.03);
+  // Scale base padding with radius for small gauges
+  const basePadding = Math.max(4, outerRadius * 0.03);
   
   // Tick line extends outward: length (~7px) + distance from arc (~3px)
-  const tickLineExtension = 10;
+  // These are scaled proportionally with tick scale factor
+  const tickLineExtension = 10 * tickScaleFactor;
   
-  // Tick label dimensions
+  // Tick label dimensions - scale font size with gauge size
   // Text height is approximately 1.2x font size
   // Text width for numbers like "100" is approximately 2.5x font size
-  const tickTextHeight = config.tickLabelFontSize * 1.3;
-  const tickTextWidth = config.tickLabelFontSize * 3; // Account for "100%" type labels
+  const scaledFontSize = config.tickLabelFontSize * tickScaleFactor;
+  const tickTextHeight = scaledFontSize * 1.3;
+  const tickTextWidth = scaledFontSize * 3; // Account for "100%" type labels
   
   // Calculate tick padding for different directions
   let tickTopPadding = 0;
@@ -123,13 +130,13 @@ const calculateDynamicPadding = (
   if (config.hasOuterTicks) {
     if (config.hasTickLabels) {
       // Top: tick line + text height (labels at top are horizontal)
-      tickTopPadding = tickLineExtension + tickTextHeight + 5;
+      tickTopPadding = tickLineExtension + tickTextHeight + 3 * tickScaleFactor;
       // Sides: tick line + text width (labels at 0° and 180° extend horizontally)
-      tickSidePadding = tickLineExtension + tickTextWidth + 5;
+      tickSidePadding = tickLineExtension + tickTextWidth + 3 * tickScaleFactor;
     } else {
       // Just tick lines, no labels
-      tickTopPadding = tickLineExtension + 2;
-      tickSidePadding = tickLineExtension + 2;
+      tickTopPadding = tickLineExtension + 2 * tickScaleFactor;
+      tickSidePadding = tickLineExtension + 2 * tickScaleFactor;
     }
   }
   
@@ -144,21 +151,24 @@ const calculateDynamicPadding = (
   let bottomPadding = basePadding;
   
   // Value label affects bottom padding for semicircle
+  // Scale value label impact proportionally
   if (config.hasValueLabel && gaugeType === GaugeType.Semicircle) {
     // Value label sits below center, need space for it
-    bottomPadding += config.valueLabelFontSize * 0.5;
+    bottomPadding += config.valueLabelFontSize * 0.5 * tickScaleFactor;
   }
   
-  // Grafana has an outer decorative arc that extends +7px
+  // Grafana has an outer decorative arc that extends outward
+  // Scale this padding with the gauge size
   if (gaugeType === GaugeType.Grafana) {
-    topPadding += 12;
-    sidePadding += 12;
+    topPadding += 8 * tickScaleFactor;
+    sidePadding += 8 * tickScaleFactor;
   }
   
   // Ensure minimum padding for safety - elements should NEVER be cut off
-  const minTopPercent = config.hasOuterTicks ? 0.18 : 0.06;
-  const minSidePercent = config.hasOuterTicks ? 0.20 : 0.06; // More side padding for horizontal labels
-  const minBottomPercent = 0.06;
+  // Use smaller minimums for smaller gauges
+  const minTopPercent = config.hasOuterTicks ? 0.15 : 0.05;
+  const minSidePercent = config.hasOuterTicks ? 0.18 : 0.05; // More side padding for horizontal labels
+  const minBottomPercent = 0.05;
   
   return {
     top: Math.max(topPadding, outerRadius * minTopPercent),
@@ -493,9 +503,16 @@ export const calculateLayoutFromMeasuredBounds = (
   arcWidth: number,
   currentLayout: GaugeLayout
 ): GaugeLayout => {
-  // Add safety margin around the measured bounds (5% minimum, more for safety)
-  const marginFactor = 0.05;
-  const minMargin = 5; // Minimum 5px margin
+  // Add safety margin around the measured bounds
+  // For small containers, use smaller margins to maximize gauge size
+  const minDimension = Math.min(parentWidth, parentHeight);
+  
+  // Scale margin factor: 3% for small containers (<150px), up to 5% for larger ones
+  const marginFactor = minDimension < 150 ? 0.02 : 
+                        minDimension < 250 ? 0.03 : 0.05;
+  
+  // Scale minimum margin with container size: 2-5px
+  const minMargin = Math.max(2, Math.min(5, minDimension * 0.02));
   const marginX = Math.max(minMargin, measuredBounds.width * marginFactor);
   const marginY = Math.max(minMargin, measuredBounds.height * marginFactor);
   
@@ -580,13 +597,17 @@ export const calculateTightLayout = (
   const arcBottomExtent = gaugeType === GaugeType.Semicircle ? 0.15 : 
     (gaugeType === GaugeType.Grafana ? 0.70 : 0.72);
   
-  // Use generous padding for first pass to ensure all content is captured
-  // This pass is hidden, so it's okay if there's extra space
-  const topPadding = 30; // Space for outer ticks/labels at top
-  const sidePadding = 40; // Space for tick labels at sides (0 and 100)
-  const bottomPadding = 25; // Space for value label and needle base
+  // Use PROPORTIONAL padding for first pass
+  // This ensures gauges stay usable at all sizes
+  // For small containers (<200px), use 8% padding; for larger, cap at reasonable pixel values
+  const minDimension = Math.min(availableWidth, availableHeight);
   
-  // Calculate radius with generous padding
+  // Proportional padding: 10% of min dimension, capped between 8-40px
+  const topPadding = Math.max(8, Math.min(30, minDimension * 0.10));
+  const sidePadding = Math.max(10, Math.min(40, minDimension * 0.12));
+  const bottomPadding = Math.max(6, Math.min(25, minDimension * 0.08));
+  
+  // Calculate radius with proportional padding
   const radiusFromWidth = (availableWidth - 2 * sidePadding) / 2;
   
   let radiusFromHeight: number;

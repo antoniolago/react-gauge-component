@@ -298,7 +298,7 @@ export const styles: Record<string, React.CSSProperties> = {
   gaugePreviewContainer: {
     display: 'flex',
     justifyContent: 'flex-start',
-    padding: '20px',
+    // padding: '20px',
   },
   dragHint: {
     textAlign: 'center' as const,

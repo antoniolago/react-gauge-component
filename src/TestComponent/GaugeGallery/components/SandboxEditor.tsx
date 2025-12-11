@@ -26,7 +26,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const [gaugeAlign, setGaugeAlign] = useState<'left' | 'center' | 'right'>('left');
   const [copied, setCopied] = useState(false);
   const [key, setKey] = useState(0);
-  const [interactionEnabled, setInteractionEnabled] = useState(true);
+  const [interactionEnabled, setInteractionEnabled] = useState(false);
 
   // Expose loadConfig method via ref
   useImperativeHandle(ref, () => ({

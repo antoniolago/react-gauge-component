@@ -62,10 +62,28 @@ export const mapTick = (value: number, gauge: Gauge): Tick => {
     lineConfig: tickLabels?.defaultTickLineConfig
   } as Tick;
 }
+/**
+ * Calculate scale factor based on gauge radius to make ticks proportional
+ * Reference radius is 100px (default behavior preserved at this size)
+ */
+const getTickScaleFactor = (gauge: Gauge): number => {
+  const referenceRadius = 100;
+  const outerRadius = gauge.dimensions.current.outerRadius;
+  // Scale proportionally but clamp between 0.5 and 1.5 to avoid extremes
+  return Math.max(0.5, Math.min(1.5, outerRadius / referenceRadius));
+};
+
 export const addTickLine = (tick: Tick, gauge: Gauge) => {
   const { labels } = gauge.props;
   const { tickAnchor, angle } = calculateAnchorAndAngleByValue(tick?.value as number, gauge);
+  
+  // Get scale factor for proportional sizing
+  const scaleFactor = getTickScaleFactor(gauge);
+  
   var tickDistanceFromArc = tick.lineConfig?.distanceFromArc || labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc || 0;
+  // Scale distance from arc
+  tickDistanceFromArc = tickDistanceFromArc * scaleFactor;
+  
   if (gauge.props.labels?.tickLabels?.type == "outer") tickDistanceFromArc = -tickDistanceFromArc;
   // else tickDistanceFromArc = tickDistanceFromArc - 10;
   let coords = getLabelCoordsByValue(tick?.value as number, gauge, tickDistanceFromArc);
@@ -73,6 +91,10 @@ export const addTickLine = (tick: Tick, gauge: Gauge) => {
   var tickColor = tick.lineConfig?.color || labels?.tickLabels?.defaultTickLineConfig?.color || defaultTickLabels.defaultTickLineConfig?.color;
   var tickWidth = tick.lineConfig?.width || labels?.tickLabels?.defaultTickLineConfig?.width || defaultTickLabels.defaultTickLineConfig?.width;
   var tickLength = tick.lineConfig?.length || labels?.tickLabels?.defaultTickLineConfig?.length || defaultTickLabels.defaultTickLineConfig?.length as number;
+  
+  // Scale tick dimensions proportionally with gauge size
+  tickLength = tickLength * scaleFactor;
+  tickWidth = Math.max(0.5, (tickWidth as number) * scaleFactor);
   // Calculate the end coordinates based on the adjusted position
   var endX;
   var endY;
@@ -113,12 +135,21 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   let arcWidth = arc.width as number;
   let tickValue = tick?.value as number;
   let { tickAnchor } = calculateAnchorAndAngleByValue(tickValue, gauge);
-  let centerToArcLengthSubtract = 27 - arcWidth * 10;
+  
+  // Get scale factor for proportional sizing
+  const scaleFactor = getTickScaleFactor(gauge);
+  
+  let centerToArcLengthSubtract = (27 - arcWidth * 10) * scaleFactor;
   let isInner = labels?.tickLabels?.type == "inner";
-  if (!isInner) centerToArcLengthSubtract = arcWidth * 10 - 10
-  else centerToArcLengthSubtract -= 10
+  if (!isInner) centerToArcLengthSubtract = (arcWidth * 10 - 10) * scaleFactor
+  else centerToArcLengthSubtract -= 10 * scaleFactor
   var tickDistanceFromArc = tick.lineConfig?.distanceFromArc || labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc || 0;
   var tickLength = tick.lineConfig?.length || labels?.tickLabels?.defaultTickLineConfig?.length || 0;
+  
+  // Scale distance and length
+  tickDistanceFromArc = tickDistanceFromArc * scaleFactor;
+  tickLength = tickLength * scaleFactor;
+  
   var _shouldHideTickLine = shouldHideTickLine(tick, gauge);
   if (!_shouldHideTickLine) {
     if (isInner) {
@@ -144,20 +175,26 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   } else {
     text = utils.floatingNumber(tickValue, maxDecimalDigits).toString();
   }
+  
+  // Scale position offsets
+  const positionOffset = 10 * scaleFactor;
   if (labels?.tickLabels?.type == "inner") {
-    if (tickAnchor === "end") coords.x += 10;
-    if (tickAnchor === "start") coords.x -= 10;
-    // if (tickAnchor === "middle") coords.y -= 0;
+    if (tickAnchor === "end") coords.x += positionOffset;
+    if (tickAnchor === "start") coords.x -= positionOffset;
   } else {
-    // if(tickAnchor === "end") coords.x -= 10;
-    // if(tickAnchor === "start") coords.x += 10;
-    if (tickAnchor === "middle") coords.y += 2;
+    if (tickAnchor === "middle") coords.y += 2 * scaleFactor;
   }
   if (tickAnchor === "middle") {
     coords.y += 0;
   } else {
-    coords.y += 3;
+    coords.y += 3 * scaleFactor;
   }
+  
+  // Scale font size based on gauge size
+  const baseFontSize = parseFloat(String(tickValueStyle.fontSize || '12px')) || 12;
+  const scaledFontSize = Math.max(6, baseFontSize * scaleFactor);
+  tickValueStyle.fontSize = `${scaledFontSize}px`;
+  
   tickValueStyle.textAnchor = tickAnchor as any;
   addText(text, coords.x, coords.y, gauge, tickValueStyle, CONSTANTS.tickValueClassname);
 }

@@ -321,7 +321,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 <button onClick={() => onInteractionChange(!interactionEnabled)} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(interactionEnabled ? styles.toolBtnActive : {}) }} 
                   title="Drag" type="button">
-                  <Hand size={14} /><span>Drag</span>
+                  <Hand size={14} /><span>Drag pointer</span>
                 </button>
                 <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, elastic: !cfg?.pointer?.elastic } })} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.elastic ? styles.toolBtnActive : {}) }} 
