@@ -81,5 +81,6 @@ export const defaultPointer: PointerProps = {
     strokeWidth: 0,
     strokeColor: undefined,
     arrowOffset: 0.72,
-    blobOffset: 0.5
+    blobOffset: 0.5,
+    hideGrabHandle: false
 }
