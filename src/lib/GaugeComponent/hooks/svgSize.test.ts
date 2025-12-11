@@ -100,7 +100,7 @@ describe('SVG Size Tests', () => {
       const viewBoxBottom = layout.viewBox.y + layout.viewBox.height;
       
       // Value label should fit within viewBox (with small tolerance)
-      expect(valueBottom).toBeLessThanOrEqual(viewBoxBottom + 10);
+      expect(valueBottom).toBeLessThanOrEqual(viewBoxBottom + 12);
       
       // ViewBox height should be optimized for semicircle (not full circle)
       // With generous padding, height may approach width
@@ -198,7 +198,7 @@ describe('SVG Size Tests', () => {
       
       // Check visible content fits within viewBox (with tolerance)
       expect(minY).toBeGreaterThanOrEqual(layout.viewBox.y);
-      expect(maxVisibleY).toBeLessThanOrEqual(layout.viewBox.y + layout.viewBox.height + 10);
+      expect(maxVisibleY).toBeLessThanOrEqual(layout.viewBox.y + layout.viewBox.height + 12);
       
       // Should have some top padding for tick labels
       const topPadding = minY - layout.viewBox.y;

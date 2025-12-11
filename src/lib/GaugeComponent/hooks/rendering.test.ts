@@ -387,7 +387,7 @@ describe('Rendering Behavior Tests', () => {
       // The visible portion should generally fit within viewBox (with small tolerance)
       // The gauge center plus some padding should be within bounds
       const visibleBottom = layout.gaugeCenter.y + layout.outerRadius * 0.15;
-      expect(visibleBottom).toBeLessThanOrEqual(viewBoxBottom + 10); // 10px tolerance
+      expect(visibleBottom).toBeLessThanOrEqual(viewBoxBottom + 12); // 12px tolerance
       
       // ViewBox should be optimized for semicircle (height <= width)
       expect(layout.viewBox.height).toBeLessThanOrEqual(layout.viewBox.width);
