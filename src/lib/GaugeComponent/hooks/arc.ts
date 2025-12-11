@@ -417,29 +417,13 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
   
   let percent = utils.calculatePercentage(gauge.props.minValue as number, gauge.props.maxValue as number, value);
   
-  // Position angles - these determine WHERE on the arc the tick is placed
-  // Uses standard math convention: 0° = right, 90° = down, 180° = left, 270° = up
-  // The angles are chosen so minValue is on the left, maxValue on the right
-  let gaugeTypesAngles: Record<GaugeType, { startAngle: number; endAngle: number; }> = {
-    [GaugeType.Grafana]: {
-      // Arc spans from -112.5° to +112.5° in D3 (from top), which is ~157° to ~23° in math coords
-      startAngle: utils.degToRad(-22.5),
-      endAngle: utils.degToRad(202.5)
-    },
-    [GaugeType.Semicircle]: {
-      // Arc spans from -90° to +90° in D3, which is 0° to 180° in math coords
-      startAngle: utils.degToRad(0),
-      endAngle: utils.degToRad(180)
-    },
-    [GaugeType.Radial]: {
-      // Arc spans from -131° to +131° in D3, which is ~-41° to ~221° in math coords
-      startAngle: utils.degToRad(-41),
-      endAngle: utils.degToRad(221)
-    },
-  };
-
-  let { startAngle, endAngle } = gaugeTypesAngles[gauge.props.type as GaugeType];
-  const angle = startAngle + (percent) * (endAngle - startAngle);
+  // Use actual angles from gauge dimensions (supports custom angles)
+  // D3 angles: 0 = top (12 o'clock), positive = clockwise
+  // Math angles for tick positioning: 0 = right (3 o'clock), 90 = down
+  // Conversion: mathAngle = d3Angle + π/2
+  const { startAngle: d3Start, endAngle: d3End } = gauge.dimensions.current.angles;
+  const d3Angle = d3Start + percent * (d3End - d3Start);
+  const angle = d3Angle + Math.PI / 2;
 
   // Calculate position relative to center (0, 0)
   // Since g is now centered at gaugeCenter, coordinates are relative to origin

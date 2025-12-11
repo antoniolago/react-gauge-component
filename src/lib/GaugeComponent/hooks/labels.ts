@@ -394,28 +394,17 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   let minValue = gauge.props.minValue as number;
   let maxValue = gauge.props.maxValue as number;
   let valuePercentage = utils.calculatePercentage(minValue, maxValue, value)
-  // These angles define the tick LINE direction (not position)
-  // startAngle = direction for minValue tick, endAngle = sweep to maxValue
-  // Angles use standard math convention: 0°=right, 90°=down, 180°=left, 270°=up
-  let gaugeTypesAngles: Record<string, { startAngle: number; endAngle: number; }> = {
-    [GaugeType.Grafana]: {
-      startAngle: 157,   // Left-bottom diagonal outward
-      endAngle: 226      // Sweep to right-bottom diagonal
-    },
-    [GaugeType.Semicircle]: {
-      startAngle: 180,   // Left horizontal outward
-      endAngle: 180      // Sweep 180° to right horizontal (0°/360°)
-    },
-    [GaugeType.Radial]: {
-      startAngle: 139,   // Left-bottom outward (arc starts lower)
-      endAngle: 262      // Sweep to right-bottom
-    },
-  };
-  // Default to Grafana if type is undefined
-  const gaugeType = gauge.props.type || GaugeType.Grafana;
-  let { startAngle, endAngle } = gaugeTypesAngles[gaugeType as string];
-
-  let angle = startAngle + (valuePercentage * 100) * endAngle / 100;
+  
+  // Use actual angles from gauge dimensions (supports custom angles)
+  // D3 angles: 0 = top (12 o'clock), positive = clockwise
+  // Convert to degrees for tick line rotation
+  const { startAngle: d3Start, endAngle: d3End } = gauge.dimensions.current.angles;
+  const d3Angle = d3Start + valuePercentage * (d3End - d3Start);
+  
+  // Convert D3 radians to degrees and add 90° to get outward-pointing angle
+  // D3 angle 0 (top) -> tick angle 90° (pointing up, outward from top)
+  // D3 angle π/2 (right) -> tick angle 180° (pointing right, outward)
+  let angle = utils.radToDeg(d3Angle) + 90;
   let isValueLessThanHalf = valuePercentage < 0.5;
   //Values between 40% and 60% are aligned in the middle
   let isValueBetweenTolerance = valuePercentage > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] &&

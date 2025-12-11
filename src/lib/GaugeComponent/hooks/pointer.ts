@@ -22,10 +22,12 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     // to avoid the pointer jumping from prevPercent to currentPercent
     const useCurrentPercent = resize && !isFirstTime;
     
-    // Initialize pointer for all types except Grafana (which uses arc fill), 
-    // unless Grafana has pointer explicitly shown (hide: false)
+    // Initialize pointer for all types except Grafana (which uses arc fill by default)
+    // For Grafana, only show pointer if user explicitly configured pointer props
     const isGrafana = gauge.props.type == GaugeType.Grafana;
-    const showPointerForGrafana = isGrafana && !pointer.hide;
+    // Check if user explicitly provided pointer config (not just defaults)
+    const userExplicitlyConfiguredPointer = gauge.originalProps?.pointer !== undefined;
+    const showPointerForGrafana = isGrafana && userExplicitlyConfiguredPointer && !pointer.hide;
     
     if ((isFirstTime || resize) && (!isGrafana || showPointerForGrafana)) 
         initPointer(gauge, useCurrentPercent);
@@ -146,12 +148,12 @@ const initPointer = (gauge: Gauge, useCurrentPercent: boolean = false) => {
                 .style("cursor", "grab");
         }
     }
-    //Add a circle at the bottom of pointer
+    //Add a circle at the center (base of pointer)
     if (pointer.type == PointerType.Needle) {
         const needleBaseCircle = gauge.pointer.current.element
             .append("circle")
-            .attr("cx", centerPoint[0])
-            .attr("cy", centerPoint[1])
+            .attr("cx", 0)
+            .attr("cy", 0)
             .attr("r", pointerRadius)
             .attr("fill", pointer.baseColor || initialColor);
         
@@ -287,26 +289,29 @@ const isProgressValid = (currentPercent: number, prevPercent: number, gauge: Gau
 }
 
 const calculatePointerPath = (gauge: Gauge, percent: number) => {
-    const { centerPoint, pointerRadius, pathLength } = gauge.pointer.current.context;
-    let startAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -42);
-    let endAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 223);
-    const angle = startAngle + (percent) * (endAngle - startAngle);
-    var topPoint = [
-        centerPoint[0] - pathLength * Math.cos(angle),
-        centerPoint[1] - pathLength * Math.sin(angle),
-    ];
-    var thetaMinusHalfPi = angle - Math.PI / 2;
-    var leftPoint = [
-        centerPoint[0] - pointerRadius * Math.cos(thetaMinusHalfPi),
-        centerPoint[1] - pointerRadius * Math.sin(thetaMinusHalfPi),
-    ];
-    var thetaPlusHalfPi = angle + Math.PI / 2;
-    var rightPoint = [
-        centerPoint[0] - pointerRadius * Math.cos(thetaPlusHalfPi),
-        centerPoint[1] - pointerRadius * Math.sin(thetaPlusHalfPi),
-    ];
+    const { pointerRadius, pathLength } = gauge.pointer.current.context;
+    // Use actual angles from gauge dimensions (supports custom angles)
+    // D3 angle convention: 0 = top (12 o'clock), positive = clockwise
+    const { startAngle, endAngle } = gauge.dimensions.current.angles;
+    const d3Angle = startAngle + percent * (endAngle - startAngle);
+    
+    // Calculate needle tip position using D3 angle convention (same as arc)
+    // x = radius * sin(angle), y = -radius * cos(angle)
+    const tipX = pathLength * Math.sin(d3Angle);
+    const tipY = -pathLength * Math.cos(d3Angle);
+    
+    // Calculate base points perpendicular to the needle direction
+    // The base is at the center (0, 0), with points spread perpendicular to the needle
+    const perpAngle = d3Angle + Math.PI / 2; // perpendicular angle
+    const baseOffset = pointerRadius;
+    
+    const leftX = baseOffset * Math.sin(perpAngle);
+    const leftY = -baseOffset * Math.cos(perpAngle);
+    
+    const rightX = -baseOffset * Math.sin(perpAngle);
+    const rightY = baseOffset * Math.cos(perpAngle);
 
-    var pathStr = `M ${leftPoint[0]} ${leftPoint[1]} L ${topPoint[0]} ${topPoint[1]} L ${rightPoint[0]} ${rightPoint[1]}`;
+    var pathStr = `M ${leftX} ${leftY} L ${tipX} ${tipY} L ${rightX} ${rightY}`;
     return pathStr;
 };
 
@@ -316,29 +321,25 @@ const calculatePointerPath = (gauge: Gauge, percent: number) => {
 const calculatePointerTipPosition = (gauge: Gauge, percent: number): { x: number, y: number } => {
     const pointer = gauge.props.pointer as PointerProps;
     const pointerType = pointer.type as PointerType;
-    const { centerPoint, pathLength, pointerRadius } = gauge.pointer.current.context;
+    const { pathLength } = gauge.pointer.current.context;
     const innerR = gauge.dimensions.current.innerRadius;
-    const outerR = gauge.dimensions.current.outerRadius;
     
-    // Use the SAME angles as the arc drawing
+    // Use the SAME angles as the arc drawing (D3 convention)
     const { startAngle, endAngle } = gauge.dimensions.current.angles;
-    const angle = startAngle + percent * (endAngle - startAngle);
+    const d3Angle = startAngle + percent * (endAngle - startAngle);
     
-    // For Arrow type, calculate position based on arrow offset
+    // For Arrow type, calculate position based on arrow offset + local tip
     if (pointerType === PointerType.Arrow) {
         const arrowOffset = pointer.arrowOffset ?? 0.72;
         const targetRadius = innerR * arrowOffset;
         
         // Arrow translation position
-        const transX = targetRadius * Math.sin(angle);
-        const transY = -targetRadius * Math.cos(angle);
+        const transX = targetRadius * Math.sin(d3Angle);
+        const transY = -targetRadius * Math.cos(d3Angle);
         
-        // Local tip position (from calculatePointerPath, using old angle convention for path shape)
-        let pathStartAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -42);
-        let pathEndAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 223);
-        const pathAngle = pathStartAngle + percent * (pathEndAngle - pathStartAngle);
-        const localTipX = centerPoint[0] - pathLength * Math.cos(pathAngle);
-        const localTipY = centerPoint[1] - pathLength * Math.sin(pathAngle);
+        // Local tip position (arrow path tip)
+        const localTipX = pathLength * Math.sin(d3Angle);
+        const localTipY = -pathLength * Math.cos(d3Angle);
         
         return {
             x: transX + localTipX,
@@ -346,14 +347,10 @@ const calculatePointerTipPosition = (gauge: Gauge, percent: number): { x: number
         };
     }
     
-    // For Needle type, calculate from center using path length (uses old angle convention for path)
-    let pathStartAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 0 : -42);
-    let pathEndAngle = utils.degToRad(gauge.props.type == GaugeType.Semicircle ? 180 : 223);
-    const pathAngle = pathStartAngle + percent * (pathEndAngle - pathStartAngle);
-    
+    // For Needle type, tip is at pathLength from center along the angle
     return {
-        x: centerPoint[0] - pathLength * Math.cos(pathAngle),
-        y: centerPoint[1] - pathLength * Math.sin(pathAngle),
+        x: pathLength * Math.sin(d3Angle),
+        y: -pathLength * Math.cos(d3Angle),
     };
 };
 

@@ -46,6 +46,9 @@ export function normalize(value: number, min: number, max: number) {
 export const degToRad = (degrees: number) => {
   return degrees * (Math.PI / 180);
 }
+export const radToDeg = (radians: number) => {
+  return radians * (180 / Math.PI);
+}
 export const getCurrentGaugePercentageByValue = (value: number, gauge: GaugeComponentProps) => calculatePercentage(gauge.minValue as number, gauge.maxValue as number, value);
 export const getCurrentGaugeValueByPercentage = (percentage: number, gauge: Gauge) => {
   let minValue = gauge.props.minValue as number;

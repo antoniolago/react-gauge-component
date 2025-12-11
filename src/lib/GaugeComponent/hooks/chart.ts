@@ -66,6 +66,15 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
 }
 export const calculateAngles = (gauge: Gauge) => {
     const { angles } = gauge.dimensions.current;
+    
+    // Use custom angles if provided (convert degrees to radians)
+    if (gauge.props.startAngle !== undefined && gauge.props.endAngle !== undefined) {
+        angles.startAngle = (gauge.props.startAngle * Math.PI) / 180;
+        angles.endAngle = (gauge.props.endAngle * Math.PI) / 180;
+        return;
+    }
+    
+    // Default angles by gauge type
     if (gauge.props.type == GaugeType.Semicircle) {
         angles.startAngle = -Math.PI / 2 + 0.02;
         angles.endAngle = Math.PI / 2 - 0.02;

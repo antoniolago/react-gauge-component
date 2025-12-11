@@ -257,6 +257,61 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                     style={styles.colorPicker} title="SubArc border color" />
                 )}
               </div>
+              {/* Custom Angle Controls */}
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px', marginTop: '4px' }}>
+                <Settings2 size={12} style={{ opacity: 0.6 }} />
+                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Angles</span>
+                <button 
+                  onClick={() => onConfigChange({ ...config, startAngle: undefined, endAngle: undefined })} 
+                  style={{ ...styles.toolBtn, padding: '2px 6px', marginLeft: 'auto', fontSize: '0.65rem' }} 
+                  title="Reset to type defaults"
+                  type="button"
+                >
+                  Reset
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Start</span>
+                <input type="range" min="-180" max="180" step="5" 
+                  value={cfg?.startAngle ?? (cfg?.type === 'semicircle' ? -90 : cfg?.type === 'radial' ? -130 : -112)} 
+                  onChange={(e) => {
+                    const start = Number(e.target.value);
+                    const currentEnd = cfg?.endAngle ?? (cfg?.type === 'semicircle' ? 90 : cfg?.type === 'radial' ? 130 : 112);
+                    onConfigChange({ ...config, startAngle: start, endAngle: currentEnd });
+                  }} 
+                  style={{ ...styles.slider, flex: 1 }} title="Start angle (degrees)" />
+                <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '30px' }}>{cfg?.startAngle ?? (cfg?.type === 'semicircle' ? -90 : cfg?.type === 'radial' ? -130 : -112)}°</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>End</span>
+                <input type="range" min="-180" max="180" step="5" 
+                  value={cfg?.endAngle ?? (cfg?.type === 'semicircle' ? 90 : cfg?.type === 'radial' ? 130 : 112)} 
+                  onChange={(e) => {
+                    const end = Number(e.target.value);
+                    const currentStart = cfg?.startAngle ?? (cfg?.type === 'semicircle' ? -90 : cfg?.type === 'radial' ? -130 : -112);
+                    onConfigChange({ ...config, startAngle: currentStart, endAngle: end });
+                  }} 
+                  style={{ ...styles.slider, flex: 1 }} title="End angle (degrees)" />
+                <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '30px' }}>{cfg?.endAngle ?? (cfg?.type === 'semicircle' ? 90 : cfg?.type === 'radial' ? 130 : 112)}°</span>
+              </div>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                <button onClick={() => onConfigChange({ ...config, startAngle: -90, endAngle: 90 })} 
+                  style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.7rem' }} type="button" title="Half circle (top)">
+                  Half
+                </button>
+                <button onClick={() => onConfigChange({ ...config, startAngle: -135, endAngle: 135 })} 
+                  style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.7rem' }} type="button" title="Three quarter circle">
+                  ¾
+                </button>
+                <button onClick={() => onConfigChange({ ...config, startAngle: -179, endAngle: 179 })} 
+                  style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.7rem' }} type="button" title="Full circle">
+                  Full
+                </button>
+                {/* <button onClick={() => onConfigChange({ ...config, startAngle: 90, endAngle: -90 })} 
+                  style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.7rem' }} type="button" title="Half circle (bottom)">
+                  Bottom
+                </button> */}
+              </div>
               {/* Grafana-specific: outer arc & empty color */}
               {cfg?.type === 'grafana' && (
                 <>

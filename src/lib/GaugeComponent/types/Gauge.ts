@@ -12,6 +12,8 @@ export interface CustomContentConfig {
 
 export interface Gauge {
     props: GaugeComponentProps;
+    /** Original props before merging with defaults - used to detect explicit user configuration */
+    originalProps?: Partial<GaugeComponentProps>;
     prevProps: React.MutableRefObject<GaugeComponentProps>;
     svg: React.MutableRefObject<any>;
     g: React.MutableRefObject<any>;

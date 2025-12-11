@@ -49,6 +49,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   
   const gauge: Gauge = {
     props: mergedProps.current,
+    originalProps: props,
     prevProps,
     resizeObserver: useRef<any>(),
     svg,
@@ -98,8 +99,11 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     const maxValueChanged = JSON.stringify(prevProps.current.maxValue) !== JSON.stringify(mergedProps.current.maxValue);
     // Check if onValueChange callback changed (for drag interaction toggle)
     const interactionChanged = (prevProps.current.onValueChange !== undefined) !== (mergedProps.current.onValueChange !== undefined);
+    // Check if custom angles changed
+    const anglesChanged = prevProps.current.startAngle !== mergedProps.current.startAngle || 
+                          prevProps.current.endAngle !== mergedProps.current.endAngle;
     
-    return arcsPropsChanged || pointerPropsChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged;
+    return arcsPropsChanged || pointerPropsChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
   };
 
   const isHeightProvidedByUser = () => mergedProps.current.style?.height !== undefined;
