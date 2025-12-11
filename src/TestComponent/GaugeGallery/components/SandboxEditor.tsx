@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Shuffle, ClipboardPaste } from 'lucide-react';
 import GaugeComponent from '../../../lib';
 import { SandboxToolbar } from './SandboxToolbar';
 import { styles, createStyles } from '../styles';
@@ -70,6 +70,94 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     });
   }, [config, value]);
 
+  const handlePaste = useCallback(() => {
+    navigator.clipboard.readText().then(text => {
+      try {
+        let parsed: any = {};
+        
+        // Check if it's JSX/hybrid format
+        if (text.includes('<GaugeComponent') || text.includes('<Gauge')) {
+          // Parse JSX props
+          const extractValue = (str: string, start: number): { value: string, end: number } => {
+            if (str[start] === '"' || str[start] === "'") {
+              const quote = str[start];
+              let end = start + 1;
+              while (end < str.length && str[end] !== quote) {
+                if (str[end] === '\\') end++;
+                end++;
+              }
+              return { value: str.slice(start + 1, end), end: end + 1 };
+            }
+            if (str[start] === '{') {
+              let depth = 1;
+              let end = start + 1;
+              while (end < str.length && depth > 0) {
+                if (str[end] === '{') depth++;
+                if (str[end] === '}') depth--;
+                if (str[end] === '"' || str[end] === "'") {
+                  const quote = str[end];
+                  end++;
+                  while (end < str.length && str[end] !== quote) {
+                    if (str[end] === '\\') end++;
+                    end++;
+                  }
+                }
+                end++;
+              }
+              return { value: str.slice(start + 1, end - 1), end };
+            }
+            return { value: '', end: start };
+          };
+          
+          const propPattern = /(\w+)=(?={|"|')/g;
+          let match;
+          while ((match = propPattern.exec(text)) !== null) {
+            const propName = match[1];
+            const startIdx = match.index + match[0].length;
+            const { value: rawValue } = extractValue(text, startIdx);
+            
+            let propValue: any = rawValue;
+            
+            if (text[startIdx] === '"' || text[startIdx] === "'") {
+              propValue = rawValue;
+            } else {
+              try {
+                let jsonStr = rawValue
+                  .replace(/(\w+)\s*:/g, '"$1":')
+                  .replace(/'/g, '"')
+                  .replace(/,(\s*[}\]])/g, '$1');
+                propValue = JSON.parse(jsonStr);
+              } catch {
+                try {
+                  propValue = eval(`(${rawValue})`);
+                } catch {
+                  propValue = rawValue;
+                }
+              }
+            }
+            parsed[propName] = propValue;
+          }
+        } else {
+          parsed = JSON.parse(text);
+        }
+        
+        if (parsed.value !== undefined) {
+          setValue(Number(parsed.value));
+          delete parsed.value;
+        }
+        if (Object.keys(parsed).length > 0) {
+          setConfig(parsed);
+          setKey(k => k + 1);
+        }
+      } catch (e) {
+        console.error('Parse error:', e);
+        alert('Could not parse clipboard. Use <GaugeComponent .../> JSX format.');
+      }
+    }).catch(() => {
+      alert('Could not read clipboard. Please allow clipboard access.');
+    });
+  }, []);
+
   const handleSizeChange = useCallback((width: string, height: string) => {
     setSandboxWidth(width);
     setSandboxHeight(height);
@@ -103,7 +191,6 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
             onAutoAnimateChange={setAutoAnimate}
             onSizeChange={handleSizeChange}
             onAlignChange={setGaugeAlign}
-            onRandomize={handleRandomize}
             interactionEnabled={interactionEnabled}
             onInteractionChange={setInteractionEnabled}
           />
@@ -124,17 +211,6 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
               resize: 'both',
               overflow: 'hidden',
             }}>
-              <button
-                onClick={handleCopy}
-                style={{
-                  ...styles.copyCornerBtn,
-                  background: copied ? '#5BE12C' : 'rgba(0, 0, 0, 0.5)',
-                }}
-                title="Copy code"
-                type="button"
-              >
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-              </button>
               
               <div style={{ width: '100%', height: 'calc(100% - 30px)' }}>
                 <GaugeComponent
@@ -145,11 +221,83 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                 />
               </div>
               
-              {interactionEnabled && (
-                <div style={styles.dragHint}>
-                  💡 Drag the pointer to set value
-                </div>
-              )}
+              {/* Action buttons */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '4px 8px',
+                background: 'rgba(0, 0, 0, 0.3)',
+                borderRadius: '4px',
+                margin: '0 8px 4px',
+              }}>
+                <button
+                  onClick={handleRandomize}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.75rem',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  title="Randomize gauge"
+                  type="button"
+                >
+                  <Shuffle size={14} /> Random
+                </button>
+                <button
+                  onClick={handlePaste}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.75rem',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  title="Paste from clipboard"
+                  type="button"
+                >
+                  <ClipboardPaste size={14} /> Paste
+                </button>
+                <button
+                  onClick={handleCopy}
+                  style={{
+                    background: copied ? 'rgba(91, 225, 44, 0.2)' : 'transparent',
+                    border: 'none',
+                    color: copied ? '#5BE12C' : 'rgba(255, 255, 255, 0.8)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.75rem',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => !copied && (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)')}
+                  onMouseLeave={(e) => !copied && (e.currentTarget.style.background = 'transparent')}
+                  title="Copy as JSX"
+                  type="button"
+                >
+                  {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
               
               {/* Resize indicator */}
               <div style={{

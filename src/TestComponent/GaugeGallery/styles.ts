@@ -207,6 +207,7 @@ export const styles: Record<string, React.CSSProperties> = {
     marginBottom: '8px',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.5px',
+    flexWrap: 'wrap' as const,
   },
   buttonRow: {
     display: 'flex',

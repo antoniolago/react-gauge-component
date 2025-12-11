@@ -20,6 +20,20 @@ const GRID_CONFIGS = {
 
 export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnimate, onSendToEditor }) => {
   const [columnCount, setColumnCount] = useState<ColumnCount>(4);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Handle responsive column count
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setColumnCount(1);
+    };
+    
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [values, setValues] = useState<number[]>(() => 
     GAUGE_PRESETS.map(preset => {
       const min = (preset.config as any)?.minValue ?? 0;
@@ -80,21 +94,23 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnim
     <div style={styles.gallerySection}>
       <div style={styles.galleryHeader}>
         <h2 style={styles.galleryTitle}>Gauge Gallery</h2>
-        <div style={styles.galleryControls}>
-          {([1, 2, 3, 4] as ColumnCount[]).map((count) => (
-            <button
-              key={count}
-              onClick={() => setColumnCount(count)}
-              style={{
-                ...styles.columnBtn,
-                ...(columnCount === count ? styles.columnBtnActive : {}),
-              }}
-              type="button"
-            >
-              {count}×
-            </button>
-          ))}
-        </div>
+        {!isMobile && (
+          <div style={styles.galleryControls}>
+            {([1, 2, 3, 4] as ColumnCount[]).map((count) => (
+              <button
+                key={count}
+                onClick={() => setColumnCount(count)}
+                style={{
+                  ...styles.columnBtn,
+                  ...(columnCount === count ? styles.columnBtnActive : {}),
+                }}
+                type="button"
+              >
+                {count}×
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       
       <div style={{

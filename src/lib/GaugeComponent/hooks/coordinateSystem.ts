@@ -507,8 +507,11 @@ export const calculateLayoutFromMeasuredBounds = (
   const topExtent = Math.abs(measuredBounds.y) + marginY;
   const bottomExtent = measuredBounds.y + measuredBounds.height + marginY;
   
-  // Total content dimensions (from the perspective of center being at 0,0)
-  const contentWidth = leftExtent + rightExtent;
+  // Use SYMMETRIC side padding to keep gauge visually centered
+  // This handles asymmetric content (like a tick on only one side) by 
+  // using the maximum extent on both sides
+  const maxSideExtent = Math.max(leftExtent, rightExtent);
+  const contentWidth = maxSideExtent * 2; // Symmetric width
   const contentHeight = topExtent + bottomExtent;
   
   // Calculate the scale factor to fit the content in the parent
@@ -525,8 +528,8 @@ export const calculateLayoutFromMeasuredBounds = (
   const newViewBoxHeight = contentHeight * scale;
   
   // Calculate new center position
-  // Center should be positioned so that leftExtent * scale from left edge
-  const newCenterX = leftExtent * scale;
+  // With symmetric side padding, center is always in the horizontal middle
+  const newCenterX = newViewBoxWidth / 2;
   const newCenterY = topExtent * scale;
   
   const viewBox: ViewBox = {
