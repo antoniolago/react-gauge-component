@@ -33,7 +33,11 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const arcData = useRef<any>([]);
   const parentNode = useRef<Element>();
   const pieChart = useRef<any>(pie());
-  const dimensions = useRef<Dimensions>({ ...defaultDimensions });
+  const dimensions = useRef<Dimensions>({ 
+    ...defaultDimensions,
+    margin: { ...defaultDimensions.margin },
+    angles: { ...defaultDimensions.angles }
+  });
   const mergedProps = useRef<GaugeComponentProps>(props as GaugeComponentProps);
   const prevProps = useRef<any>({});
   const prevGSize = useRef<any>(null);

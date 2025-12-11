@@ -6,7 +6,7 @@ import {
     select,
 } from "d3";
 import { PointerContext, PointerProps, PointerType } from "../types/Pointer";
-import { getCoordByValue } from "./arc";
+import { getCoordByValue, getEffectiveAngles } from "./arc";
 import { Gauge } from "../types/Gauge";
 import * as utils from "./utils";
 import * as arcHooks from "./arc";
@@ -246,7 +246,7 @@ const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gaug
             const targetRadius = innerR * arrowOffset;
             
             // Use the SAME angles as the arc drawing
-            const { startAngle, endAngle } = gauge.dimensions.current.angles;
+            const { startAngle, endAngle } = getEffectiveAngles(gauge);
             const angle = startAngle + progress * (endAngle - startAngle);
             
             // Convert d3 angle to x,y coordinates
@@ -263,9 +263,9 @@ const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gaug
             // Interpolate between inner and outer radius based on offset
             const targetRadius = innerR + (outerR - innerR) * blobOffset;
             
-            // Use the SAME angles as the arc drawing (from gauge.dimensions.current.angles)
+            // Use the SAME angles as the arc drawing
             // These are d3 angles: 0 at top, positive clockwise
-            const { startAngle, endAngle } = gauge.dimensions.current.angles;
+            const { startAngle, endAngle } = getEffectiveAngles(gauge);
             const angle = startAngle + progress * (endAngle - startAngle);
             
             // Convert d3 angle to x,y coordinates
@@ -292,7 +292,7 @@ const calculatePointerPath = (gauge: Gauge, percent: number) => {
     const { pointerRadius, pathLength } = gauge.pointer.current.context;
     // Use actual angles from gauge dimensions (supports custom angles)
     // D3 angle convention: 0 = top (12 o'clock), positive = clockwise
-    const { startAngle, endAngle } = gauge.dimensions.current.angles;
+    const { startAngle, endAngle } = getEffectiveAngles(gauge);
     const d3Angle = startAngle + percent * (endAngle - startAngle);
     
     // Calculate needle tip position using D3 angle convention (same as arc)
@@ -325,7 +325,7 @@ const calculatePointerTipPosition = (gauge: Gauge, percent: number): { x: number
     const innerR = gauge.dimensions.current.innerRadius;
     
     // Use the SAME angles as the arc drawing (D3 convention)
-    const { startAngle, endAngle } = gauge.dimensions.current.angles;
+    const { startAngle, endAngle } = getEffectiveAngles(gauge);
     const d3Angle = startAngle + percent * (endAngle - startAngle);
     
     // For Arrow type, calculate position based on arrow offset + local tip
@@ -416,8 +416,8 @@ export const getValueFromPosition = (gauge: Gauge, clientX: number, clientY: num
     
     let angle = Math.atan2(dx, -dy);
     
-    // Get the actual gauge angles from dimensions
-    const { startAngle, endAngle } = gauge.dimensions.current.angles;
+    // Get the actual gauge angles
+    const { startAngle, endAngle } = getEffectiveAngles(gauge);
     
     // Calculate the dead zone (where there's no arc)
     // The arc goes from startAngle to endAngle

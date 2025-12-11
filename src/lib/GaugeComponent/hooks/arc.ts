@@ -13,6 +13,38 @@ import { GaugeType } from '../types/GaugeComponentProps';
 import { throttle } from 'lodash';
 import { Arc, SubArc } from '../types/Arc';
 
+/**
+ * Get effective angles for a gauge, with fallback to type defaults if not yet calculated.
+ * This ensures ticks are positioned correctly even on first render before dimensions are set.
+ */
+export const getEffectiveAngles = (gauge: Gauge): { startAngle: number; endAngle: number } => {
+  const { startAngle, endAngle } = gauge.dimensions.current.angles;
+  
+  // If angles are set (non-zero or explicitly custom), use them
+  if (startAngle !== 0 || endAngle !== 0) {
+    return { startAngle, endAngle };
+  }
+  
+  // Check for custom angles in props
+  if (gauge.props.startAngle !== undefined && gauge.props.endAngle !== undefined) {
+    return {
+      startAngle: (gauge.props.startAngle * Math.PI) / 180,
+      endAngle: (gauge.props.endAngle * Math.PI) / 180
+    };
+  }
+  
+  // Fallback to type defaults
+  switch (gauge.props.type) {
+    case GaugeType.Semicircle:
+      return { startAngle: -Math.PI / 2 + 0.02, endAngle: Math.PI / 2 - 0.02 };
+    case GaugeType.Radial:
+      return { startAngle: -Math.PI / 1.37, endAngle: Math.PI / 1.37 };
+    case GaugeType.Grafana:
+    default:
+      return { startAngle: -Math.PI / 1.6, endAngle: Math.PI / 1.6 };
+  }
+};
+
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
   //event.target.style.stroke = "#ffffff5e";
   if (d.data.tooltip != undefined) {
@@ -421,7 +453,7 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
   // D3 angles: 0 = top (12 o'clock), positive = clockwise
   // Math angles for tick positioning: 0 = right (3 o'clock), 90 = down
   // Conversion: mathAngle = d3Angle + π/2
-  const { startAngle: d3Start, endAngle: d3End } = gauge.dimensions.current.angles;
+  const { startAngle: d3Start, endAngle: d3End } = getEffectiveAngles(gauge);
   const d3Angle = d3Start + percent * (d3End - d3Start);
   const angle = d3Angle + Math.PI / 2;
 

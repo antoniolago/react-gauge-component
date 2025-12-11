@@ -5,7 +5,7 @@ import { Tick, defaultTickLabels } from '../types/Tick';
 import * as d3 from 'd3';
 import React from 'react';
 import { GaugeType } from '../types/GaugeComponentProps';
-import { getArcDataByValue, getCoordByValue } from './arc';
+import { getArcDataByValue, getCoordByValue, getEffectiveAngles } from './arc';
 import { Labels, ValueLabel } from '../types/Labels';
 import { Arc, SubArc } from '../types/Arc';
 export const setupLabels = (gauge: Gauge) => {
@@ -398,13 +398,14 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   // Use actual angles from gauge dimensions (supports custom angles)
   // D3 angles: 0 = top (12 o'clock), positive = clockwise
   // Convert to degrees for tick line rotation
-  const { startAngle: d3Start, endAngle: d3End } = gauge.dimensions.current.angles;
+  const { startAngle: d3Start, endAngle: d3End } = getEffectiveAngles(gauge);
   const d3Angle = d3Start + valuePercentage * (d3End - d3Start);
   
-  // Convert D3 radians to degrees and add 90° to get outward-pointing angle
-  // D3 angle 0 (top) -> tick angle 90° (pointing up, outward from top)
-  // D3 angle π/2 (right) -> tick angle 180° (pointing right, outward)
-  let angle = utils.radToDeg(d3Angle) + 90;
+  // Convert D3 radians to degrees and subtract 90° to get outward-pointing angle
+  // D3 angle 0 (top) -> tick angle -90°/270° (pointing up in screen coords, outward from top)
+  // D3 angle π/2 (right) -> tick angle 0° (pointing right, outward)
+  // D3 angle -π/2 (left) -> tick angle 180° (pointing left, outward)
+  let angle = utils.radToDeg(d3Angle) - 90;
   let isValueLessThanHalf = valuePercentage < 0.5;
   //Values between 40% and 60% are aligned in the middle
   let isValueBetweenTolerance = valuePercentage > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] &&
