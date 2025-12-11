@@ -85,13 +85,15 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const shouldInitChart = () => {
     const arcsPropsChanged = JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc);
     const pointerPropsChanged = JSON.stringify(prevProps.current.pointer) !== JSON.stringify(mergedProps.current.pointer);
+    const labelsPropsChanged = JSON.stringify(prevProps.current.labels) !== JSON.stringify(mergedProps.current.labels);
+    const typeChanged = prevProps.current.type !== mergedProps.current.type;
     const valueChanged = JSON.stringify(prevProps.current.value) !== JSON.stringify(mergedProps.current.value);
     const minValueChanged = JSON.stringify(prevProps.current.minValue) !== JSON.stringify(mergedProps.current.minValue);
     const maxValueChanged = JSON.stringify(prevProps.current.maxValue) !== JSON.stringify(mergedProps.current.maxValue);
     // Check if onValueChange callback changed (for drag interaction toggle)
     const interactionChanged = (prevProps.current.onValueChange !== undefined) !== (mergedProps.current.onValueChange !== undefined);
     
-    return arcsPropsChanged || pointerPropsChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged;
+    return arcsPropsChanged || pointerPropsChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged;
   };
 
   const isHeightProvidedByUser = () => mergedProps.current.style?.height !== undefined;
