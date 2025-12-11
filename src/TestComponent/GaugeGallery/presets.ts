@@ -110,7 +110,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
   },
   {
     name: 'Altitude',
-    description: 'Aircraft altimeter',
+    description: 'Altimeter',
     config: {
       type: 'radial' as const,
       minValue: 0,

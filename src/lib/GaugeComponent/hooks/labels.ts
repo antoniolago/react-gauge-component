@@ -84,8 +84,15 @@ export const addTickLine = (tick: Tick, gauge: Gauge) => {
   // Scale distance from arc
   tickDistanceFromArc = tickDistanceFromArc * scaleFactor;
   
-  if (gauge.props.labels?.tickLabels?.type == "outer") tickDistanceFromArc = -tickDistanceFromArc;
-  // else tickDistanceFromArc = tickDistanceFromArc - 10;
+  // For outer ticks: tick starts at outer arc edge + distance, line goes outward
+  // For inner ticks: tick starts at inner arc edge - distance, line goes inward toward center
+  // Both use negative offset to push START position away from center (toward arc edge)
+  if (gauge.props.labels?.tickLabels?.type == "outer") {
+    tickDistanceFromArc = -tickDistanceFromArc;
+  } else {
+    // Inner ticks: start at arc edge (small gap), not deep inside
+    tickDistanceFromArc = tickDistanceFromArc; // Keep positive to offset slightly from arc
+  }
   let coords = getLabelCoordsByValue(tick?.value as number, gauge, tickDistanceFromArc);
 
   var tickColor = tick.lineConfig?.color || labels?.tickLabels?.defaultTickLineConfig?.color || defaultTickLabels.defaultTickLineConfig?.color;
@@ -95,17 +102,24 @@ export const addTickLine = (tick: Tick, gauge: Gauge) => {
   // Scale tick dimensions proportionally with gauge size
   tickLength = tickLength * scaleFactor;
   tickWidth = Math.max(0.5, (tickWidth as number) * scaleFactor);
-  // Calculate the end coordinates based on the adjusted position
+  
+  // Calculate the end coordinates based on tick type
+  // coords is positioned at the arc edge
+  // angle points OUTWARD from center (away from arc center)
   var endX;
   var endY;
-  // When inner should draw from outside to inside
-  // When outer should draw from inside to outside
+  const angleRad = (angle * Math.PI) / 180;
+  
+  // For outer ticks: line goes OUTWARD from arc (in direction of angle)
+  // For inner ticks: line goes INWARD toward center (opposite of angle)
   if (labels?.tickLabels?.type == "inner") {
-    endX = coords.x + tickLength * Math.cos((angle * Math.PI) / 180);
-    endY = coords.y + tickLength * Math.sin((angle * Math.PI) / 180);
+    // Inner ticks: start at inner arc edge, draw toward center (opposite direction)
+    endX = coords.x - tickLength * Math.cos(angleRad);
+    endY = coords.y - tickLength * Math.sin(angleRad);
   } else {
-    endX = coords.x - tickLength * Math.cos((angle * Math.PI) / 180);
-    endY = coords.y - tickLength * Math.sin((angle * Math.PI) / 180);
+    // Outer ticks: start at outer arc edge, draw away from center (same direction as angle)
+    endX = coords.x + tickLength * Math.cos(angleRad);
+    endY = coords.y + tickLength * Math.sin(angleRad);
   }
 
   // (gauge.dimensions.current.outerRadius - gauge.dimensions.current.innerRadius)
@@ -131,18 +145,13 @@ export const addTickLine = (tick: Tick, gauge: Gauge) => {
 };
 export const addTickValue = (tick: Tick, gauge: Gauge) => {
   const { labels } = gauge.props;
-  let arc = gauge.props.arc as Arc;
-  let arcWidth = arc.width as number;
   let tickValue = tick?.value as number;
-  let { tickAnchor } = calculateAnchorAndAngleByValue(tickValue, gauge);
+  let { tickAnchor, angle } = calculateAnchorAndAngleByValue(tickValue, gauge);
   
   // Get scale factor for proportional sizing
   const scaleFactor = getTickScaleFactor(gauge);
   
-  let centerToArcLengthSubtract = (27 - arcWidth * 10) * scaleFactor;
   let isInner = labels?.tickLabels?.type == "inner";
-  if (!isInner) centerToArcLengthSubtract = (arcWidth * 10 - 10) * scaleFactor
-  else centerToArcLengthSubtract -= 10 * scaleFactor
   var tickDistanceFromArc = tick.lineConfig?.distanceFromArc || labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc || 0;
   var tickLength = tick.lineConfig?.length || labels?.tickLabels?.defaultTickLineConfig?.length || 0;
   
@@ -150,16 +159,24 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   tickDistanceFromArc = tickDistanceFromArc * scaleFactor;
   tickLength = tickLength * scaleFactor;
   
+  // Calculate label position: at the end of the tick line + padding for text
   var _shouldHideTickLine = shouldHideTickLine(tick, gauge);
-  if (!_shouldHideTickLine) {
-    if (isInner) {
-      centerToArcLengthSubtract += tickDistanceFromArc;
-      centerToArcLengthSubtract += tickLength;
-    } else {
-      centerToArcLengthSubtract -= tickDistanceFromArc;
-      centerToArcLengthSubtract -= tickLength;
-    }
+  
+  // For outer ticks, centerToArcLengthSubtract is negative to push outward
+  // For inner ticks, it's positive to push inward
+  let tickLineOffset = _shouldHideTickLine ? 0 : (tickDistanceFromArc + tickLength);
+  // Inner ticks need more padding because text is inside and can overlap more easily
+  let textPadding = isInner ? (15 * scaleFactor) : (5 * scaleFactor);
+  
+  let centerToArcLengthSubtract: number;
+  if (isInner) {
+    // Inner: push position inward (toward center) past tick line
+    centerToArcLengthSubtract = tickLineOffset + textPadding;
+  } else {
+    // Outer: push position outward (away from center) past tick line
+    centerToArcLengthSubtract = -(tickLineOffset + textPadding);
   }
+  
   let coords = getLabelCoordsByValue(tickValue, gauge, centerToArcLengthSubtract);
   let tickValueStyle = tick.valueConfig?.style || (labels?.tickLabels?.defaultTickValueConfig?.style || {});
   tickValueStyle = { ...tickValueStyle };
@@ -211,21 +228,8 @@ export const addTick = (tick: Tick, gauge: Gauge) => {
 }
 export const getLabelCoordsByValue = (value: number, gauge: Gauge, centerToArcLengthSubtract = 0) => {
   let labels = gauge.props.labels as Labels;
-  let minValue = gauge.props.minValue as number;
-  let maxValue = gauge.props.maxValue as number;
   let type = labels.tickLabels?.type;
-  let { x, y } = getCoordByValue(value, gauge, type, centerToArcLengthSubtract, 0.93);
-  let percent = utils.calculatePercentage(minValue, maxValue, value);
-  //This corrects labels in the cener being too close from the arc
-  // let isValueBetweenCenter = percent > CONSTANTS.rangeBetweenCenteredTickValueLabel[0] && 
-  //                               percent < CONSTANTS.rangeBetweenCenteredTickValueLabel[1];
-  // if (isValueBetweenCenter){
-  //   let isInner = type == "inner";
-  //   y+= isInner ? 8 : -1;
-  // }
-  if (gauge.props.type == GaugeType.Radial) {
-    y += 3;
-  }
+  let { x, y } = getCoordByValue(value, gauge, type, centerToArcLengthSubtract);
   return { x, y }
 }
 export const addText = (html: any, x: number, y: number, gauge: Gauge, style: React.CSSProperties, className: string, rotate = 0) => {
@@ -387,18 +391,21 @@ export const calculateAnchorAndAngleByValue = (value: number, gauge: Gauge) => {
   let minValue = gauge.props.minValue as number;
   let maxValue = gauge.props.maxValue as number;
   let valuePercentage = utils.calculatePercentage(minValue, maxValue, value)
+  // These angles define the tick LINE direction (not position)
+  // startAngle = direction for minValue tick, endAngle = sweep to maxValue
+  // Angles use standard math convention: 0°=right, 90°=down, 180°=left, 270°=up
   let gaugeTypesAngles: Record<string, { startAngle: number; endAngle: number; }> = {
     [GaugeType.Grafana]: {
-      startAngle: -20,
-      endAngle: 220
+      startAngle: 157,   // Left-bottom diagonal outward
+      endAngle: 226      // Sweep to right-bottom diagonal
     },
     [GaugeType.Semicircle]: {
-      startAngle: -6,
-      endAngle: 192
+      startAngle: 180,   // Left horizontal outward
+      endAngle: 180      // Sweep 180° to right horizontal (0°/360°)
     },
     [GaugeType.Radial]: {
-      startAngle: -42,
-      endAngle: 266
+      startAngle: 139,   // Left-bottom outward (arc starts lower)
+      endAngle: 262      // Sweep to right-bottom
     },
   };
   // Default to Grafana if type is undefined

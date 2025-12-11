@@ -143,14 +143,17 @@ const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undef
 }
 const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
   const { outerRadius } = gauge.dimensions.current;
-  //Grafana's outer arc will be populates as the standard arc data would
+  const { padding, cornerRadius } = gauge.props.arc as Arc;
+  //Grafana's outer arc will be populated as the standard arc data would
   if (gauge.props.type == GaugeType.Grafana && resize) {
     gauge.doughnut.current.selectAll(".outerSubArc").remove();
+    // Scale corner radius for the thin outer arc (max 2px since arc is only 5px thick)
+    const outerCornerRadius = cornerRadius ? Math.min(cornerRadius, 2) : 0;
     let outerArc = arc()
       .outerRadius(outerRadius + 7)
       .innerRadius(outerRadius + 2)
-      .cornerRadius(0)
-      .padAngle(0);
+      .cornerRadius(outerCornerRadius)
+      .padAngle(padding || 0);
     var arcPaths = gauge.doughnut.current
       .selectAll("anyString")
       .data(gauge.pieChart.current(gauge.arcData.current))
@@ -183,8 +186,8 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
   if (gauge.props.type == GaugeType.Grafana) {
     data = getGrafanaMainArcData(gauge, percent);
   }
-  let arcPadding = gauge.props.type == GaugeType.Grafana ? 0 : (padding || 0);
-  let arcCornerRadius = gauge.props.type == GaugeType.Grafana ? 0 : cornerRadius;
+  let arcPadding = padding || 0;
+  let arcCornerRadius = cornerRadius || 0;
   let arcObj = arc()
     .outerRadius(outerRadius)
     .innerRadius(innerRadius)
@@ -355,36 +358,54 @@ export const createGradientElement = (div: any, uniqueId: string) => {
   return lg
 }
 
-export const getCoordByValue = (value: number, gauge: Gauge, position = "inner", centerToArcLengthSubtract = 0, radiusFactor = 1) => {
+export const getCoordByValue = (value: number, gauge: Gauge, position = "inner", centerToArcLengthSubtract = 0) => {
+  const { outerRadius, innerRadius } = gauge.dimensions.current;
+  const isGrafana = gauge.props.type === GaugeType.Grafana;
+  
+  // Grafana has an outer decorative arc from outerRadius+2 to outerRadius+7
+  const grafanaOuterArcEdge = outerRadius + 7;
+  
   let positionCenterToArcLength: { [key: string]: () => number } = {
-    "outer": () => gauge.dimensions.current.outerRadius - centerToArcLengthSubtract + 2,
-    "inner": () => gauge.dimensions.current.innerRadius * radiusFactor - centerToArcLengthSubtract + 9,
+    "outer": () => {
+      // For outer ticks: start at the outer edge of the arc
+      // Grafana: outer decorative arc edge (outerRadius + 7)
+      // Others: main arc outer edge (outerRadius)
+      const arcEdge = isGrafana ? grafanaOuterArcEdge : outerRadius;
+      return arcEdge - centerToArcLengthSubtract;
+    },
+    "inner": () => {
+      // For inner ticks: start at the inner edge of the arc
+      // centerToArcLengthSubtract is positive to push inward (toward center)
+      return innerRadius - centerToArcLengthSubtract;
+    },
     "between": () => {
-      let lengthBetweenOuterAndInner = (gauge.dimensions.current.outerRadius - gauge.dimensions.current.innerRadius);
-      let middlePosition = gauge.dimensions.current.innerRadius + lengthBetweenOuterAndInner / 2;
+      let lengthBetweenOuterAndInner = (outerRadius - innerRadius);
+      let middlePosition = innerRadius + lengthBetweenOuterAndInner / 2;
       return middlePosition;
     }
   };
   let centerToArcLength = positionCenterToArcLength[position]();
-  // This normalizes the labels when distanceFromArc = 0 to be just touching the arcs 
-  if (gauge.props.type === GaugeType.Grafana) {
-    centerToArcLength += 5;
-  } else if (gauge.props.type === GaugeType.Semicircle) {
-    centerToArcLength += -2;
-  }
+  
   let percent = utils.calculatePercentage(gauge.props.minValue as number, gauge.props.maxValue as number, value);
+  
+  // Position angles - these determine WHERE on the arc the tick is placed
+  // Uses standard math convention: 0° = right, 90° = down, 180° = left, 270° = up
+  // The angles are chosen so minValue is on the left, maxValue on the right
   let gaugeTypesAngles: Record<GaugeType, { startAngle: number; endAngle: number; }> = {
     [GaugeType.Grafana]: {
-      startAngle: utils.degToRad(-23),
-      endAngle: utils.degToRad(203)
+      // Arc spans from -112.5° to +112.5° in D3 (from top), which is ~157° to ~23° in math coords
+      startAngle: utils.degToRad(-22.5),
+      endAngle: utils.degToRad(202.5)
     },
     [GaugeType.Semicircle]: {
-      startAngle: utils.degToRad(0.9),
-      endAngle: utils.degToRad(179.1)
+      // Arc spans from -90° to +90° in D3, which is 0° to 180° in math coords
+      startAngle: utils.degToRad(0),
+      endAngle: utils.degToRad(180)
     },
     [GaugeType.Radial]: {
-      startAngle: utils.degToRad(-39),
-      endAngle: utils.degToRad(219)
+      // Arc spans from -131° to +131° in D3, which is ~-41° to ~221° in math coords
+      startAngle: utils.degToRad(-41),
+      endAngle: utils.degToRad(221)
     },
   };
 
@@ -413,16 +434,17 @@ export const clearArcs = (gauge: Gauge) => {
  */
 export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
   const { innerRadius, outerRadius } = gauge.dimensions.current;
+  const { padding, cornerRadius } = gauge.props.arc as Arc;
   
   // Get the new arc data (returns [filledArc, emptyArc])
   const data = getGrafanaMainArcData(gauge, percent);
   
-  // Create the arc generator
+  // Create the arc generator with config values for corner and padding
   const arcObj = arc()
     .outerRadius(outerRadius)
     .innerRadius(innerRadius)
-    .cornerRadius(0)
-    .padAngle(0);
+    .cornerRadius(cornerRadius || 0)
+    .padAngle(padding || 0);
   
   // Get existing arc groups
   const existingArcGroups = gauge.doughnut.current.selectAll(".subArc");

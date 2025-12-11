@@ -114,36 +114,38 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
         {/* Type */}
         <Col xs={12} md={4}>
           <CollapsibleGroup title="Type" icon={<Palette size={14} />} isMobile={isMobile} defaultOpen={true}>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', justifyContent: 'stretch', gap: '8px', width: '100%' }}>
               {(['semicircle', 'radial', 'grafana'] as const).map((gaugeType) => (
                 <button 
                   key={gaugeType}
                   onClick={() => onConfigChange({ ...config, type: gaugeType })} 
                   style={{ 
+                    flex: 1,
                     background: cfg?.type === gaugeType ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                     border: cfg?.type === gaugeType ? '2px solid #3b82f6' : '2px solid transparent',
                     borderRadius: '8px',
-                    padding: '6px',
+                    padding: '8px 6px',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     transition: 'all 0.15s ease',
+                    minWidth: 0,
                   }} 
                   title={gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)} 
                   type="button"
                 >
-                  <div style={{ width: '70px', height: '50px', pointerEvents: 'none' }}>
+                  <div style={{ width: '100%', height: '60px', pointerEvents: 'none' }}>
                     <GaugeComponent 
                       {...TYPE_GAUGE_CONFIGS[gaugeType]} 
                       value={50} 
                     />
                   </div>
                   <span style={{ 
-                    fontSize: '0.65rem', 
+                    fontSize: '0.7rem', 
                     fontWeight: cfg?.type === gaugeType ? 600 : 400,
                     color: cfg?.type === gaugeType ? '#60a5fa' : 'rgba(255,255,255,0.6)',
-                    marginTop: '2px',
+                    marginTop: '4px',
                   }}>
                     {gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)}
                   </span>
@@ -438,7 +440,19 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
           <CollapsibleGroup title="Tick Marks" icon={<Ruler size={14} />} isMobile={isMobile}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexWrap: 'wrap' }}>
-                {[{ label: 'None', interval: 0 }, { label: '5', interval: 5 }, { label: '10', interval: 10 }, { label: '25', interval: 25 }].map((t) => (
+                {[
+                  { label: 'None', interval: 0 }, 
+                  { label: '5', interval: 5 }, 
+                  { label: '10', interval: 10 }, 
+                  { label: '25', interval: 25 },
+                  { label: '100', interval: 100 },
+                  { label: '250', interval: 250 },
+                  { label: '500', interval: 500 },
+                  { label: '1k', interval: 1000 },
+                  { label: '2.5k', interval: 2500 },
+                  { label: '5k', interval: 5000 },
+                  { label: '10k', interval: 10000 },
+                ].map((t) => (
                   <button key={t.label} onClick={() => {
                     const min = cfg?.minValue ?? 0; const max = cfg?.maxValue ?? 100;
                     const ticks = t.interval === 0 ? [] : Array.from({ length: Math.floor((max - min) / t.interval) + 1 }, (_, i) => ({ value: min + i * t.interval }));
