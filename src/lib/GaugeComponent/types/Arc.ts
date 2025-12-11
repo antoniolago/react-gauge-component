@@ -17,7 +17,14 @@ export interface Arc {
     /** Color of the grafana's empty subArc  */
     emptyColor?: string,
     /** list of sub arcs segments of the whole arc. */
-    subArcs?: Array<SubArc>
+    subArcs?: Array<SubArc>,
+    /** Settings for Grafana's outer decorative arc (only applies to grafana type) */
+    outerArc?: {
+        /** Corner radius for outer arc (max effective value ~2 due to thin arc) */
+        cornerRadius?: number,
+        /** Padding between outer arc segments */
+        padding?: number
+    }
 }
 export interface SubArc {
     /** The limit of the subArc, in accord to the gauge value. */

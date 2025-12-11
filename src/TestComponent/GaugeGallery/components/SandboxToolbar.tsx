@@ -8,7 +8,8 @@ import {
   Palette, Layers, Target, Tag, Ruler, Move, Sliders,
   Circle, Triangle, ArrowRight, EyeOff,
   Eye, Rainbow, Minus, AlignLeft, AlignCenter, AlignRight,
-  Play, Hand, Hash, ArrowUpRight, ArrowDownLeft, ChevronDown
+  Play, Hand, Hash, ArrowUpRight, ArrowDownLeft, ChevronDown,
+  Timer, Settings2
 } from 'lucide-react';
 
 // Collapsible wrapper for mobile
@@ -288,6 +289,33 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, padding: Number(e.target.value) } })} 
                   style={{ ...styles.slider, flex: 1 }} title="Padding" />
               </div>
+              {/* Grafana-specific: outer arc & empty color */}
+              {cfg?.type === 'grafana' && (
+                <>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px', marginTop: '4px' }}>
+                    <Settings2 size={12} style={{ opacity: 0.6 }} />
+                    <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Outer Arc (Grafana)</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                    <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Corner</span>
+                    <input type="range" min="0" max="2" step="0.1" value={cfg?.arc?.outerArc?.cornerRadius ?? (cfg?.arc?.cornerRadius ? Math.min(cfg.arc.cornerRadius, 2) : 0)} 
+                      onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, outerArc: { ...cfg?.arc?.outerArc, cornerRadius: Number(e.target.value) } } })} 
+                      style={{ ...styles.slider, flex: 1 }} title="Outer arc corner radius" />
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                    <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Pad</span>
+                    <input type="range" min="0" max="0.5" step="0.005" value={cfg?.arc?.outerArc?.padding ?? (cfg?.arc?.padding ?? 0.05)} 
+                      onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, outerArc: { ...cfg?.arc?.outerArc, padding: Number(e.target.value) } } })} 
+                      style={{ ...styles.slider, flex: 1 }} title="Outer arc padding" />
+                  </div>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={styles.sliderLabel}>Empty color</span>
+                    <input type="color" value={cfg?.arc?.emptyColor || '#5C5C5C'} 
+                      onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, emptyColor: e.target.value } })} 
+                      style={styles.colorPicker} title="Empty arc color" />
+                  </div>
+                </>
+              )}
             </div>
           </CollapsibleGroup>
         </Col>
@@ -397,6 +425,24 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                     style={{ ...styles.slider, flex: 1 }} />
                 </div>
               )}
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px', marginTop: '4px' }}>
+                <Timer size={12} style={{ opacity: 0.6 }} />
+                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Animation</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Duration</span>
+                <input type="range" min="100" max="5000" step="100" value={cfg?.pointer?.animationDuration ?? 3000} 
+                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationDuration: Number(e.target.value) } })} 
+                  style={{ ...styles.slider, flex: 1 }} title="Animation duration (ms)" />
+                <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '35px' }}>{((cfg?.pointer?.animationDuration ?? 3000) / 1000).toFixed(1)}s</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Delay</span>
+                <input type="range" min="0" max="1000" step="50" value={cfg?.pointer?.animationDelay ?? 100} 
+                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationDelay: Number(e.target.value) } })} 
+                  style={{ ...styles.slider, flex: 1 }} title="Animation delay (ms)" />
+                <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '35px' }}>{cfg?.pointer?.animationDelay ?? 100}ms</span>
+              </div>
             </div>
           </CollapsibleGroup>
         </Col>
@@ -510,6 +556,12 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickValueConfig: { ...cfg?.labels?.tickLabels?.defaultTickValueConfig, style: { ...cfg?.labels?.tickLabels?.defaultTickValueConfig?.style, fontSize: `${e.target.value}px` } } } } })} 
                   style={{ ...styles.slider, flex: 1 }} />
               </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Distance</span>
+                <input type="range" min="0" max="15" step="1" value={cfg?.labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc ?? 3} 
+                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickLineConfig: { ...cfg?.labels?.tickLabels?.defaultTickLineConfig, distanceFromArc: Number(e.target.value) } } } })} 
+                  style={{ ...styles.slider, flex: 1 }} title="Distance from arc" />
+              </div>
             </div>
           </CollapsibleGroup>
         </Col>
@@ -547,26 +599,56 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
           </CollapsibleGroup>
         </Col>
         <Col xs={12}>
-          <CollapsibleGroup title="Value" icon={<Sliders size={14} />} isMobile={isMobile} defaultOpen={true}>
-            <div style={styles.buttonRow}>
-              <label style={styles.inlineLabel}>
-                <input type="checkbox" checked={autoAnimate} onChange={(e) => onAutoAnimateChange(e.target.checked)} style={styles.inlineCheckbox} />
-                Auto
-              </label>
-              {[0, 25, 50, 75, 100].map((val) => {
-                const min = cfg?.minValue ?? 0; const max = cfg?.maxValue ?? 100;
-                const actualValue = min + (val / 100) * (max - min);
-                return (
-                  <button key={val} onClick={() => onValueChange(actualValue)} 
-                    style={{ ...styles.toolBtn, ...(Math.abs(value - actualValue) < 0.01 ? styles.toolBtnActive : {}) }} type="button">
-                    {val}
-                  </button>
-                );
-              })}
-              <input type="range" min={cfg?.minValue ?? 0} max={cfg?.maxValue ?? 100} value={value} 
-                onChange={(e) => { onValueChange(Number(e.target.value)); if (autoAnimate) onAutoAnimateChange(false); }} 
-                style={{ ...styles.slider, flex: 1, minWidth: '150px' }} step="0.1" />
-              <span style={{ ...styles.sliderValue, fontWeight: 700, color: '#60a5fa' }}>{value.toFixed(1)}</span>
+          <CollapsibleGroup title="Value & Range" icon={<Sliders size={14} />} isMobile={isMobile} defaultOpen={true}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '30px' }}>Min</span>
+                  <input 
+                    type="number" 
+                    value={cfg?.minValue ?? 0} 
+                    onChange={(e) => {
+                      const newMin = Number(e.target.value);
+                      onConfigChange({ ...config, minValue: newMin });
+                      if (value < newMin) onValueChange(newMin);
+                    }}
+                    style={{ ...styles.toolBtn, width: '70px', padding: '4px 8px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '30px' }}>Max</span>
+                  <input 
+                    type="number" 
+                    value={cfg?.maxValue ?? 100} 
+                    onChange={(e) => {
+                      const newMax = Number(e.target.value);
+                      onConfigChange({ ...config, maxValue: newMax });
+                      if (value > newMax) onValueChange(newMax);
+                    }}
+                    style={{ ...styles.toolBtn, width: '70px', padding: '4px 8px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
+                  />
+                </div>
+                <label style={styles.inlineLabel}>
+                  <input type="checkbox" checked={autoAnimate} onChange={(e) => onAutoAnimateChange(e.target.checked)} style={styles.inlineCheckbox} />
+                  Auto
+                </label>
+              </div>
+              <div style={styles.buttonRow}>
+                {[0, 25, 50, 75, 100].map((val) => {
+                  const min = cfg?.minValue ?? 0; const max = cfg?.maxValue ?? 100;
+                  const actualValue = min + (val / 100) * (max - min);
+                  return (
+                    <button key={val} onClick={() => onValueChange(actualValue)} 
+                      style={{ ...styles.toolBtn, ...(Math.abs(value - actualValue) < 0.01 ? styles.toolBtnActive : {}) }} type="button">
+                      {val}%
+                    </button>
+                  );
+                })}
+                <input type="range" min={cfg?.minValue ?? 0} max={cfg?.maxValue ?? 100} value={value} 
+                  onChange={(e) => { onValueChange(Number(e.target.value)); if (autoAnimate) onAutoAnimateChange(false); }} 
+                  style={{ ...styles.slider, flex: 1, minWidth: '150px' }} step="0.1" />
+                <span style={{ ...styles.sliderValue, fontWeight: 700, color: '#60a5fa' }}>{value.toFixed(1)}</span>
+              </div>
             </div>
           </CollapsibleGroup>
         </Col>

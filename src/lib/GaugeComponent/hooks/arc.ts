@@ -143,17 +143,23 @@ const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undef
 }
 const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
   const { outerRadius } = gauge.dimensions.current;
-  const { padding, cornerRadius } = gauge.props.arc as Arc;
+  const { padding, cornerRadius, outerArc: outerArcConfig } = gauge.props.arc as Arc;
   //Grafana's outer arc will be populated as the standard arc data would
   if (gauge.props.type == GaugeType.Grafana && resize) {
     gauge.doughnut.current.selectAll(".outerSubArc").remove();
+    // Use outerArc config if provided, otherwise fall back to main arc settings
     // Scale corner radius for the thin outer arc (max 2px since arc is only 5px thick)
-    const outerCornerRadius = cornerRadius ? Math.min(cornerRadius, 2) : 0;
+    const outerCornerRadius = outerArcConfig?.cornerRadius !== undefined 
+      ? Math.min(outerArcConfig.cornerRadius, 2) 
+      : (cornerRadius ? Math.min(cornerRadius, 2) : 0);
+    const outerPadding = outerArcConfig?.padding !== undefined 
+      ? outerArcConfig.padding 
+      : (padding || 0);
     let outerArc = arc()
       .outerRadius(outerRadius + 7)
       .innerRadius(outerRadius + 2)
       .cornerRadius(outerCornerRadius)
-      .padAngle(padding || 0);
+      .padAngle(outerPadding);
     var arcPaths = gauge.doughnut.current
       .selectAll("anyString")
       .data(gauge.pieChart.current(gauge.arcData.current))
