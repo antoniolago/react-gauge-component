@@ -118,9 +118,9 @@ const initPointer = (gauge: Gauge, useCurrentPercent: boolean = false) => {
         
         gauge.pointer.current.path = pathElement;
         
-        // Add grab handle at pointer tip if onValueChange is provided
+        // Add grab handle at pointer tip if onValueChange is provided and not hidden
         // Note: The handle will be raised to top after all elements are rendered in drawPointer
-        if (gauge.props.onValueChange) {
+        if (gauge.props.onValueChange && !pointer.hideGrabHandle) {
             const tipPosition = calculatePointerTipPosition(gauge, startPercent);
             const handleRadius = Math.max(6, pointerRadius * 0.8);
             // Append to the main g element (not pointer element) so it renders on top of everything

@@ -308,8 +308,16 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 <button onClick={() => onInteractionChange(!interactionEnabled)} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(interactionEnabled ? styles.toolBtnActive : {}) }} 
                   title="Drag" type="button">
-                  <Hand size={14} /><span>Drag pointer</span>
+                  <Hand size={14} /><span>Drag</span>
                 </button>
+                {interactionEnabled && (
+                  <label style={styles.inlineLabel} title="Hide grab handle circle at pointer tip">
+                    <input type="checkbox" checked={cfg?.pointer?.hideGrabHandle || false} 
+                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, hideGrabHandle: e.target.checked } })} 
+                      style={styles.inlineCheckbox} />
+                    No circle
+                  </label>
+                )}
                 <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, elastic: !cfg?.pointer?.elastic } })} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.elastic ? styles.toolBtnActive : {}) }} 
                   title="Elastic" type="button">
@@ -600,55 +608,47 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
         </Col>
         <Col xs={12}>
           <CollapsibleGroup title="Value & Range" icon={<Sliders size={14} />} isMobile={isMobile} defaultOpen={true}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ ...styles.sliderLabel, minWidth: '30px' }}>Min</span>
-                  <input 
-                    type="number" 
-                    value={cfg?.minValue ?? 0} 
-                    onChange={(e) => {
-                      const newMin = Number(e.target.value);
-                      onConfigChange({ ...config, minValue: newMin });
-                      if (value < newMin) onValueChange(newMin);
-                    }}
-                    style={{ ...styles.toolBtn, width: '70px', padding: '4px 8px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ ...styles.sliderLabel, minWidth: '30px' }}>Max</span>
-                  <input 
-                    type="number" 
-                    value={cfg?.maxValue ?? 100} 
-                    onChange={(e) => {
-                      const newMax = Number(e.target.value);
-                      onConfigChange({ ...config, maxValue: newMax });
-                      if (value > newMax) onValueChange(newMax);
-                    }}
-                    style={{ ...styles.toolBtn, width: '70px', padding: '4px 8px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
-                  />
-                </div>
-                <label style={styles.inlineLabel}>
-                  <input type="checkbox" checked={autoAnimate} onChange={(e) => onAutoAnimateChange(e.target.checked)} style={styles.inlineCheckbox} />
-                  Auto
-                </label>
-              </div>
-              <div style={styles.buttonRow}>
-                {[0, 25, 50, 75, 100].map((val) => {
-                  const min = cfg?.minValue ?? 0; const max = cfg?.maxValue ?? 100;
-                  const actualValue = min + (val / 100) * (max - min);
-                  return (
-                    <button key={val} onClick={() => onValueChange(actualValue)} 
-                      style={{ ...styles.toolBtn, ...(Math.abs(value - actualValue) < 0.01 ? styles.toolBtnActive : {}) }} type="button">
-                      {val}%
-                    </button>
-                  );
-                })}
-                <input type="range" min={cfg?.minValue ?? 0} max={cfg?.maxValue ?? 100} value={value} 
-                  onChange={(e) => { onValueChange(Number(e.target.value)); if (autoAnimate) onAutoAnimateChange(false); }} 
-                  style={{ ...styles.slider, flex: 1, minWidth: '150px' }} step="0.1" />
-                <span style={{ ...styles.sliderValue, fontWeight: 700, color: '#60a5fa' }}>{value.toFixed(1)}</span>
-              </div>
+            <div style={styles.buttonRow}>
+              <input 
+                type="number" 
+                value={cfg?.minValue ?? 0} 
+                onChange={(e) => {
+                  const newMin = Number(e.target.value);
+                  onConfigChange({ ...config, minValue: newMin });
+                  if (value < newMin) onValueChange(newMin);
+                }}
+                style={{ ...styles.toolBtn, width: '55px', padding: '4px 6px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
+                title="Min value"
+              />
+              {[0, 25, 50, 75, 100].map((val) => {
+                const min = cfg?.minValue ?? 0; const max = cfg?.maxValue ?? 100;
+                const actualValue = min + (val / 100) * (max - min);
+                return (
+                  <button key={val} onClick={() => onValueChange(actualValue)} 
+                    style={{ ...styles.toolBtn, padding: '4px 6px', ...(Math.abs(value - actualValue) < 0.01 ? styles.toolBtnActive : {}) }} type="button">
+                    {val}%
+                  </button>
+                );
+              })}
+              <input 
+                type="number" 
+                value={cfg?.maxValue ?? 100} 
+                onChange={(e) => {
+                  const newMax = Number(e.target.value);
+                  onConfigChange({ ...config, maxValue: newMax });
+                  if (value > newMax) onValueChange(newMax);
+                }}
+                style={{ ...styles.toolBtn, width: '55px', padding: '4px 6px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
+                title="Max value"
+              />
+              <input type="range" min={cfg?.minValue ?? 0} max={cfg?.maxValue ?? 100} value={value} 
+                onChange={(e) => { onValueChange(Number(e.target.value)); if (autoAnimate) onAutoAnimateChange(false); }} 
+                style={{ ...styles.slider, flex: 1, minWidth: '120px' }} step="0.1" />
+              <span style={{ ...styles.sliderValue, fontWeight: 700, color: '#60a5fa', minWidth: '45px' }}>{value.toFixed(1)}</span>
+              <label style={styles.inlineLabel}>
+                <input type="checkbox" checked={autoAnimate} onChange={(e) => onAutoAnimateChange(e.target.checked)} style={styles.inlineCheckbox} />
+                Auto
+              </label>
             </div>
           </CollapsibleGroup>
         </Col>

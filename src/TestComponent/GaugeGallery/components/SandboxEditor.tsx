@@ -53,7 +53,8 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
 
   const handleConfigChange = useCallback((newConfig: Partial<GaugeComponentProps>) => {
     setConfig(newConfig);
-    setKey(k => k + 1);
+    // Don't increment key on normal config changes - let the component handle updates internally
+    // This prevents unnecessary remounts which cause the pointer to animate from 0
   }, []);
 
   const handleRandomize = useCallback(() => {

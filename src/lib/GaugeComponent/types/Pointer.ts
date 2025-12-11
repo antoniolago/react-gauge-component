@@ -26,7 +26,9 @@ export interface PointerProps {
     /** Arrow offset - controls radial position of arrow pointer (0-1, default 0.72). Lower = closer to center, higher = closer to arc edge */
     arrowOffset?: number,
     /** Blob offset - controls radial position of blob pointer (0-1, default 0.5 = centered on arc). Lower = inner edge, higher = outer edge */
-    blobOffset?: number
+    blobOffset?: number,
+    /** Hide the grab handle circle shown at pointer tip when drag mode is enabled */
+    hideGrabHandle?: boolean
 }
 export interface PointerRef {
     element: any,
