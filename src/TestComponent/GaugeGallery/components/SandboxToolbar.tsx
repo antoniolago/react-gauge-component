@@ -112,49 +112,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
   return (
     <Container fluid style={styles.editorToolbar} className="p-0">
       <Row className="g-0">
-        {/* Type */}
-        <Col xs={12} md={4}>
-          <CollapsibleGroup title="Type" icon={<Palette size={14} />} isMobile={isMobile} defaultOpen={true}>
-            <div style={{ display: 'flex', justifyContent: 'stretch', gap: '8px', width: '100%' }}>
-              {(['semicircle', 'radial', 'grafana'] as const).map((gaugeType) => (
-                <button 
-                  key={gaugeType}
-                  onClick={() => onConfigChange({ ...config, type: gaugeType })} 
-                  style={{ 
-                    flex: 1,
-                    background: cfg?.type === gaugeType ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                    border: cfg?.type === gaugeType ? '2px solid #3b82f6' : '2px solid transparent',
-                    borderRadius: '8px',
-                    padding: '8px 6px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    transition: 'all 0.15s ease',
-                    minWidth: 0,
-                  }} 
-                  title={gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)} 
-                  type="button"
-                >
-                  <div style={{ width: '100%', height: '60px', pointerEvents: 'none' }}>
-                    <GaugeComponent 
-                      {...TYPE_GAUGE_CONFIGS[gaugeType]} 
-                      value={50} 
-                    />
-                  </div>
-                  <span style={{ 
-                    fontSize: '0.7rem', 
-                    fontWeight: cfg?.type === gaugeType ? 600 : 400,
-                    color: cfg?.type === gaugeType ? '#60a5fa' : 'rgba(255,255,255,0.6)',
-                    marginTop: '4px',
-                  }}>
-                    {gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </CollapsibleGroup>
-        </Col>
         <Col xs={12} md={4}>
           <CollapsibleGroup title="Arc & Colors" icon={<Layers size={14} />} isMobile={isMobile}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -446,41 +403,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
             </div>
           </CollapsibleGroup>
         </Col>
-        <Col xs={12} md={4}>
-          <CollapsibleGroup title="Label" icon={<Tag size={14} />} isMobile={isMobile}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: !cfg?.labels?.valueLabel?.hide } } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.labels?.valueLabel?.hide ? styles.toolBtnActive : {}) }} type="button">
-                  {cfg?.labels?.valueLabel?.hide ? <EyeOff size={14} /> : <Eye size={14} />}<span>Show</span>
-                </button>
-                <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, matchColorWithArc: !cfg?.labels?.valueLabel?.matchColorWithArc } } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.labels?.valueLabel?.matchColorWithArc ? styles.toolBtnActive : {}) }} type="button">
-                  <Rainbow size={14} /><span>Arc</span>
-                </button>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Size</span>
-                <input type="range" min="12" max="72" step="1" value={parseInt(cfg?.labels?.valueLabel?.style?.fontSize || '35')} 
-                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: false, style: { ...cfg?.labels?.valueLabel?.style, fontSize: `${e.target.value}px` } } } })} 
-                  style={{ ...styles.slider, flex: 1 }} />
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>X Offset</span>
-                <input type="range" min="-50" max="50" step="1" value={cfg?.labels?.valueLabel?.offsetX ?? 0} 
-                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetX: Number(e.target.value) } } })} 
-                  style={{ ...styles.slider, flex: 1 }} />
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Y Offset</span>
-                <input type="range" min="-100" max="50" step="1" value={cfg?.labels?.valueLabel?.offsetY ?? 0} 
-                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetY: Number(e.target.value) } } })} 
-                  style={{ ...styles.slider, flex: 1 }} />
-              </div>
-            </div>
-          </CollapsibleGroup>
-        </Col>
-
         {/* Tick Marks */}
         <Col xs={12} md={4}>
           <CollapsibleGroup title="Tick Marks" icon={<Ruler size={14} />} isMobile={isMobile}>
@@ -561,6 +483,84 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 <input type="range" min="0" max="15" step="1" value={cfg?.labels?.tickLabels?.defaultTickLineConfig?.distanceFromArc ?? 3} 
                   onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickLineConfig: { ...cfg?.labels?.tickLabels?.defaultTickLineConfig, distanceFromArc: Number(e.target.value) } } } })} 
                   style={{ ...styles.slider, flex: 1 }} title="Distance from arc" />
+              </div>
+            </div>
+          </CollapsibleGroup>
+        </Col>
+
+        {/* Type */}
+        <Col xs={12} md={4}>
+          <CollapsibleGroup title="Type" icon={<Palette size={14} />} isMobile={isMobile} defaultOpen={true}>
+            <div style={{ display: 'flex', justifyContent: 'stretch', gap: '8px', width: '100%' }}>
+              {(['semicircle', 'radial', 'grafana'] as const).map((gaugeType) => (
+                <button 
+                  key={gaugeType}
+                  onClick={() => onConfigChange({ ...config, type: gaugeType })} 
+                  style={{ 
+                    flex: 1,
+                    background: cfg?.type === gaugeType ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    border: cfg?.type === gaugeType ? '2px solid #3b82f6' : '2px solid transparent',
+                    borderRadius: '8px',
+                    padding: '8px 6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    transition: 'all 0.15s ease',
+                    minWidth: 0,
+                  }} 
+                  title={gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)} 
+                  type="button"
+                >
+                  <div style={{ width: '100%', height: '60px', pointerEvents: 'none' }}>
+                    <GaugeComponent 
+                      {...TYPE_GAUGE_CONFIGS[gaugeType]} 
+                      value={50} 
+                    />
+                  </div>
+                  <span style={{ 
+                    fontSize: '0.7rem', 
+                    fontWeight: cfg?.type === gaugeType ? 600 : 400,
+                    color: cfg?.type === gaugeType ? '#60a5fa' : 'rgba(255,255,255,0.6)',
+                    marginTop: '4px',
+                  }}>
+                    {gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </CollapsibleGroup>
+        </Col>
+        <Col xs={12} md={4}>
+          <CollapsibleGroup title="Label" icon={<Tag size={14} />} isMobile={isMobile}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: !cfg?.labels?.valueLabel?.hide } } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.labels?.valueLabel?.hide ? styles.toolBtnActive : {}) }} type="button">
+                  {cfg?.labels?.valueLabel?.hide ? <EyeOff size={14} /> : <Eye size={14} />}<span>Show</span>
+                </button>
+                <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, matchColorWithArc: !cfg?.labels?.valueLabel?.matchColorWithArc } } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.labels?.valueLabel?.matchColorWithArc ? styles.toolBtnActive : {}) }} type="button">
+                  <Rainbow size={14} /><span>Arc</span>
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Size</span>
+                <input type="range" min="12" max="72" step="1" value={parseInt(cfg?.labels?.valueLabel?.style?.fontSize || '35')} 
+                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: false, style: { ...cfg?.labels?.valueLabel?.style, fontSize: `${e.target.value}px` } } } })} 
+                  style={{ ...styles.slider, flex: 1 }} />
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>X Offset</span>
+                <input type="range" min="-50" max="50" step="1" value={cfg?.labels?.valueLabel?.offsetX ?? 0} 
+                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetX: Number(e.target.value) } } })} 
+                  style={{ ...styles.slider, flex: 1 }} />
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Y Offset</span>
+                <input type="range" min="-100" max="50" step="1" value={cfg?.labels?.valueLabel?.offsetY ?? 0} 
+                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetY: Number(e.target.value) } } })} 
+                  style={{ ...styles.slider, flex: 1 }} />
               </div>
             </div>
           </CollapsibleGroup>
