@@ -41,6 +41,10 @@ export interface GaugeComponentProps {
     pointer?: PointerProps,
     /** This configures the type of the Gauge. */
     type?: "semicircle" | "radial" | "grafana",
+    /** Custom start angle in degrees. -90 = top left, 0 = top, 90 = top right, -180/180 = bottom */
+    startAngle?: number,
+    /** Custom end angle in degrees. -90 = top left, 0 = top, 90 = top right, -180/180 = bottom */
+    endAngle?: number,
     /** Callback fired when value changes via pointer drag. Enables input mode. */
     onValueChange?: (value: number) => void
 }

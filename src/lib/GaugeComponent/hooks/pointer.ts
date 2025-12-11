@@ -22,13 +22,19 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     // to avoid the pointer jumping from prevPercent to currentPercent
     const useCurrentPercent = resize && !isFirstTime;
     
-    if ((isFirstTime || resize) && gauge.props.type != GaugeType.Grafana) 
+    // Initialize pointer for all types except Grafana (which uses arc fill), 
+    // unless Grafana has pointer explicitly shown (hide: false)
+    const isGrafana = gauge.props.type == GaugeType.Grafana;
+    const showPointerForGrafana = isGrafana && !pointer.hide;
+    
+    if ((isFirstTime || resize) && (!isGrafana || showPointerForGrafana)) 
         initPointer(gauge, useCurrentPercent);
+    
     let shouldAnimate = (!resize || isFirstTime) && pointer.animate;
     if (shouldAnimate) {
-        // For Grafana type, animate the doughnut (arc fill animation)
-        // For other types, animate only the pointer element (not the whole doughnut)
-        const animationTarget = gauge.props.type == GaugeType.Grafana 
+        // For Grafana type without pointer, animate the doughnut (arc fill animation)
+        // For other types or Grafana with pointer, animate the pointer element
+        const animationTarget = (isGrafana && !showPointerForGrafana)
             ? gauge.doughnut.current 
             : gauge.pointer.current.element;
         
@@ -42,10 +48,12 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                 return function (percentOfPercent: number) {
                     const progress = currentInterpolatedPercent(percentOfPercent);
                     if (isProgressValid(progress, prevProgress, gauge)) {
-                        if(gauge.props.type == GaugeType.Grafana){
-                            // Use efficient arc update instead of clearing/recreating DOM elements
+                        // Always update Grafana arc fill
+                        if (isGrafana) {
                             arcHooks.updateGrafanaArc(gauge, progress);
-                        } else {
+                        }
+                        // Update pointer if not Grafana, or if Grafana with pointer shown
+                        if (!isGrafana || showPointerForGrafana) {
                             updatePointer(progress, gauge);
                         }
                     }
@@ -53,10 +61,12 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                 };
             });
     } else {
-        // For Grafana, update the arc fill; for others, update pointer position
-        if (gauge.props.type == GaugeType.Grafana) {
+        // For Grafana, always update the arc fill
+        if (isGrafana) {
             arcHooks.updateGrafanaArc(gauge, currentPercent);
-        } else {
+        }
+        // Update pointer if not Grafana, or if Grafana with pointer shown
+        if (!isGrafana || showPointerForGrafana) {
             updatePointer(currentPercent, gauge);
         }
     }
@@ -181,7 +191,7 @@ const updatePointer = (percentage: number, gauge: Gauge) => {
     let pointer = gauge.props.pointer as PointerProps;
     const { pointerRadius, shouldDrawPath, prevColor } = gauge.pointer.current.context;
     setPointerPosition(pointerRadius, percentage, gauge);
-    if(shouldDrawPath && gauge.props.type != GaugeType.Grafana) {
+    if(shouldDrawPath) {
         gauge.pointer.current.path.attr("d", calculatePointerPath(gauge, percentage));
         
         // Update grab handle position if it exists (grab handle is on g.current, not pointer element)

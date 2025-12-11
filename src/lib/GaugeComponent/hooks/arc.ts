@@ -156,16 +156,21 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
   if (gauge.props.type == GaugeType.Grafana && resize) {
     gauge.doughnut.current.selectAll(".outerSubArc").remove();
     // Use outerArc config if provided, otherwise fall back to main arc settings
+    // Get outer arc width (default 5px)
+    const outerArcWidth = outerArcConfig?.width ?? 5;
     // Scale corner radius for the thin outer arc (max 2px since arc is only 5px thick)
+    const maxCornerRadius = Math.min(outerArcWidth / 2, 2);
     const outerCornerRadius = outerArcConfig?.cornerRadius !== undefined 
-      ? Math.min(outerArcConfig.cornerRadius, 2) 
-      : (cornerRadius ? Math.min(cornerRadius, 2) : 0);
+      ? Math.min(outerArcConfig.cornerRadius, maxCornerRadius) 
+      : (cornerRadius ? Math.min(cornerRadius, maxCornerRadius) : 0);
     const outerPadding = outerArcConfig?.padding !== undefined 
       ? outerArcConfig.padding 
       : (padding || 0);
+    // Gap between main arc and outer arc is 2px
+    const gap = 2;
     let outerArc = arc()
-      .outerRadius(outerRadius + 7)
-      .innerRadius(outerRadius + 2)
+      .outerRadius(outerRadius + gap + outerArcWidth)
+      .innerRadius(outerRadius + gap)
       .cornerRadius(outerCornerRadius)
       .padAngle(outerPadding);
     var arcPaths = gauge.doughnut.current
@@ -385,8 +390,9 @@ export const getCoordByValue = (value: number, gauge: Gauge, position = "inner",
   const { outerRadius, innerRadius } = gauge.dimensions.current;
   const isGrafana = gauge.props.type === GaugeType.Grafana;
   
-  // Grafana has an outer decorative arc from outerRadius+2 to outerRadius+7
-  const grafanaOuterArcEdge = outerRadius + 7;
+  // Grafana has an outer decorative arc - get width from config (default 5px) + 2px gap
+  const outerArcWidth = gauge.props.arc?.outerArc?.width ?? 5;
+  const grafanaOuterArcEdge = outerRadius + 2 + outerArcWidth;
   
   let positionCenterToArcLength: { [key: string]: () => number } = {
     "outer": () => {

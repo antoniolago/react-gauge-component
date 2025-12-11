@@ -23,7 +23,9 @@ export interface Arc {
         /** Corner radius for outer arc (max effective value ~2 due to thin arc) */
         cornerRadius?: number,
         /** Padding between outer arc segments */
-        padding?: number
+        padding?: number,
+        /** Width of the outer arc in pixels (default: 5) */
+        width?: number
     },
     /** Stroke/border width for all subArcs */
     subArcsStrokeWidth?: number,

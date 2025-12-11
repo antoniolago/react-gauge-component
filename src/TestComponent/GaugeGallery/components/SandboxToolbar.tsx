@@ -276,6 +276,12 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                       onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, outerArc: { ...cfg?.arc?.outerArc, padding: Number(e.target.value) } } })} 
                       style={{ ...styles.slider, flex: 1 }} title="Outer arc padding" />
                   </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                    <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
+                    <input type="range" min="0" max="30" step="1" value={cfg?.arc?.outerArc?.width ?? 5} 
+                      onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, outerArc: { ...cfg?.arc?.outerArc, width: Number(e.target.value) } } })} 
+                      style={{ ...styles.slider, flex: 1 }} title="Outer arc width" />
+                  </div>
                   <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span style={styles.sliderLabel}>Empty color</span>
                     <input type="color" value={cfg?.arc?.emptyColor || '#5C5C5C'} 
