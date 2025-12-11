@@ -46,7 +46,6 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
 
   const gauge: Gauge = {
     props: mergedProps.current,
-    resizeObserver,
     prevProps,
     resizeObserver: useRef<any>(),
     svg,
