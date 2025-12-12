@@ -9,7 +9,7 @@ import {
   Circle, Triangle, ArrowRight, EyeOff,
   Eye, Rainbow, Minus, AlignLeft, AlignCenter, AlignRight,
   Play, Hand, Hash, ArrowUpRight, ArrowDownLeft, ChevronDown,
-  Timer, Settings2
+  Timer, Settings2, Sparkles
 } from 'lucide-react';
 
 // Collapsible wrapper for mobile
@@ -344,6 +344,61 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                       style={styles.colorPicker} title="Empty arc color" />
                   </div>
                 </>
+              )}
+              
+              {/* Arc Effects */}
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px', marginTop: '4px' }}>
+                <Sparkles size={12} style={{ opacity: 0.6 }} />
+                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Effects</span>
+              </div>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <label style={styles.inlineLabel} title="Add glow effect to arcs">
+                  <input type="checkbox" checked={cfg?.arc?.effects?.glow || false} 
+                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, effects: { ...cfg?.arc?.effects, glow: e.target.checked } } })} 
+                    style={styles.inlineCheckbox} />
+                  Glow
+                </label>
+                <label style={styles.inlineLabel} title="Add drop shadow to arcs">
+                  <input type="checkbox" checked={!!cfg?.arc?.effects?.dropShadow} 
+                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, effects: { ...cfg?.arc?.effects, dropShadow: e.target.checked ? { dy: 2, blur: 3, opacity: 0.3 } : undefined } } })} 
+                    style={styles.inlineCheckbox} />
+                  Shadow
+                </label>
+                <label style={styles.inlineLabel} title="Add inner shadow for 3D look">
+                  <input type="checkbox" checked={cfg?.arc?.effects?.innerShadow || false} 
+                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, effects: { ...cfg?.arc?.effects, innerShadow: e.target.checked } } })} 
+                    style={styles.inlineCheckbox} />
+                  3D
+                </label>
+              </div>
+              {cfg?.arc?.effects?.glow && (
+                <>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                    <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Blur</span>
+                    <input type="range" min="1" max="30" step="1" value={cfg?.arc?.effects?.glowBlur ?? 10} 
+                      onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, effects: { ...cfg?.arc?.effects, glowBlur: Number(e.target.value) } } })} 
+                      style={{ ...styles.slider, flex: 1 }} title="Glow blur intensity" />
+                    <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '20px' }}>{cfg?.arc?.effects?.glowBlur ?? 10}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                    <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Spread</span>
+                    <input type="range" min="0" max="3" step="0.1" value={cfg?.arc?.effects?.glowSpread ?? 1} 
+                      onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, effects: { ...cfg?.arc?.effects, glowSpread: Number(e.target.value) } } })} 
+                      style={{ ...styles.slider, flex: 1 }} title="Glow spread/intensity" />
+                    <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '20px' }}>{cfg?.arc?.effects?.glowSpread ?? 1}</span>
+                  </div>
+                </>
+              )}
+              {cfg?.arc?.effects?.dropShadow && (
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Shadow</span>
+                  <input type="range" min="0" max="10" step="1" value={cfg?.arc?.effects?.dropShadow?.blur ?? 3} 
+                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, effects: { ...cfg?.arc?.effects, dropShadow: { ...cfg?.arc?.effects?.dropShadow, blur: Number(e.target.value) } } } })} 
+                    style={{ ...styles.slider, flex: 1 }} title="Shadow blur" />
+                  <input type="range" min="0" max="1" step="0.1" value={cfg?.arc?.effects?.dropShadow?.opacity ?? 0.3} 
+                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, effects: { ...cfg?.arc?.effects, dropShadow: { ...cfg?.arc?.effects?.dropShadow, opacity: Number(e.target.value) } } } })} 
+                    style={{ ...styles.slider, flex: 1 }} title="Shadow opacity" />
+                </div>
               )}
             </div>
           </CollapsibleGroup>

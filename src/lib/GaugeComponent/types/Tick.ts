@@ -1,3 +1,15 @@
+/** Visual effects for ticks */
+export interface TickEffects {
+    /** Enable glow effect on tick lines */
+    glow?: boolean,
+    /** Glow color (defaults to tick line color) */
+    glowColor?: string,
+    /** Glow blur radius (default: 4) */
+    glowBlur?: number,
+    /** Glow spread (default: 2) */
+    glowSpread?: number
+}
+
 export interface TickLabels {
     /** Hide first and last ticks and it's values */
     hideMinMax?: boolean;
@@ -11,6 +23,8 @@ export interface TickLabels {
     /** Default tick line label configs, this will apply to all 
      * ticks but the individually configured */
     defaultTickLineConfig?: TickLineConfig;
+    /** Visual effects for all ticks (can be overridden per tick) */
+    effects?: TickEffects;
 }
 export interface Tick {
     /** The value the tick will correspond to */
@@ -19,6 +33,8 @@ export interface Tick {
     valueConfig?: TickValueConfig;
     /** This will override defaultTickLineConfig */
     lineConfig?: TickLineConfig;
+    /** Visual effects for this specific tick (overrides tickLabels.effects) */
+    effects?: TickEffects;
 }
 export interface TickValueConfig {
     /** This function allows to customize the rendered tickValue label */
@@ -42,6 +58,8 @@ export interface TickLineConfig {
     color?: string;
     /** If true will hide the tick line */
     hide?: boolean;
+    /** Visual effects for the tick line */
+    effects?: TickEffects;
 }
 
 const defaultTickLineConfig: TickLineConfig = {

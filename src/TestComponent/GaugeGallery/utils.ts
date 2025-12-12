@@ -1,3 +1,4 @@
+import { ReactElement } from 'react';
 import { RANDOM_RANGES, COLOR_THEMES } from './presets';
 import { GaugeComponentProps } from '../../lib/GaugeComponent/types/GaugeComponentProps';
 
@@ -261,6 +262,7 @@ export const stringifyConfig = (config: any, value: number): string => {
   
   Object.entries(config).forEach(([key, val]) => {
     if (val === undefined) return;
+    if (key === 'value') return; // Skip value - already added above
     if (typeof val === 'string') {
       props.push(`  ${key}="${val}"`);
     } else {
@@ -279,6 +281,23 @@ export const copyToClipboard = async (
   value: number, 
   onSuccess: () => void
 ): Promise<void> => {
+  const code = stringifyConfig(config, value);
+  try {
+    await navigator.clipboard.writeText(code);
+    onSuccess();
+  } catch (err) {
+    console.error('Failed to copy:', err);
+  }
+};
+
+/**
+ * Copy JSX element to clipboard - extracts props from the element
+ */
+export const copyToClipboardFromJsx = async (
+  element: ReactElement,
+  onSuccess: () => void
+): Promise<void> => {
+  const { value, ...config } = element.props;
   const code = stringifyConfig(config, value);
   try {
     await navigator.clipboard.writeText(code);

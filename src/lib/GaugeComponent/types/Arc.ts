@@ -25,13 +25,52 @@ export interface Arc {
         /** Padding between outer arc segments */
         padding?: number,
         /** Width of the outer arc in pixels (default: 5) */
-        width?: number
+        width?: number,
+        /** Visual effects for the outer arc (inherits from arc.effects if not set) */
+        effects?: ArcEffects
     },
     /** Stroke/border width for all subArcs */
     subArcsStrokeWidth?: number,
     /** Stroke/border color for all subArcs */
-    subArcsStrokeColor?: string
+    subArcsStrokeColor?: string,
+    /** CSS/SVG effects for the arc */
+    effects?: ArcEffects
 }
+
+export interface ArcEffects {
+    /** Enable glow effect on arcs */
+    glow?: boolean,
+    /** Glow color (defaults to arc color if not set) */
+    glowColor?: string,
+    /** Glow intensity/blur radius (default: 10) */
+    glowBlur?: number,
+    /** Glow spread (default: 3) */
+    glowSpread?: number,
+    /** Custom SVG filter ID to apply */
+    filterUrl?: string,
+    /** Drop shadow effect */
+    dropShadow?: {
+        /** Shadow offset X (default: 0) */
+        dx?: number,
+        /** Shadow offset Y (default: 2) */
+        dy?: number,
+        /** Shadow blur (default: 3) */
+        blur?: number,
+        /** Shadow color (default: rgba(0,0,0,0.3)) */
+        color?: string,
+        /** Shadow opacity (default: 0.3) */
+        opacity?: number
+    },
+    /** Inner shadow/inset effect for 3D look */
+    innerShadow?: boolean
+}
+
+/** Effects that can be applied to individual SubArcs - inherits from arc.effects if not specified */
+export interface SubArcEffects extends ArcEffects {
+    /** Override to disable inherited effects from arc.effects */
+    inherit?: boolean
+}
+
 export interface SubArc {
     /** The limit of the subArc, in accord to the gauge value. */
     limit?: number,
@@ -49,7 +88,9 @@ export interface SubArc {
     /** This will trigger onMouseMove of the subArc */
     onMouseMove?: () => void,
     /** This will trigger onMouseMove of the subArc */
-    onMouseLeave?: () => void
+    onMouseLeave?: () => void,
+    /** Visual effects for this specific subArc (inherits from arc.effects if not set) */
+    effects?: SubArcEffects
 }
 export const defaultSubArcs: SubArc[] = [
     { limit: 33, color: "#5BE12C" }, // needleColorWhenWithinLimit: "#AA4128"},
@@ -67,9 +108,9 @@ export const getArcWidthByType = (type: string): number => {
     return gaugeTypesWidth[type as string];
 }
 export const defaultArc: Arc = {
-    padding: 0.05,
+    padding: 0.01,
     width: 0.25,
-    cornerRadius: 7,
+    cornerRadius: 1,
     nbSubArcs: undefined,
     emptyColor: "#5C5C5C",
     colorArray: undefined,

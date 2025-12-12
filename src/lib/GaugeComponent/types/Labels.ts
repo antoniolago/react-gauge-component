@@ -1,4 +1,19 @@
 import { defaultTickLabels, TickLabels } from './Tick';
+
+/** Visual effects for labels */
+export interface LabelEffects {
+    /** Enable glow effect */
+    glow?: boolean,
+    /** Glow color (defaults to label color) */
+    glowColor?: string,
+    /** Glow blur radius (default: 6) */
+    glowBlur?: number,
+    /** Glow spread (default: 2) */
+    glowSpread?: number,
+    /** Text shadow for enhanced readability */
+    textShadow?: string
+}
+
 export interface Labels {
     /** This configures the central value label. */
     valueLabel?: ValueLabel,
@@ -46,6 +61,8 @@ export interface ValueLabel {
      * Only used when renderContent is provided. Defaults to 50.
      */
     contentHeight?: number;
+    /** Visual effects for the value label */
+    effects?: LabelEffects;
 }
 
 export const defaultValueLabel: ValueLabel = {

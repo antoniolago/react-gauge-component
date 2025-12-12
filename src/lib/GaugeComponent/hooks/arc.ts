@@ -298,6 +298,121 @@ export const applyColors = (subArcsPath: any, gauge: Gauge) => {
       .attr("stroke", strokeColor)
       .attr("stroke-width", strokeWidth);
   }
+  
+  // Apply visual effects if configured
+  applyArcEffects(subArcsPath, gauge);
+}
+
+/**
+ * Create and apply SVG filter effects to arcs
+ */
+export const applyArcEffects = (subArcsPath: any, gauge: Gauge) => {
+  const effects = gauge.props?.arc?.effects;
+  if (!effects) return;
+  
+  const filterId = `arc-effects-${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Check if we need to create any filters
+  const needsFilter = effects.glow || effects.dropShadow || effects.innerShadow || effects.filterUrl;
+  if (!needsFilter) return;
+  
+  // Use custom filter URL if provided
+  if (effects.filterUrl) {
+    subArcsPath.attr("filter", effects.filterUrl);
+    return;
+  }
+  
+  // Create defs if it doesn't exist
+  let defs = gauge.doughnut.current.select("defs");
+  if (defs.empty()) {
+    defs = gauge.doughnut.current.append("defs");
+  }
+  
+  // Create filter element
+  const filter = defs.append("filter")
+    .attr("id", filterId)
+    .attr("x", "-50%")
+    .attr("y", "-50%")
+    .attr("width", "200%")
+    .attr("height", "200%");
+  
+  let lastResult = "SourceGraphic";
+  
+  // Add glow effect
+  if (effects.glow) {
+    const glowBlur = effects.glowBlur ?? 10;
+    const glowSpread = effects.glowSpread ?? 3;
+    
+    // Create glow using Gaussian blur
+    filter.append("feGaussianBlur")
+      .attr("in", "SourceGraphic")
+      .attr("stdDeviation", glowBlur)
+      .attr("result", "blur");
+    
+    // Brighten the blur for more intensity
+    filter.append("feComponentTransfer")
+      .attr("in", "blur")
+      .attr("result", "glow")
+      .selectAll("feFuncA")
+      .data([null])
+      .enter()
+      .append("feFuncA")
+      .attr("type", "linear")
+      .attr("slope", glowSpread);
+    
+    // Merge glow behind original
+    const merge = filter.append("feMerge");
+    merge.append("feMergeNode").attr("in", "glow");
+    merge.append("feMergeNode").attr("in", "SourceGraphic");
+    lastResult = "glow";
+  }
+  
+  // Add drop shadow effect
+  if (effects.dropShadow) {
+    const ds = effects.dropShadow;
+    const dx = ds.dx ?? 0;
+    const dy = ds.dy ?? 2;
+    const blur = ds.blur ?? 3;
+    const opacity = ds.opacity ?? 0.3;
+    const color = ds.color ?? `rgba(0,0,0,${opacity})`;
+    
+    filter.append("feDropShadow")
+      .attr("dx", dx)
+      .attr("dy", dy)
+      .attr("stdDeviation", blur)
+      .attr("flood-color", color)
+      .attr("flood-opacity", opacity);
+  }
+  
+  // Add inner shadow for 3D effect
+  if (effects.innerShadow) {
+    // Create inner shadow using morphology and blur
+    filter.append("feMorphology")
+      .attr("in", "SourceAlpha")
+      .attr("operator", "erode")
+      .attr("radius", "1")
+      .attr("result", "eroded");
+    
+    filter.append("feGaussianBlur")
+      .attr("in", "eroded")
+      .attr("stdDeviation", "2")
+      .attr("result", "innerBlur");
+    
+    filter.append("feComposite")
+      .attr("in", "innerBlur")
+      .attr("in2", "SourceAlpha")
+      .attr("operator", "arithmetic")
+      .attr("k2", "-1")
+      .attr("k3", "1")
+      .attr("result", "innerShadow");
+    
+    const merge = filter.append("feMerge");
+    merge.append("feMergeNode").attr("in", "SourceGraphic");
+    merge.append("feMergeNode").attr("in", "innerShadow");
+  }
+  
+  // Apply the filter to the arcs
+  subArcsPath.attr("filter", `url(#${filterId})`);
 }
 
 export const getArcDataByValue = (value: number, gauge: Gauge): SubArc =>
@@ -594,29 +709,27 @@ const verifySubArcsLimits = (gauge: Gauge) => {
     const limit = subArc.limit;
     // Only validate if limit is explicitly defined (skip length-based subArcs)
     if (typeof limit !== 'undefined') {
-      // Check if the limit is within the valid range
+      // Check if the limit is within the valid range - clamp instead of throwing
       if (limit < minValue || limit > maxValue) {
-        const debugInfo = getDebugInfo();
-        console.error('[GaugeComponent] SubArc limit validation failed:', debugInfo);
-        throw new Error(
-          `SubArc limit ${limit} is outside range [${minValue}, ${maxValue}]. ` +
-          `Type: ${gauge.props.type}, Gradient: ${gauge.props.arc?.gradient}. ` +
-          `Check console for full debug info.`
+        console.warn(
+          `[GaugeComponent] SubArc limit ${limit} is outside range [${minValue}, ${maxValue}]. ` +
+          `Clamping to valid range. Consider updating your subArc limits to match minValue/maxValue.`
         );
+        // Clamp the limit to valid range
+        subArc.limit = Math.max(minValue, Math.min(maxValue, limit));
       }
       // Check if the limit is greater than the previous limit
       if (typeof prevLimit !== 'undefined') {
-        if (limit <= prevLimit) {
-          const debugInfo = getDebugInfo();
-          console.error('[GaugeComponent] SubArc order validation failed:', debugInfo);
-          throw new Error(
-            `SubArc limit ${limit} must be > previous limit ${prevLimit}. ` +
-            `Use "length" property for percentage-based sizing. ` +
-            `See: https://github.com/antoniolago/react-gauge-component`
+        if (subArc.limit !== undefined && subArc.limit <= prevLimit) {
+          console.warn(
+            `[GaugeComponent] SubArc limit ${subArc.limit} must be > previous limit ${prevLimit}. ` +
+            `Adjusting automatically.`
           );
+          // Adjust to be slightly greater than previous
+          subArc.limit = prevLimit + (maxValue - minValue) * 0.01;
         }
       }
-      prevLimit = limit;
+      prevLimit = subArc.limit;
     }
   }
   // If the user has defined subArcs with limits, make sure the last one covers maxValue

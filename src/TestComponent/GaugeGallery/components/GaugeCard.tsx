@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import GaugeComponent from '../../../lib';
+import React, { useState, useEffect, cloneElement } from 'react';
 import { styles, createStyles } from '../styles';
-import { copyToClipboard } from '../utils';
+import { copyToClipboardFromJsx } from '../utils';
 import { GaugePreset } from '../types';
 import { GaugeComponentProps } from '../../../lib/GaugeComponent/types/GaugeComponentProps';
 import { Pencil, Copy, Check } from 'lucide-react';
@@ -16,23 +15,45 @@ interface GaugeCardProps {
 
 export const GaugeCard: React.FC<GaugeCardProps> = ({ 
   preset, 
-  value, 
+  value: externalValue, 
   cardHeight, 
   isLightTheme,
   onSendToEditor
 }) => {
   const [copied, setCopied] = useState(false);
+  const [localValue, setLocalValue] = useState(externalValue);
   const themeStyles = createStyles(isLightTheme);
 
+  // Sync with external value when it changes (e.g., from animation)
+  useEffect(() => {
+    setLocalValue(externalValue);
+  }, [externalValue]);
+
   const handleCopy = () => {
-    copyToClipboard(preset.config, value, () => {
+    // Extract props from the rendered component
+    const element = preset.component(localValue);
+    copyToClipboardFromJsx(element, () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
 
   const handleSendToEditor = () => {
-    onSendToEditor?.(preset.config, value);
+    // Extract config from component props for editor
+    const element = preset.component(localValue);
+    const config = element.props as Partial<GaugeComponentProps>;
+    onSendToEditor?.(config, localValue);
+  };
+
+  // Render gauge with onValueChange for drag interaction
+  const renderGauge = () => {
+    const element = preset.component(localValue);
+    // Clone the element and add onValueChange for drag interaction
+    return cloneElement(element, {
+      ...element.props,
+      value: localValue,
+      onValueChange: setLocalValue,
+    });
   };
 
   return (
@@ -76,7 +97,7 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
       <div style={themeStyles.cardDescription}>{preset.description}</div>
       
       <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
-        <GaugeComponent {...preset.config} value={value} />
+        {renderGauge()}
       </div>
     </div>
   );

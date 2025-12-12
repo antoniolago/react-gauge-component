@@ -10,6 +10,9 @@ interface SandboxEditorProps {
   isLightTheme: boolean;
 }
 
+// Breakpoint for responsive layout
+const LAYOUT_BREAKPOINT = 1024;
+
 export interface SandboxEditorHandle {
   loadConfig: (config: Partial<GaugeComponentProps>, value: number) => void;
   scrollToEditor: () => void;
@@ -25,10 +28,20 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const [autoAnimate, setAutoAnimate] = useState(false);
   const [sandboxWidth, setSandboxWidth] = useState('400px');
   const [sandboxHeight, setSandboxHeight] = useState('300px');
-  const [gaugeAlign, setGaugeAlign] = useState<'left' | 'center' | 'right'>('left');
+  const [gaugeAlign, setGaugeAlign] = useState<'left' | 'center' | 'right'>('center');
   const [copied, setCopied] = useState(false);
   const [key, setKey] = useState(0);
   const [interactionEnabled, setInteractionEnabled] = useState(false);
+  const [isHorizontalLayout, setIsHorizontalLayout] = useState(window.innerWidth >= LAYOUT_BREAKPOINT);
+
+  // Handle responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsHorizontalLayout(window.innerWidth >= LAYOUT_BREAKPOINT);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Expose methods via ref
   useImperativeHandle(ref, () => ({
@@ -39,9 +52,12 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       setIsOpen(true); // Ensure editor is open
     },
     scrollToEditor: () => {
-      if (containerRef.current) {
-        containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      // Wait for content to render after setIsOpen(true) before scrolling
+      setTimeout(() => {
+        if (containerRef.current) {
+          containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
     },
   }));
 
@@ -186,34 +202,27 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
       </div>
       
       {isOpen && (
-        <div style={styles.sandboxContent}>
-          <SandboxToolbar
-            config={config}
-            value={value}
-            autoAnimate={autoAnimate}
-            sandboxWidth={sandboxWidth}
-            sandboxHeight={sandboxHeight}
-            gaugeAlign={gaugeAlign}
-            onConfigChange={handleConfigChange}
-            onValueChange={setValue}
-            onAutoAnimateChange={setAutoAnimate}
-            onSizeChange={handleSizeChange}
-            onAlignChange={setGaugeAlign}
-            interactionEnabled={interactionEnabled}
-            onInteractionChange={setInteractionEnabled}
-          />
-
-          {/* Gauge Preview - Resizable */}
+        <div style={{
+          ...styles.sandboxContent,
+          display: 'flex',
+          flexDirection: isHorizontalLayout ? 'row' : 'column',
+          gap: '20px',
+          alignItems: isHorizontalLayout ? 'flex-start' : 'stretch',
+        }}>
+          {/* Gauge Preview - Left side on desktop, top on mobile */}
           <div style={{
-            ...styles.gaugePreviewContainer,
-            justifyContent: gaugeAlign === 'left' ? 'flex-start' : gaugeAlign === 'right' ? 'flex-end' : 'center',
+            flex: isHorizontalLayout ? '0 0 auto' : '1',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: gaugeAlign === 'left' ? 'flex-start' : gaugeAlign === 'right' ? 'flex-end' : 'center',
+            minWidth: isHorizontalLayout ? '300px' : undefined,
           }}>
             <div style={{
               ...themeStyles.randomizerCard,
               width: sandboxWidth,
               height: sandboxHeight,
-              minWidth: '150px',
-              minHeight: '120px',
+              minWidth: '200px',
+              minHeight: '150px',
               maxWidth: '100%',
               position: 'relative',
               resize: 'both',
@@ -319,6 +328,28 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                 background: 'linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.3) 50%)',
               }} />
             </div>
+          </div>
+          
+          {/* Toolbar - Right side on desktop, bottom on mobile */}
+          <div style={{
+            flex: isHorizontalLayout ? '1' : '0 0 auto',
+            minWidth: 0,
+          }}>
+            <SandboxToolbar
+              config={config}
+              value={value}
+              autoAnimate={autoAnimate}
+              sandboxWidth={sandboxWidth}
+              sandboxHeight={sandboxHeight}
+              gaugeAlign={gaugeAlign}
+              onConfigChange={handleConfigChange}
+              onValueChange={setValue}
+              onAutoAnimateChange={setAutoAnimate}
+              onSizeChange={handleSizeChange}
+              onAlignChange={setGaugeAlign}
+              interactionEnabled={interactionEnabled}
+              onInteractionChange={setInteractionEnabled}
+            />
           </div>
         </div>
       )}

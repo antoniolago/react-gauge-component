@@ -34,10 +34,17 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnim
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+  // Helper to extract config from preset component
+  const getPresetConfig = (preset: typeof GAUGE_PRESETS[0]) => {
+    const element = preset.component(0);
+    return element.props;
+  };
+
   const [values, setValues] = useState<number[]>(() => 
     GAUGE_PRESETS.map(preset => {
-      const min = (preset.config as any)?.minValue ?? 0;
-      const max = (preset.config as any)?.maxValue ?? 100;
+      const config = getPresetConfig(preset);
+      const min = config?.minValue ?? 0;
+      const max = config?.maxValue ?? 100;
       return min + (max - min) * 0.5;
     })
   );
@@ -66,9 +73,9 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnim
             const endIdx = Math.min(startIdx + BATCH_SIZE, GAUGE_PRESETS.length);
             
             for (let idx = startIdx; idx < endIdx; idx++) {
-              const preset = GAUGE_PRESETS[idx]?.config;
-              const min = (preset as any)?.minValue ?? 0;
-              const max = (preset as any)?.maxValue ?? 100;
+              const config = getPresetConfig(GAUGE_PRESETS[idx]);
+              const min = config?.minValue ?? 0;
+              const max = config?.maxValue ?? 100;
               next[idx] = min + Math.random() * (max - min);
             }
             return next;

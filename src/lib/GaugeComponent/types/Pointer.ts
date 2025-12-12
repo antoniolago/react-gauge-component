@@ -1,3 +1,23 @@
+/** Visual effects for pointer */
+export interface PointerEffects {
+    /** Enable glow effect */
+    glow?: boolean,
+    /** Glow color (defaults to pointer color) */
+    glowColor?: string,
+    /** Glow blur radius (default: 8) */
+    glowBlur?: number,
+    /** Glow spread (default: 2) */
+    glowSpread?: number,
+    /** Drop shadow */
+    dropShadow?: {
+        dx?: number,
+        dy?: number,
+        blur?: number,
+        color?: string,
+        opacity?: number
+    }
+}
+
 export interface PointerProps {
     /** Pointer type */
     type?: "needle" | "blob" | "arrow",
@@ -28,7 +48,9 @@ export interface PointerProps {
     /** Blob offset - controls radial position of blob pointer (0-1, default 0.5 = centered on arc). Lower = inner edge, higher = outer edge */
     blobOffset?: number,
     /** Hide the grab handle circle shown at pointer tip when drag mode is enabled */
-    hideGrabHandle?: boolean
+    hideGrabHandle?: boolean,
+    /** Visual effects for the pointer */
+    effects?: PointerEffects
 }
 export interface PointerRef {
     element: any,
@@ -82,5 +104,5 @@ export const defaultPointer: PointerProps = {
     strokeColor: undefined,
     arrowOffset: 0.72,
     blobOffset: 0.5,
-    hideGrabHandle: false
+    hideGrabHandle: true
 }
