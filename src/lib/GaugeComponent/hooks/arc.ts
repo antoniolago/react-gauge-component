@@ -45,6 +45,7 @@ export const getEffectiveAngles = (gauge: Gauge): { startAngle: number; endAngle
   }
 };
 
+
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
   //event.target.style.stroke = "#ffffff5e";
   if (d.data.tooltip != undefined) {
@@ -198,16 +199,32 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
     const outerPadding = outerArcConfig?.padding !== undefined 
       ? outerArcConfig.padding 
       : (padding || 0);
+    const padEndpoints = gauge.props.arc?.padEndpoints;
     // Gap between main arc and outer arc is 2px
     const gap = 2;
     let outerArc = arc()
       .outerRadius(outerRadius + gap + outerArcWidth)
       .innerRadius(outerRadius + gap)
       .cornerRadius(outerCornerRadius)
-      .padAngle(outerPadding);
+      .padAngle(padEndpoints === false ? 0 : outerPadding);
+    
+    // Generate pie data
+    let outerPieData = gauge.pieChart.current(gauge.arcData.current);
+    
+    // Apply manual padding when padEndpoints is false
+    if (padEndpoints === false && outerPadding > 0 && outerPieData.length > 1) {
+      const halfPad = outerPadding / 2;
+      outerPieData = outerPieData.map((d: any, i: number) => {
+        const adjusted = { ...d };
+        if (i < outerPieData.length - 1) adjusted.endAngle -= halfPad;
+        if (i > 0) adjusted.startAngle += halfPad;
+        return adjusted;
+      });
+    }
+    
     var arcPaths = gauge.doughnut.current
       .selectAll("anyString")
-      .data(gauge.pieChart.current(gauge.arcData.current))
+      .data(outerPieData)
       .enter()
       .append("g")
       .attr("class", "outerSubArc");
@@ -239,15 +256,39 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
   }
   let arcPadding = padding || 0;
   let arcCornerRadius = cornerRadius || 0;
+  const padEndpoints = gauge.props.arc?.padEndpoints;
+  
+  // When padEndpoints is false, we handle padding manually via adjusted angles
+  // so we don't use padAngle on the arc generator
   let arcObj = arc()
     .outerRadius(outerRadius)
     .innerRadius(innerRadius)
     .cornerRadius(arcCornerRadius as number)
-    .padAngle(arcPadding);
+    .padAngle(padEndpoints === false ? 0 : arcPadding);
     
+  // Generate pie data and adjust for endpoint padding
+  let pieData = gauge.pieChart.current(data as any);
+  
+  // Apply manual padding to pie data when padEndpoints is false
+  if (padEndpoints === false && arcPadding > 0 && pieData.length > 1) {
+    const halfPad = arcPadding / 2;
+    pieData = pieData.map((d: any, i: number) => {
+      const adjusted = { ...d };
+      // Add padding to end of each arc (except the last one)
+      if (i < pieData.length - 1) {
+        adjusted.endAngle -= halfPad;
+      }
+      // Add padding to start of each arc (except the first one)
+      if (i > 0) {
+        adjusted.startAngle += halfPad;
+      }
+      return adjusted;
+    });
+  }
+  
   var arcPaths = gauge.doughnut.current
     .selectAll("anyString")
-    .data(gauge.pieChart.current(data as any))
+    .data(pieData)
     .enter()
     .append("g")
     .attr("class", "subArc");
@@ -595,6 +636,8 @@ export const clearArcs = (gauge: Gauge) => {
 export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
   const { innerRadius, outerRadius } = gauge.dimensions.current;
   const { padding, cornerRadius } = gauge.props.arc as Arc;
+  const padEndpoints = gauge.props.arc?.padEndpoints;
+  const arcPadding = padding || 0;
   
   // Get the new arc data (returns [filledArc, emptyArc])
   const data = getGrafanaMainArcData(gauge, percent);
@@ -604,7 +647,7 @@ export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
     .outerRadius(outerRadius)
     .innerRadius(innerRadius)
     .cornerRadius(cornerRadius || 0)
-    .padAngle(padding || 0);
+    .padAngle(padEndpoints === false ? 0 : arcPadding);
   
   // Get existing arc groups
   const existingArcGroups = gauge.doughnut.current.selectAll(".subArc");
@@ -615,8 +658,19 @@ export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
     return;
   }
   
-  // Generate pie data from our arc data
-  const pieData = gauge.pieChart.current(data);
+  // Generate pie data
+  let pieData = gauge.pieChart.current(data);
+  
+  // Apply manual padding when padEndpoints is false
+  if (padEndpoints === false && arcPadding > 0 && pieData.length > 1) {
+    const halfPad = arcPadding / 2;
+    pieData = pieData.map((d: any, i: number) => {
+      const adjusted = { ...d };
+      if (i < pieData.length - 1) adjusted.endAngle -= halfPad;
+      if (i > 0) adjusted.startAngle += halfPad;
+      return adjusted;
+    });
+  }
   
   // Update each arc group's path with the corresponding pie data
   // We need to iterate and update each path individually since D3 data binding

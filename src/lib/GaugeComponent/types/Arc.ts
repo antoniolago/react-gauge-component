@@ -5,6 +5,8 @@ export interface Arc {
     cornerRadius?: number,
     /** The padding between subArcs, in rad. */
     padding?: number,
+    /** Remove padding from start and end of the arc (first and last subArcs) */
+    padEndpoints?: boolean,
     /** The width of the arc given in percent of the radius. */
     width?: number,
     /** The number of subArcs, this overrides "subArcs" limits. */

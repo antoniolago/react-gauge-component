@@ -244,7 +244,13 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Pad</span>
                 <input type="range" min="0" max="0.5" step="0.005" value={cfg?.arc?.padding ?? 0.05} 
                   onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, padding: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, flex: 1 }} title="Padding" />
+                  style={{ ...styles.slider, flex: 1 }} title="Padding between arcs" />
+                <label style={{ ...styles.inlineLabel, fontSize: '0.65rem' }} title="Add padding to start/end of arc">
+                  <input type="checkbox" checked={cfg?.arc?.padEndpoints !== false} 
+                    onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, padEndpoints: e.target.checked } })} 
+                    style={styles.inlineCheckbox} />
+                  Ends
+                </label>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                 <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Border</span>
