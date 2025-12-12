@@ -196,9 +196,8 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
     const outerCornerRadius = outerArcConfig?.cornerRadius !== undefined 
       ? Math.min(outerArcConfig.cornerRadius, maxCornerRadius) 
       : (cornerRadius ? Math.min(cornerRadius, maxCornerRadius) : 0);
-    const outerPadding = outerArcConfig?.padding !== undefined 
-      ? outerArcConfig.padding 
-      : (padding || 0);
+    // Outer arc has its own padding - does NOT inherit from main arc
+    const outerPadding = outerArcConfig?.padding ?? 0;
     const padEndpoints = gauge.props.arc?.padEndpoints;
     // Gap between main arc and outer arc is 2px
     const gap = 2;

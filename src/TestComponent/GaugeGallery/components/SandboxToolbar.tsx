@@ -333,7 +333,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                     <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Pad</span>
-                    <input type="range" min="0" max="0.5" step="0.005" value={cfg?.arc?.outerArc?.padding ?? (cfg?.arc?.padding ?? 0.05)} 
+                    <input type="range" min="0" max="0.5" step="0.005" value={cfg?.arc?.outerArc?.padding ?? 0} 
                       onChange={(e) => onConfigChange({ ...config, arc: { ...cfg?.arc, outerArc: { ...cfg?.arc?.outerArc, padding: Number(e.target.value) } } })} 
                       style={{ ...styles.slider, flex: 1 }} title="Outer arc padding" />
                   </div>

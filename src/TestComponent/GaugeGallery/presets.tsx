@@ -195,14 +195,14 @@ export const GAUGE_PRESETS: GaugePreset[] = [
     ),
   },
   {
-    name: "Custo Angle",
+    name: "Custom Angle",
     description: "Custom angle radial with neon colors",
     component: (value) => (
       <GaugeComponent
-        value={7948.622727161325}
+        value={2500}
         type="radial"
-        minValue={0}
-        maxValue={10000}
+        minValue={-300}
+        maxValue={3000}
         startAngle={-145}
         endAngle={40}
         arc={{
@@ -235,7 +235,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           tickLabels: {
             type: "outer",
             hideMinMax: false,
-            ticks: [{ value: 0 }, { value: 5000 }, { value: 10000 }],
+            ticks: [{ value: 0 }, { value: 3000 }, { value: 2000 }],
           },
         }}
       />
