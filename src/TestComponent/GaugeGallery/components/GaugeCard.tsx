@@ -57,7 +57,7 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
   };
 
   return (
-    <div style={{ ...themeStyles.gaugeCard, height: cardHeight }}>
+    <div style={{ ...themeStyles.gaugeCard, maxHeight: cardHeight }}>
       {/* Card action buttons */}
       <div style={{
         position: 'absolute',
