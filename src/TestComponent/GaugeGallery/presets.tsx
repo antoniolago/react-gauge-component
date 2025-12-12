@@ -432,44 +432,6 @@ export const GAUGE_PRESETS: GaugePreset[] = [
     ),
   },
   {
-    name: "Holographic",
-    description: "Iridescent rainbow effect",
-    component: (value) => (
-      <GaugeComponent
-        value={value}
-        type="semicircle"
-        arc={{
-          width: 0.2,
-          gradient: true,
-          cornerRadius: 5,
-          subArcs: [
-            { limit: 16, color: "#ff0080" },
-            { limit: 33, color: "#ff8c00" },
-            { limit: 50, color: "#ffff00" },
-            { limit: 66, color: "#00ff88" },
-            { limit: 83, color: "#00cfff" },
-            { color: "#8000ff" },
-          ],
-        }}
-        pointer={{
-          type: "needle",
-          color: "#fff",
-          length: 0.8,
-          width: 10,
-          strokeWidth: 2,
-          strokeColor: "rgba(0,0,0,0.3)",
-        }}
-        labels={{
-          valueLabel: {
-            matchColorWithArc: true,
-            style: { fontSize: "28px", fontWeight: "bold" },
-          },
-          tickLabels: { hideMinMax: true },
-        }}
-      />
-    ),
-  },
-  {
     name: "Frost Crystal",
     description: "Icy winter theme",
     component: (value) => (
