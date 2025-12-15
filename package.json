@@ -22,11 +22,8 @@
     "url": "git+https://github.com/antoniolago/react-gauge-component.git"
   },
   "dependencies": {
-    "@types/d3": "^7.4.0",
-    "bootstrap": "^5.3.8",
     "d3": "^7.6.1",
-    "lodash": "^4.17.21",
-    "serve": "^14.2.3"
+    "lodash-es": "^4.17.21"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -61,6 +58,8 @@
   },
   "devDependencies": {
     "@babel/cli": "^7.12.8",
+    "bootstrap": "^5.3.8",
+    "@types/d3": "^7.4.0",
     "@babel/core": "^7.6.2",
     "@babel/plugin-proposal-class-properties": "^7.4.4",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
