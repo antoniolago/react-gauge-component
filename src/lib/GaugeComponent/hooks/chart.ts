@@ -7,6 +7,7 @@ import * as arcHooks from "./arc";
 import * as labelsHooks from "./labels";
 import * as pointerHooks from "./pointer";
 import * as utilHooks from "./utils";
+import { shallowEqual } from "./utils";
 import * as coordinateSystem from "./coordinateSystem";
 import { GaugeLayout } from "./coordinateSystem";
 export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
@@ -14,7 +15,7 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     // if (gauge.resizeObserver?.current?.disconnect) {
     //     gauge.resizeObserver?.current?.disconnect();
     // }
-    let updatedValue = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
+    let updatedValue = gauge.prevProps.current.value !== gauge.props.value;
     if (updatedValue && !isFirstRender) {
         renderChart(gauge, false);
         return;
@@ -22,10 +23,11 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     
     // Invalidate measured bounds when layout-affecting props change
     // This forces a proper two-pass recalculation for accurate sizing
+    // Uses shallowEqual instead of JSON.stringify for better performance
     const layoutPropsChanged = 
-        JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc) ||
-        JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer) ||
-        JSON.stringify(gauge.prevProps.current.labels) !== JSON.stringify(gauge.props.labels) ||
+        !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc) ||
+        !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer) ||
+        !shallowEqual(gauge.prevProps.current.labels, gauge.props.labels) ||
         gauge.prevProps.current.type !== gauge.props.type ||
         gauge.prevProps.current.marginInPercent !== gauge.props.marginInPercent;
     
@@ -354,11 +356,12 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         }
     } else {
         // Non-resize updates (only data/props changed)
-        let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
-        let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
-        let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
-        let ticksChanged = (JSON.stringify(gauge.prevProps.current.labels?.tickLabels) !== JSON.stringify(labels.tickLabels));
-        let valueLabelChanged = (JSON.stringify(gauge.prevProps.current.labels?.valueLabel) !== JSON.stringify(labels.valueLabel));
+        // Uses shallowEqual instead of JSON.stringify for better performance
+        let arcsPropsChanged = !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc);
+        let pointerPropsChanged = !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer);
+        let valueChanged = gauge.prevProps.current.value !== gauge.props.value;
+        let ticksChanged = !shallowEqual(gauge.prevProps.current.labels?.tickLabels, labels.tickLabels);
+        let valueLabelChanged = !shallowEqual(gauge.prevProps.current.labels?.valueLabel, labels.valueLabel);
         let shouldRedrawArcs = arcsPropsChanged;
         if (shouldRedrawArcs) {
             arcHooks.clearArcs(gauge);

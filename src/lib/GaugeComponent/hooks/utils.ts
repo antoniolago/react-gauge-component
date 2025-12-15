@@ -57,3 +57,62 @@ export const getCurrentGaugeValueByPercentage = (percentage: number, gauge: Gaug
   return value;
 }
 export const camelCaseToKebabCase = (str: string): string => str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+
+/**
+ * Shallow comparison of two values. More performant than JSON.stringify for prop comparisons.
+ * Handles primitives, arrays (shallow), and objects (shallow, one level deep for nested objects).
+ */
+export const shallowEqual = (a: any, b: any): boolean => {
+  if (a === b) return true;
+  if (a == null || b == null) return a === b;
+  if (typeof a !== typeof b) return false;
+  
+  if (typeof a !== 'object') return a === b;
+  
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  
+  if (Array.isArray(a)) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!shallowEqualSimple(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  
+  for (const key of keysA) {
+    if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
+    if (!shallowEqualSimple(a[key], b[key])) return false;
+  }
+  return true;
+};
+
+/**
+ * Simple shallow comparison for nested values (one level only)
+ */
+const shallowEqualSimple = (a: any, b: any): boolean => {
+  if (a === b) return true;
+  if (a == null || b == null) return a === b;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== 'object') return a === b;
+  
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a)) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+  }
+  
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  for (const key of keysA) {
+    if (a[key] !== b[key]) return false;
+  }
+  return true;
+};

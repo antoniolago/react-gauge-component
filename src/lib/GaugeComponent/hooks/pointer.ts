@@ -40,6 +40,11 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
             ? gauge.doughnut.current 
             : gauge.pointer.current.element;
         
+        // FPS limiting - calculate minimum time between frames
+        const maxFps = pointer.maxFps ?? 60;
+        const minFrameTime = maxFps > 0 ? 1000 / maxFps : 0;
+        let lastFrameTime = 0;
+        
         animationTarget
             .transition()
             .delay(pointer.animationDelay)
@@ -48,6 +53,14 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
             .tween("progress", () => {
                 const currentInterpolatedPercent = interpolateNumber(prevPercent, currentPercent);
                 return function (percentOfPercent: number) {
+                    // FPS limiting - skip frame if not enough time has passed
+                    const now = performance.now();
+                    if (minFrameTime > 0 && (now - lastFrameTime) < minFrameTime) {
+                        // Skip this frame, but still update on final frame
+                        if (percentOfPercent < 0.99) return;
+                    }
+                    lastFrameTime = now;
+                    
                     const progress = currentInterpolatedPercent(percentOfPercent);
                     if (isProgressValid(progress, prevProgress, gauge)) {
                         // Always update Grafana arc fill
@@ -280,10 +293,18 @@ const setPointerPosition = (pointerRadius: number, progress: number, gauge: Gaug
     return pointers[pointerType]();
 }
 
+/**
+ * Validates if progress update should trigger a DOM update.
+ * Uses animationThreshold from pointer props to control update frequency.
+ */
 const isProgressValid = (currentPercent: number, prevPercent: number, gauge: Gauge) => {
+    const pointer = gauge.props.pointer as PointerProps;
+    // Use configurable threshold (default 0.001 for backward compatibility)
+    const threshold = pointer.animationThreshold ?? 0.001;
+    
     //Avoid unnecessary re-rendering (when progress is too small) but allow the pointer to reach the final value
     let overFlow = currentPercent > 1 || currentPercent < 0;
-    let tooSmallValue = Math.abs(currentPercent - prevPercent) < 0.0001;
+    let tooSmallValue = Math.abs(currentPercent - prevPercent) < threshold;
     let sameValueAsBefore = currentPercent == prevPercent;
     return !tooSmallValue && !sameValueAsBefore && !overFlow;
 }

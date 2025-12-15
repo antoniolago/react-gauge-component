@@ -50,7 +50,21 @@ export interface PointerProps {
     /** Hide the grab handle circle shown at pointer tip when drag mode is enabled */
     hideGrabHandle?: boolean,
     /** Visual effects for the pointer */
-    effects?: PointerEffects
+    effects?: PointerEffects,
+    
+    // Performance tuning options
+    /** 
+     * Maximum frames per second for animation updates (default: 60). 
+     * Lower values reduce GPU/CPU load on mobile devices.
+     * Recommended: 60 (smooth), 30 (balanced), 15 (low-power)
+     */
+    maxFps?: number,
+    /** 
+     * Minimum progress change threshold before updating DOM (default: 0.001).
+     * Higher values skip more frames, reducing render load.
+     * Range: 0.0001 (smooth) to 0.01 (choppy but fast)
+     */
+    animationThreshold?: number
 }
 export interface PointerRef {
     element: any,
@@ -104,5 +118,8 @@ export const defaultPointer: PointerProps = {
     strokeColor: undefined,
     arrowOffset: 0.72,
     blobOffset: 0.5,
-    hideGrabHandle: true
+    hideGrabHandle: true,
+    // Performance defaults - 60fps, fine threshold
+    maxFps: 60,
+    animationThreshold: 0.001
 }
