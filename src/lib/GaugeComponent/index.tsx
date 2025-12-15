@@ -21,6 +21,22 @@ import CONSTANTS from "./constants";
  * - Smooth animations with configurable timing
  * - ResizeObserver for automatic resize handling
  */
+// CSS keyframes for fade-in animation to prevent initial render flash
+const fadeInKeyframes = `
+@keyframes gaugeComponentFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+`;
+
+// Inject keyframes once
+if (typeof document !== 'undefined' && !document.getElementById('gauge-fade-in-style')) {
+  const style = document.createElement('style');
+  style.id = 'gauge-fade-in-style';
+  style.textContent = fadeInKeyframes;
+  document.head.appendChild(style);
+}
+
 const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const svg = useRef<any>({});
   const tooltip = useRef<any>({});
@@ -44,6 +60,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const maxGHeight = useRef<any>(null);
   const svgRef = useRef<any>(null);
   const customContent = useRef<CustomContentConfig | {}>({});
+  const initialAnimationTriggered = useRef<boolean>(false);
   
   // State to trigger re-render when custom content needs to be rendered
   const [customContentNode, setCustomContentNode] = useState<HTMLElement | null>(null);
@@ -70,6 +87,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     prevGSize,
     maxGHeight,
     customContent,
+    initialAnimationTriggered,
   };
   
   // Keep gaugeRef updated with current gauge (including current props)

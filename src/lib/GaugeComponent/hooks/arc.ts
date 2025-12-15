@@ -251,7 +251,9 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
     data = gauge.arcData.current
   }
   if (gauge.props.type == GaugeType.Grafana) {
+    console.log('[FLASH_DEBUG] drawArc called with percent:', percent);
     data = getGrafanaMainArcData(gauge, percent);
+    console.log('[FLASH_DEBUG] Grafana arc data:', data);
   }
   let arcPadding = padding || 0;
   let arcCornerRadius = cornerRadius || 0;
@@ -303,11 +305,13 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
     .on("click", (event: any, d: any) => onArcMouseClick(event, d))
 
 }
-export const setupArcs = (gauge: Gauge, resize: boolean = false) => {
+export const setupArcs = (gauge: Gauge, resize: boolean = false, initialPercent: number | undefined = undefined) => {
   //Setup the arc
   setupTooltip(gauge);
   drawGrafanaOuterArc(gauge, resize);
-  drawArc(gauge);
+  // For Grafana type with animation, pass initialPercent (usually 0 or prevPercent) 
+  // so the arc starts at the correct position before animating
+  drawArc(gauge, initialPercent);
 };
 
 export const setupTooltip = (gauge: Gauge) => {

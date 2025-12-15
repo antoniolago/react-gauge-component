@@ -37,4 +37,6 @@ export interface Gauge {
     renderPass?: React.MutableRefObject<number>;
     /** Stores measured bounds from first render pass */
     measuredBounds?: React.MutableRefObject<{ width: number; height: number; x: number; y: number } | null>;
+    /** Tracks if initial animation has been triggered (prevents ResizeObserver from restarting animation) */
+    initialAnimationTriggered?: React.MutableRefObject<boolean>;
 }

@@ -215,10 +215,17 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                 if (CONSTANTS.debugLogs) {
                     console.log('[renderChart] Layout stable, skipping re-render');
                 }
-                // Still ensure gauge is visible even when skipping
-                gauge.svg.current
-                    ?.style("visibility", "visible")
-                    .style("opacity", "1");
+                // Still ensure gauge is visible - use animation if not already visible
+                const isHidden = gauge.svg.current?.style("visibility") === "hidden";
+                if (isHidden) {
+                    const animDelay = gauge.props.pointer?.animationDelay || 0;
+                    gauge.svg.current
+                        ?.style("visibility", "visible")
+                        .style("opacity", "0")
+                        .style("animation", `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards`);
+                } else {
+                    gauge.svg.current?.style("visibility", "visible").style("opacity", "1");
+                }
                 gauge.g.current
                     ?.style("visibility", "visible")
                     .style("opacity", "1");
@@ -245,8 +252,8 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             .style("max-width", "100%")
             .style("max-height", "100%")
             .style("display", "block")
-            .style("visibility", shouldShowSvg ? "visible" : "hidden")
-            .style("opacity", shouldShowSvg ? "1" : "0")
+            .style("visibility", hasOldContent ? "visible" : "hidden")
+            .style("opacity", hasOldContent ? "1" : "0")
             .attr('preserveAspectRatio', 'xMidYMid meet');
         
         // Only update viewBox when showing new content (pass 2) or if no old content exists
@@ -255,12 +262,11 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             gauge.svg.current.attr("viewBox", layout.viewBox.toString());
         }
         
-        // Hide NEW content during pass 1 (old content stays visible)
-        // Show new content during pass 2
-        // Use visibility:hidden to ensure element is truly invisible (opacity:0 can still cause artifacts)
+        // Keep new content hidden until it's properly drawn at the starting position
+        // This prevents flash at final value before animation
         gauge.g.current
-            .style("visibility", shouldHideNewContent ? "hidden" : "visible")
-            .style("opacity", shouldHideNewContent ? "0" : "1");
+            .style("visibility", "hidden")
+            .style("opacity", "0");
         
         // Position the main gauge group at the calculated center
         gauge.g.current
@@ -278,10 +284,51 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         
         clearChart(gauge);
         arcHooks.setArcData(gauge);
-        arcHooks.setupArcs(gauge, resize);
+        
+        // For Grafana type with animation, start the arc at prevPercent (or 0) 
+        // so it animates from that position instead of flashing at final value
+        // Use initialAnimationTriggered flag to handle ResizeObserver firing after prevProps is set
+        let initialArcPercent: number | undefined = undefined;
+        const isGrafana = gauge.props.type === GaugeType.Grafana;
+        const shouldAnimate = gauge.props.pointer?.animate !== false;
+        const isFirstAnimation = !gauge.initialAnimationTriggered?.current;
+        
+        // Always use 0 for first animation to prevent flash
+        if (isGrafana && shouldAnimate) {
+            // Force 0% on first animation - this is the key fix
+            if (isFirstAnimation) {
+                initialArcPercent = 0;
+                console.log('[FLASH_DEBUG] First animation - forcing initialArcPercent to 0, pass:', currentPass);
+            } else {
+                const minValue = gauge.props.minValue as number;
+                const maxValue = gauge.props.maxValue as number;
+                const prevValue = gauge.prevProps?.current.value ?? minValue;
+                initialArcPercent = utilHooks.calculatePercentage(minValue, maxValue, prevValue);
+                console.log('[FLASH_DEBUG] Subsequent - initialArcPercent:', initialArcPercent, 'pass:', currentPass);
+            }
+        }
+        
+        arcHooks.setupArcs(gauge, resize, initialArcPercent);
         labelsHooks.setupLabels(gauge);
-        if (!gauge.props?.pointer?.hide)
+        
+        // Only draw pointer on pass 2 (visible pass) to avoid animation interference
+        // On pass 1, content is hidden for measurement only - no need to animate
+        if (!gauge.props?.pointer?.hide && currentPass === 2) {
             pointerHooks.drawPointer(gauge, resize);
+        }
+        
+        // NOW make gauge visible - content is drawn at correct starting position
+        // Use CSS animation to fade in smoothly and mask any potential flash
+        if (currentPass === 2) {
+            const animationDelay = gauge.props.pointer?.animationDelay || 0;
+            gauge.svg.current
+                .style("visibility", "visible")
+                .style("opacity", "0")
+                .style("animation", `gaugeComponentFadeIn 200ms ease-out ${animationDelay}ms forwards`);
+            gauge.g.current
+                .style("visibility", "visible")
+                .style("opacity", "1");
+        }
         
         // Set up pointer drag if onValueChange callback is provided
         // Only set up on second pass when layout is stable
@@ -328,11 +375,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                     if (CONSTANTS.debugLogs) {
                         console.log('[renderChart] Could not measure bounds:', e);
                     }
-                    // Make visible anyway using rAF as fallback
+                    // Make visible anyway using rAF as fallback with fade-in
                     requestAnimationFrame(() => {
+                        const animDelay = gauge.props.pointer?.animationDelay || 0;
                         gauge.svg.current
                             ?.style("visibility", "visible")
-                            .style("opacity", "1");
+                            .style("opacity", "0")
+                            .style("animation", `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards`);
                         gauge.g.current
                             ?.style("visibility", "visible")
                             .style("opacity", "1");
@@ -341,11 +390,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                     });
                 }
             } else {
-                // gElement not available - use rAF as fallback
+                // gElement not available - use rAF as fallback with fade-in
                 requestAnimationFrame(() => {
+                    const animDelay = gauge.props.pointer?.animationDelay || 0;
                     gauge.svg.current
                         ?.style("visibility", "visible")
-                        .style("opacity", "1");
+                        .style("opacity", "0")
+                        .style("animation", `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards`);
                     gauge.g.current
                         ?.style("visibility", "visible")
                         .style("opacity", "1");

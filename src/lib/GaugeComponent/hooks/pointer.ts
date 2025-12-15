@@ -16,11 +16,14 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     gauge.pointer.current.context = setupContext(gauge);
     const { prevPercent, currentPercent, prevProgress } = gauge.pointer.current.context;
     let pointer = gauge.props.pointer as PointerProps;
-    let isFirstTime = gauge.prevProps?.current.value == undefined;
+    
+    // Use initialAnimationTriggered flag to handle ResizeObserver firing after prevProps is set
+    const isFirstAnimation = !gauge.initialAnimationTriggered?.current;
     
     // When resize=true (config change, not value change), draw directly at currentPercent
     // to avoid the pointer jumping from prevPercent to currentPercent
-    const useCurrentPercent = resize && !isFirstTime;
+    // EXCEPT on first animation - always start at 0 to avoid flash
+    const useCurrentPercent = resize && !isFirstAnimation;
     
     // Initialize pointer for all types except Grafana (which uses arc fill by default)
     // For Grafana, only show pointer if user explicitly configured pointer props
@@ -29,11 +32,16 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     const userExplicitlyConfiguredPointer = gauge.originalProps?.pointer !== undefined;
     const showPointerForGrafana = isGrafana && userExplicitlyConfiguredPointer && !pointer.hide;
     
-    if ((isFirstTime || resize) && (!isGrafana || showPointerForGrafana)) 
+    if ((isFirstAnimation || resize) && (!isGrafana || showPointerForGrafana)) 
         initPointer(gauge, useCurrentPercent);
     
-    let shouldAnimate = (!resize || isFirstTime) && pointer.animate;
+    let shouldAnimate = (!resize || isFirstAnimation) && pointer.animate;
     if (shouldAnimate) {
+        // Mark that initial animation has been triggered to prevent ResizeObserver from restarting
+        if (gauge.initialAnimationTriggered) {
+            gauge.initialAnimationTriggered.current = true;
+        }
+        
         // For Grafana type without pointer, animate the doughnut (arc fill animation)
         // For other types or Grafana with pointer, animate the pointer element
         const animationTarget = (isGrafana && !showPointerForGrafana)
