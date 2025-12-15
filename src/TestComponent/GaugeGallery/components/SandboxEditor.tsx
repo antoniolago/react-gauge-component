@@ -349,6 +349,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
               onAlignChange={setGaugeAlign}
               interactionEnabled={interactionEnabled}
               onInteractionChange={setInteractionEnabled}
+              onForceRemount={() => setKey(k => k + 1)}
             />
           </div>
         </div>

@@ -123,7 +123,8 @@ const initPointer = (gauge: Gauge, useCurrentPercent: boolean = false) => {
     
     // Use currentPercent when reinitializing due to config changes (not value changes)
     // This prevents the pointer from jumping from old value to new value
-    const startPercent = useCurrentPercent ? currentPercent : (prevPercent || currentPercent);
+    // Note: Use nullish coalescing (??) instead of || to handle prevPercent=0 correctly
+    const startPercent = useCurrentPercent ? currentPercent : (prevPercent ?? 0);
     
     if(shouldDrawPath){
         gauge.pointer.current.context.pathStr = calculatePointerPath(gauge, startPercent);

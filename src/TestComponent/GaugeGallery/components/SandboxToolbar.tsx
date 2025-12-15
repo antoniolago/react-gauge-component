@@ -83,6 +83,7 @@ interface SandboxToolbarProps {
   onInteractionChange: (enabled: boolean) => void;
   onSizeChange: (width: string, height: string) => void;
   onAlignChange: (align: 'left' | 'center' | 'right') => void;
+  onForceRemount?: () => void;
 }
 
 export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
@@ -99,6 +100,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
   onAlignChange,
   interactionEnabled,
   onInteractionChange,
+  onForceRemount,
 }) => {
   const cfg = config as any;
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -440,34 +442,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 </button>
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Movement</span>
-                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button onClick={() => onInteractionChange(!interactionEnabled)} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(interactionEnabled ? styles.toolBtnActive : {}) }} 
-                  title="Drag" type="button">
-                  <Hand size={14} /><span>Drag</span>
-                </button>
-                {interactionEnabled && (
-                  <label style={styles.inlineLabel} title="Hide grab handle circle at pointer tip">
-                    <input type="checkbox" checked={cfg?.pointer?.hideGrabHandle || false} 
-                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, hideGrabHandle: e.target.checked } })} 
-                      style={styles.inlineCheckbox} />
-                    No circle
-                  </label>
-                )}
-                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, elastic: !cfg?.pointer?.elastic } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.elastic ? styles.toolBtnActive : {}) }} 
-                  title="Elastic" type="button">
-                  <Move size={14} /><span>Elastic</span>
-                </button>
-                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationDelay: cfg?.pointer?.animationDelay === 0 ? 200 : 0 } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.animationDelay === 0 ? styles.toolBtnActive : {}) }} 
-                  title="Instant" type="button">
-                  <Play size={14} /><span>Instant</span>
-                </button>
-                </div>
-              </div>
+             
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                 <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Colors</span>
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -533,7 +508,27 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
               )}
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px', marginTop: '4px' }}>
                 <Timer size={12} style={{ opacity: 0.6 }} />
-                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Animation</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Animation (Performance can degrade with many gauges)</span>
+                <button 
+                  onClick={() => {
+                    const currentValue = value;
+                    const minValue = cfg?.minValue ?? 0;
+                    // Force remount to get a clean animation without flickering
+                    onValueChange(minValue);
+                    if (onForceRemount) {
+                      onForceRemount();
+                      // After remount, set the target value to trigger animation
+                      setTimeout(() => onValueChange(currentValue), 100);
+                    } else {
+                      setTimeout(() => onValueChange(currentValue), 50);
+                    }
+                  }} 
+                  style={{ ...styles.toolBtn, padding: '4px 10px', marginLeft: 'auto', fontSize: '0.7rem' }} 
+                  type="button" 
+                  title="Replay animation from minimum value (clean remount)"
+                >
+                  <Play size={12} /> Test
+                </button>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                 <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Duration</span>
@@ -548,6 +543,70 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationDelay: Number(e.target.value) } })} 
                   style={{ ...styles.slider, flex: 1 }} title="Animation delay (ms)" />
                 <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '35px' }}>{cfg?.pointer?.animationDelay ?? 100}ms</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Threshold</span>
+                <input type="range" min="0.0001" max="0.01" step="0.0005" value={cfg?.pointer?.animationThreshold ?? 0.001} 
+                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationThreshold: Number(e.target.value) } })} 
+                  style={{ ...styles.slider, flex: 1 }} title="Animation update threshold (higher = fewer updates, less smooth)" />
+                <span style={{ fontSize: '0.65rem', opacity: 0.6, minWidth: '40px' }}>{((cfg?.pointer?.animationThreshold ?? 0.001) * 100).toFixed(2)}%</span>
+              </div>
+               {/* Performance Controls */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Max FPS</span>
+                <input type="range" min="10" max="60" step="5" value={cfg?.pointer?.maxFps ?? 60} 
+                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, maxFps: Number(e.target.value) } })} 
+                  style={{ ...styles.slider, flex: 1 }} title="Maximum frames per second (lower = less GPU load)" />
+                <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '30px' }}>{cfg?.pointer?.maxFps ?? 60}</span>
+              </div>
+              
+              
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, maxFps: 60 } })} 
+                  style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.7rem', ...(cfg?.pointer?.maxFps === 60 || cfg?.pointer?.maxFps === undefined ? styles.toolBtnActive : {}) }} 
+                  type="button" title="60 FPS - Smooth (default)">
+                  60fps
+                </button>
+                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, maxFps: 30 } })} 
+                  style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.7rem', ...(cfg?.pointer?.maxFps === 30 ? styles.toolBtnActive : {}) }} 
+                  type="button" title="30 FPS - Balanced performance">
+                  30fps
+                </button>
+                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, maxFps: 15 } })} 
+                  style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.7rem', ...(cfg?.pointer?.maxFps === 15 ? styles.toolBtnActive : {}) }} 
+                  type="button" title="15 FPS - Low power mode for mobile">
+                  15fps
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                
+                <button onClick={() => onInteractionChange(!interactionEnabled)} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(interactionEnabled ? styles.toolBtnActive : {}) }} 
+                  title="Drag" type="button">
+                  <Hand size={14} /><span>Drag and drop</span>
+                </button>
+                {interactionEnabled && (
+                  <label style={styles.inlineLabel} title="Hide grab handle circle at pointer tip">
+                    <input type="checkbox" checked={cfg?.pointer?.hideGrabHandle || false} 
+                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, hideGrabHandle: e.target.checked } })} 
+                      style={styles.inlineCheckbox} />
+                    No circle
+                  </label>
+                )}
+                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, elastic: !cfg?.pointer?.elastic } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.elastic ? styles.toolBtnActive : {}) }} 
+                  title="Elastic" type="button">
+                  <Move size={14} /><span>Elastic movement</span>
+                </button>
+                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationDelay: cfg?.pointer?.animationDelay === 0 ? 200 : 0 } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.animationDelay === 0 ? styles.toolBtnActive : {}) }} 
+                  title="Instant" type="button">
+                  <Play size={14} /><span>Instant movement</span>
+                </button>
+              </div>
+                </div>
               </div>
             </div>
           </CollapsibleGroup>
