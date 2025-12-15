@@ -115,8 +115,8 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
         <Col xs={12} md={4}>
           <CollapsibleGroup title="Arc & Colors" icon={<Layers size={14} />} isMobile={isMobile}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                Color presets: 
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Color presets</span>
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
                   {COLOR_PRESETS.map((preset) => (
                     <button 
@@ -138,8 +138,8 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   ))}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                Number of arcs: 
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Number of arcs</span>
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
                   {[3, 10, 50, 100].map((n) => (
                     <button 
@@ -156,8 +156,9 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   ))}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
-                Colors: 
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Colors</span>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}> 
                 <label style={styles.inlineLabel}>
                   <input 
                     type="checkbox" 
@@ -227,6 +228,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 >
                   +
                 </button>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                 <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
@@ -413,8 +415,9 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
         <Col xs={12} md={4}>
           <CollapsibleGroup title="Pointer" icon={<Target size={14} />} isMobile={isMobile}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span>Type:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Type</span>
+                <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
                 <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, type: 'needle', hide: false } })} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.type === 'needle' && !cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
                   title="Needle" type="button">
@@ -435,9 +438,11 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   title="Hide" type="button">
                   <EyeOff size={14} /><span>Hide</span>
                 </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span>Movement:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Movement</span>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <button onClick={() => onInteractionChange(!interactionEnabled)} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(interactionEnabled ? styles.toolBtnActive : {}) }} 
                   title="Drag" type="button">
@@ -461,9 +466,11 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   title="Instant" type="button">
                   <Play size={14} /><span>Instant</span>
                 </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span>Colors:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Colors</span>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: cfg?.pointer?.color ? undefined : '#464A4F' } })} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.pointer?.color ? styles.toolBtnActive : {}) }} 
                   title="Arc color" type="button">
@@ -482,6 +489,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   <input type="color" value={cfg?.pointer?.baseColor || '#ffffff'} 
                     onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, baseColor: e.target.value } })} 
                     style={styles.colorPicker} />
+                </div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
@@ -540,42 +548,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationDelay: Number(e.target.value) } })} 
                   style={{ ...styles.slider, flex: 1 }} title="Animation delay (ms)" />
                 <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '35px' }}>{cfg?.pointer?.animationDelay ?? 100}ms</span>
-              </div>
-              {/* Performance Controls */}
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px', marginTop: '4px' }}>
-                <Sliders size={12} style={{ opacity: 0.6 }} />
-                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Performance</span>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Max FPS</span>
-                <input type="range" min="10" max="60" step="5" value={cfg?.pointer?.maxFps ?? 60} 
-                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, maxFps: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, flex: 1 }} title="Maximum frames per second (lower = less GPU load)" />
-                <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '30px' }}>{cfg?.pointer?.maxFps ?? 60}</span>
-              </div>
-              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, maxFps: 60 } })} 
-                  style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.7rem', ...(cfg?.pointer?.maxFps === 60 || cfg?.pointer?.maxFps === undefined ? styles.toolBtnActive : {}) }} 
-                  type="button" title="60 FPS - Smooth (default)">
-                  60fps
-                </button>
-                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, maxFps: 30 } })} 
-                  style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.7rem', ...(cfg?.pointer?.maxFps === 30 ? styles.toolBtnActive : {}) }} 
-                  type="button" title="30 FPS - Balanced performance">
-                  30fps
-                </button>
-                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, maxFps: 15 } })} 
-                  style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.7rem', ...(cfg?.pointer?.maxFps === 15 ? styles.toolBtnActive : {}) }} 
-                  type="button" title="15 FPS - Low power mode for mobile">
-                  15fps
-                </button>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Threshold</span>
-                <input type="range" min="0.0001" max="0.01" step="0.0005" value={cfg?.pointer?.animationThreshold ?? 0.001} 
-                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationThreshold: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, flex: 1 }} title="Animation update threshold (higher = fewer updates, less smooth)" />
-                <span style={{ fontSize: '0.65rem', opacity: 0.6, minWidth: '40px' }}>{((cfg?.pointer?.animationThreshold ?? 0.001) * 100).toFixed(2)}%</span>
               </div>
             </div>
           </CollapsibleGroup>
