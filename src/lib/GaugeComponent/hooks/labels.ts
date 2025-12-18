@@ -252,34 +252,65 @@ const applyTextStyles = (div: any, style: React.CSSProperties) => {
 
 //Adds text undeneath the graft to display which percentage is the current one
 export const addValueText = (gauge: Gauge) => {
-  const { labels } = gauge.props;
-  let value = gauge.props.value as number;
-  // Ensure valueLabel has default values if undefined
+  const { labels, pointers } = gauge.props;
   let valueLabel = (labels?.valueLabel || {}) as ValueLabel;
-  let maxDecimalDigits = valueLabel?.maxDecimalDigits;
-  let floatValue = utils.floatingNumber(value, maxDecimalDigits);
   
-  // Get arc color for the current value
-  const arcColor = getArcDataByValue(value, gauge)?.color as string || "white";
+  // Check for multi-pointer mode
+  const isMultiPointer = Array.isArray(pointers) && pointers.length > 0;
+  const multiPointerDisplay = valueLabel.multiPointerDisplay ?? 'primary';
+  
+  if (isMultiPointer && multiPointerDisplay === 'none') {
+    return; // Hide value label in multi-pointer mode if configured
+  }
   
   // Position label in the CENTER of the gauge arc
-  // The center is at (0, 0), so we position based on inner radius
   const innerRadius = gauge.dimensions.current.innerRadius;
   let x = 0;
   let y = 0;
   
   // Default positioning - moved lower to avoid overlapping with needle
   if (gauge.props.type == GaugeType.Semicircle) {
-    y = innerRadius * -0.15;  // Higher position for semicircle
+    y = innerRadius * -0.15;
   } else if (gauge.props.type == GaugeType.Radial) {
-    y = innerRadius * 0.4;   // Moved lower (was 0.15)
+    y = innerRadius * 0.4;
   } else if (gauge.props.type == GaugeType.Grafana) {
-    y = innerRadius * 0.35;  // Moved lower (was 0.1)
+    y = innerRadius * 0.35;
   }
   
-  // Apply user offsets - direct pixel values
+  // Apply user offsets
   x += valueLabel.offsetX ?? 0;
   y += valueLabel.offsetY ?? 0;
+  
+  // Handle multi-pointer mode
+  if (isMultiPointer) {
+    if (multiPointerDisplay === 'all') {
+      addMultiPointerValueText(gauge, valueLabel, x, y);
+    } else {
+      // 'primary' - show first pointer value
+      const primaryValue = pointers[0].value;
+      addSingleValueText(gauge, valueLabel, primaryValue, x, y);
+    }
+    return;
+  }
+  
+  // Single pointer mode
+  let value = gauge.props.value as number;
+  addSingleValueText(gauge, valueLabel, value, x, y);
+};
+
+/**
+ * Add a single value text to the gauge
+ */
+const addSingleValueText = (
+  gauge: Gauge,
+  valueLabel: ValueLabel,
+  value: number,
+  x: number,
+  y: number
+) => {
+  const maxDecimalDigits = valueLabel?.maxDecimalDigits;
+  const floatValue = utils.floatingNumber(value, maxDecimalDigits);
+  const arcColor = getArcDataByValue(value, gauge)?.color as string || "white";
   
   // Check if user wants to render custom React content
   if (valueLabel.renderContent) {
@@ -292,8 +323,7 @@ export const addValueText = (gauge: Gauge) => {
   if (valueLabel.formatTextValue) {
     text = valueLabel.formatTextValue(floatValue);
   } else if (gauge.props.minValue === 0 && gauge.props.maxValue === 100) {
-    text = floatValue.toString();
-    text += "%";
+    text = floatValue.toString() + "%";
   } else {
     text = floatValue.toString();
   }
@@ -311,6 +341,65 @@ export const addValueText = (gauge: Gauge) => {
   valueTextStyle.fontSize = fontSizeNumber + "px";
   if (valueLabel.matchColorWithArc) valueTextStyle.fill = arcColor;
   addText(text, x, y, gauge, valueTextStyle, CONSTANTS.valueLabelClassname);
+};
+
+/**
+ * Add multiple pointer values stacked vertically
+ */
+const addMultiPointerValueText = (
+  gauge: Gauge,
+  valueLabel: ValueLabel,
+  baseX: number,
+  baseY: number
+) => {
+  const pointers = gauge.props.pointers;
+  if (!pointers || pointers.length === 0) return;
+  
+  const maxDecimalDigits = valueLabel?.maxDecimalDigits;
+  let valueFontSize = (valueLabel?.style?.fontSize || '35px') as string;
+  
+  // Calculate font size based on gauge dimensions
+  let widthFactor = gauge.props.type == GaugeType.Radial ? 0.003 : 0.003;
+  let fontRatio = gauge.dimensions.current.width * widthFactor;
+  let baseFontSizeNumber = parseInt(valueFontSize, 10) * fontRatio;
+  
+  // Reduce font size for multiple values to fit better
+  const fontSizeReduction = Math.max(0.5, 1 - (pointers.length - 1) * 0.15);
+  const fontSize = baseFontSizeNumber * fontSizeReduction;
+  const lineHeight = fontSize * 1.3;
+  
+  // Center the stack vertically
+  const totalHeight = lineHeight * pointers.length;
+  let currentY = baseY - totalHeight / 2 + lineHeight / 2;
+  
+  pointers.forEach((pointer, index) => {
+    const floatValue = utils.floatingNumber(pointer.value, maxDecimalDigits);
+    const arcColor = pointer.color || getArcDataByValue(pointer.value, gauge)?.color as string || "white";
+    
+    let text = '';
+    if (valueLabel.formatTextValue) {
+      text = valueLabel.formatTextValue(floatValue);
+    } else if (gauge.props.minValue === 0 && gauge.props.maxValue === 100) {
+      text = floatValue.toString() + "%";
+    } else {
+      text = floatValue.toString();
+    }
+    
+    // Add label if provided
+    if (pointer.label) {
+      text = `${pointer.label}: ${text}`;
+    }
+    
+    let valueTextStyle = { ...(valueLabel.style || {}) };
+    valueTextStyle.textAnchor = "middle";
+    valueTextStyle.fontSize = fontSize + "px";
+    if (valueLabel.matchColorWithArc) {
+      valueTextStyle.fill = arcColor;
+    }
+    
+    addText(text, baseX, currentY, gauge, valueTextStyle, `${CONSTANTS.valueLabelClassname} multi-value-${index}`);
+    currentY += lineHeight;
+  });
 };
 
 /**
@@ -379,6 +468,40 @@ const addCustomValueContent = (
 };
 
 export const clearValueLabel = (gauge: Gauge) => gauge.g.current.selectAll(`.${CONSTANTS.valueLabelClassname}`).remove();
+
+/**
+ * Updates the value label text during animation.
+ * Called from pointer animation when animateValue is true.
+ */
+export const updateValueLabelText = (gauge: Gauge, currentValue: number) => {
+  const { labels } = gauge.props;
+  const valueLabel = labels?.valueLabel;
+  if (!valueLabel || valueLabel.hide) return;
+  
+  const maxDecimalDigits = valueLabel.maxDecimalDigits ?? 2;
+  const floatValue = utils.floatingNumber(currentValue, maxDecimalDigits);
+  
+  let text = '';
+  if (valueLabel.formatTextValue) {
+    text = valueLabel.formatTextValue(floatValue);
+  } else if (gauge.props.minValue === 0 && gauge.props.maxValue === 100) {
+    text = floatValue.toString() + "%";
+  } else {
+    text = floatValue.toString();
+  }
+  
+  // Update the text element
+  const textElement = gauge.g.current.select(`.${CONSTANTS.valueLabelClassname} text`);
+  if (!textElement.empty()) {
+    textElement.text(text);
+    
+    // Update color if matchColorWithArc is enabled
+    if (valueLabel.matchColorWithArc) {
+      const arcColor = getArcDataByValue(currentValue, gauge)?.color as string || "white";
+      textElement.style("fill", arcColor);
+    }
+  }
+};
 export const clearTicks = (gauge: Gauge) => {
   gauge.g.current.selectAll(`.${CONSTANTS.tickLineClassname}`).remove();
   gauge.g.current.selectAll(`.${CONSTANTS.tickValueClassname}`).remove();

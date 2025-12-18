@@ -3,6 +3,55 @@ import { RANDOM_RANGES, COLOR_THEMES } from './presets';
 import { GaugeComponentProps } from '../../lib/GaugeComponent/types/GaugeComponentProps';
 
 /**
+ * Default Grafana Neon configuration for the editor
+ */
+export const GRAFANA_NEON_CONFIG: Partial<GaugeComponentProps> = {
+  type: 'grafana',
+  minValue: 0,
+  maxValue: 1000,
+  arc: {
+    width: 0.55,
+    cornerRadius: 0,
+    nbSubArcs: 52,
+    colorArray: ['#ff00ff', '#00ffff', '#ffff00', '#ff0080'],
+    padding: 0,
+    subArcsStrokeWidth: 1,
+    subArcsStrokeColor: '#000000',
+    effects: { glow: true, glowBlur: 1, glowSpread: 2 },
+  },
+  pointer: {
+    type: 'needle',
+    elastic: false,
+    animationDelay: 200,
+    animationDuration: 4000,
+    length: 0.87,
+    width: 24,
+    baseColor: '#ffffff',
+    strokeWidth: 2,
+    strokeColor: '#000000',
+    maxFps: 60,
+    animationThreshold: 0.0096,
+  },
+  labels: {
+    valueLabel: {
+      matchColorWithArc: true,
+      style: { fontSize: '29px', fontWeight: 'bold' },
+      offsetY: 25,
+    },
+    tickLabels: {
+      type: 'outer',
+      hideMinMax: false,
+      ticks: [
+        { value: 0 },
+        { value: 250 },
+        { value: 500 },
+        { value: 1000 },
+      ],
+    },
+  },
+};
+
+/**
  * Generate a random gauge configuration
  */
 export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
@@ -205,6 +254,7 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
       width: pointerWidth,
       color: Math.random() > 0.6 ? undefined : (Math.random() > 0.5 ? '#fff' : randomTheme.colors[randomTheme.colors.length - 1]),
       baseColor: pointerBaseColor,
+      maxFps: 30,
     },
     labels: {
       valueLabel: {

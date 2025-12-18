@@ -1,6 +1,7 @@
 import { GaugeComponentProps } from './GaugeComponentProps';
 import { SubArc } from './Arc';
 import { Dimensions } from './Dimensions';
+import { MultiPointerRef } from './Pointer';
 
 /** Custom content configuration for React element rendering in value label */
 export interface CustomContentConfig {
@@ -39,4 +40,12 @@ export interface Gauge {
     measuredBounds?: React.MutableRefObject<{ width: number; height: number; x: number; y: number } | null>;
     /** Tracks if initial animation has been triggered (prevents ResizeObserver from restarting animation) */
     initialAnimationTriggered?: React.MutableRefObject<boolean>;
+    /** Tracks if animation is currently in progress (prevents resize from interrupting) */
+    animationInProgress?: React.MutableRefObject<boolean>;
+    /** Tracks if a resize was skipped during animation (triggers render after animation) */
+    pendingResize?: React.MutableRefObject<boolean>;
+    /** Array of pointer refs for multi-pointer mode */
+    multiPointers?: React.MutableRefObject<MultiPointerRef[]>;
+    /** Tracks initial animation triggered state per pointer in multi-pointer mode */
+    multiPointerAnimationTriggered?: React.MutableRefObject<boolean[]>;
 }

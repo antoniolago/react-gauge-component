@@ -7,7 +7,7 @@ import * as chartHooks from "./hooks/chart";
 import * as arcHooks from "./hooks/arc";
 import { isEmptyObject, mergeObjects, shallowEqual } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
-import { PointerRef, defaultPointerRef } from "./types/Pointer";
+import { PointerRef, defaultPointerRef, MultiPointerRef } from "./types/Pointer";
 import { Arc, getArcWidthByType } from "./types/Arc";
 import CONSTANTS from "./constants";
 
@@ -61,6 +61,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const svgRef = useRef<any>(null);
   const customContent = useRef<CustomContentConfig | {}>({});
   const initialAnimationTriggered = useRef<boolean>(false);
+  const animationInProgress = useRef<boolean>(false);
+  const pendingResize = useRef<boolean>(false);
+  const multiPointers = useRef<MultiPointerRef[]>([]);
+  const multiPointerAnimationTriggered = useRef<boolean[]>([]);
   
   // State to trigger re-render when custom content needs to be rendered
   const [customContentNode, setCustomContentNode] = useState<HTMLElement | null>(null);
@@ -88,6 +92,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     maxGHeight,
     customContent,
     initialAnimationTriggered,
+    animationInProgress,
+    pendingResize,
+    multiPointers,
+    multiPointerAnimationTriggered,
   };
   
   // Keep gaugeRef updated with current gauge (including current props)

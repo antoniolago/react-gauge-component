@@ -123,3 +123,33 @@ export const defaultPointer: PointerProps = {
     maxFps: 60,
     animationThreshold: 0.001
 }
+
+/**
+ * Pointer configuration with an embedded value.
+ * Used for multi-pointer gauges where each pointer points to its own value.
+ * 
+ * @example
+ * // Compound turbo gauge with multiple pressure readings
+ * pointers={[
+ *   { value: 15, color: '#ff0000', label: 'Back Pressure' },
+ *   { value: 25, color: '#00ff00', label: 'Turbo 1' },
+ *   { value: 35, color: '#0000ff', label: 'Turbo 2' },
+ * ]}
+ */
+export interface PointerWithValue extends PointerProps {
+    /** The value this pointer points to */
+    value: number;
+    /** Optional label for this pointer's value (shown in value display) */
+    label?: string;
+}
+
+/** Reference for a single pointer in multi-pointer mode */
+export interface MultiPointerRef {
+    element: any;
+    path: any;
+    context: PointerContext;
+    /** Index of this pointer in the pointers array */
+    index: number;
+    /** Whether animation is currently in progress for this pointer */
+    animationInProgress: boolean;
+}

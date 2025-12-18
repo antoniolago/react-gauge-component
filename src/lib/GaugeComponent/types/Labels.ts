@@ -63,6 +63,19 @@ export interface ValueLabel {
     contentHeight?: number;
     /** Visual effects for the value label */
     effects?: LabelEffects;
+    /** 
+     * When true, the value label updates in real-time during pointer animation
+     * to show the current animated value instead of the target value.
+     * Default: false
+     */
+    animateValue?: boolean;
+    /**
+     * How to display values in multi-pointer mode.
+     * - 'primary': Show only the first pointer's value (default)
+     * - 'all': Show all pointer values stacked vertically
+     * - 'none': Hide value label entirely in multi-pointer mode
+     */
+    multiPointerDisplay?: 'primary' | 'all' | 'none';
 }
 
 export const defaultValueLabel: ValueLabel = {

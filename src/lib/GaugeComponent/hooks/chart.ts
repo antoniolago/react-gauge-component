@@ -95,6 +95,19 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     let labels = gauge.props.labels as Labels;
 
     if (resize) {
+        // Skip resize render if animation is currently in progress
+        // This prevents the pointer/arc from being redrawn at wrong position
+        // Mark that a resize is pending so we can render after animation completes
+        if (gauge.animationInProgress?.current) {
+            if (gauge.pendingResize) {
+                gauge.pendingResize.current = true;
+            }
+            if (CONSTANTS.debugLogs) {
+                console.log('[renderChart] Skipping resize - animation in progress, marked pending');
+            }
+            return;
+        }
+        
         var parentNode = gauge.container.current.node() as HTMLElement;
         if (!parentNode) return;
         
@@ -215,16 +228,17 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                 if (CONSTANTS.debugLogs) {
                     console.log('[renderChart] Layout stable, skipping re-render');
                 }
-                // Still ensure gauge is visible - use animation if not already visible
+                // Still ensure gauge is visible
                 const isHidden = gauge.svg.current?.style("visibility") === "hidden";
-                if (isHidden) {
+                const useFadeIn = gauge.props.fadeInAnimation === true;
+                if (isHidden && useFadeIn) {
                     const animDelay = gauge.props.pointer?.animationDelay || 0;
                     gauge.svg.current
                         ?.style("visibility", "visible")
                         .style("opacity", "0")
                         .style("animation", `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards`);
                 } else {
-                    gauge.svg.current?.style("visibility", "visible").style("opacity", "1");
+                    gauge.svg.current?.style("visibility", "visible").style("opacity", "1").style("animation", "none");
                 }
                 gauge.g.current
                     ?.style("visibility", "visible")
@@ -294,37 +308,51 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         const isFirstAnimation = !gauge.initialAnimationTriggered?.current;
         
         // Always use 0 for first animation to prevent flash
+        // For multi-pointer mode, use first pointer's value for Grafana arc
+        const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
         if (isGrafana && shouldAnimate) {
             // Force 0% on first animation - this is the key fix
             if (isFirstAnimation) {
                 initialArcPercent = 0;
-                console.log('[FLASH_DEBUG] First animation - forcing initialArcPercent to 0, pass:', currentPass);
             } else {
                 const minValue = gauge.props.minValue as number;
                 const maxValue = gauge.props.maxValue as number;
-                const prevValue = gauge.prevProps?.current.value ?? minValue;
+                // Use first pointer's value in multi-pointer mode, otherwise use main value
+                const prevPointerValue = gauge.prevProps?.current?.pointers?.[0]?.value;
+                const prevValue = isMultiPointer && prevPointerValue !== undefined 
+                    ? prevPointerValue 
+                    : (gauge.prevProps?.current.value ?? minValue);
                 initialArcPercent = utilHooks.calculatePercentage(minValue, maxValue, prevValue);
-                console.log('[FLASH_DEBUG] Subsequent - initialArcPercent:', initialArcPercent, 'pass:', currentPass);
             }
         }
         
         arcHooks.setupArcs(gauge, resize, initialArcPercent);
-        labelsHooks.setupLabels(gauge);
+        
+        // Setup ticks first (under pointers)
+        labelsHooks.setupTicks(gauge);
         
         // Only draw pointer on pass 2 (visible pass) to avoid animation interference
         // On pass 1, content is hidden for measurement only - no need to animate
-        if (!gauge.props?.pointer?.hide && currentPass === 2) {
-            pointerHooks.drawPointer(gauge, resize);
+        if (currentPass === 2) {
+            // Check if multi-pointer mode is enabled
+            if (pointerHooks.isMultiPointerMode(gauge)) {
+                pointerHooks.drawMultiPointers(gauge, resize);
+            } else if (!gauge.props?.pointer?.hide) {
+                pointerHooks.drawPointer(gauge, resize);
+            }
         }
         
+        // Setup value label AFTER pointers so it renders on top
+        labelsHooks.setupValueLabel(gauge);
+        
         // NOW make gauge visible - content is drawn at correct starting position
-        // Use CSS animation to fade in smoothly and mask any potential flash
         if (currentPass === 2) {
             const animationDelay = gauge.props.pointer?.animationDelay || 0;
+            const useFadeIn = gauge.props.fadeInAnimation === true;
             gauge.svg.current
                 .style("visibility", "visible")
-                .style("opacity", "0")
-                .style("animation", `gaugeComponentFadeIn 200ms ease-out ${animationDelay}ms forwards`);
+                .style("opacity", useFadeIn ? "0" : "1")
+                .style("animation", useFadeIn ? `gaugeComponentFadeIn 200ms ease-out ${animationDelay}ms forwards` : "none");
             gauge.g.current
                 .style("visibility", "visible")
                 .style("opacity", "1");
@@ -375,13 +403,14 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                     if (CONSTANTS.debugLogs) {
                         console.log('[renderChart] Could not measure bounds:', e);
                     }
-                    // Make visible anyway using rAF as fallback with fade-in
+                    // Make visible anyway using rAF as fallback
                     requestAnimationFrame(() => {
                         const animDelay = gauge.props.pointer?.animationDelay || 0;
+                        const useFadeIn = gauge.props.fadeInAnimation === true;
                         gauge.svg.current
                             ?.style("visibility", "visible")
-                            .style("opacity", "0")
-                            .style("animation", `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards`);
+                            .style("opacity", useFadeIn ? "0" : "1")
+                            .style("animation", useFadeIn ? `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards` : "none");
                         gauge.g.current
                             ?.style("visibility", "visible")
                             .style("opacity", "1");
@@ -390,13 +419,14 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                     });
                 }
             } else {
-                // gElement not available - use rAF as fallback with fade-in
+                // gElement not available - use rAF as fallback
                 requestAnimationFrame(() => {
                     const animDelay = gauge.props.pointer?.animationDelay || 0;
+                    const useFadeIn = gauge.props.fadeInAnimation === true;
                     gauge.svg.current
                         ?.style("visibility", "visible")
-                        .style("opacity", "0")
-                        .style("animation", `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards`);
+                        .style("opacity", useFadeIn ? "0" : "1")
+                        .style("animation", useFadeIn ? `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards` : "none");
                     gauge.g.current
                         ?.style("visibility", "visible")
                         .style("opacity", "1");
@@ -457,5 +487,6 @@ export const clearChart = (gauge: Gauge) => {
     labelsHooks.clearTicks(gauge);
     labelsHooks.clearValueLabel(gauge);
     pointerHooks.clearPointerElement(gauge);
+    pointerHooks.clearMultiPointers(gauge);
     arcHooks.clearArcs(gauge);
 };

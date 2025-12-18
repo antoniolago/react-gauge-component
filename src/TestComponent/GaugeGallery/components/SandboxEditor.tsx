@@ -3,7 +3,7 @@ import { Copy, Check, Shuffle, ClipboardPaste } from 'lucide-react';
 import GaugeComponent from '../../../lib';
 import { SandboxToolbar } from './SandboxToolbar';
 import { styles, createStyles } from '../styles';
-import { generateRandomConfig, copyToClipboard, getInitialValue } from '../utils';
+import { generateRandomConfig, copyToClipboard, getInitialValue, GRAFANA_NEON_CONFIG } from '../utils';
 import { GaugeComponentProps } from '../../../lib/GaugeComponent/types/GaugeComponentProps';
 
 interface SandboxEditorProps {
@@ -23,8 +23,8 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const containerRef = useRef<HTMLDivElement>(null);
   
   const [isOpen, setIsOpen] = useState(true);
-  const [config, setConfig] = useState<Partial<GaugeComponentProps>>(() => generateRandomConfig());
-  const [value, setValue] = useState(() => getInitialValue(config));
+  const [config, setConfig] = useState<Partial<GaugeComponentProps>>(() => GRAFANA_NEON_CONFIG);
+  const [value, setValue] = useState(() => getInitialValue(GRAFANA_NEON_CONFIG));
   const [autoAnimate, setAutoAnimate] = useState(false);
   const [sandboxWidth, setSandboxWidth] = useState('400px');
   const [sandboxHeight, setSandboxHeight] = useState('300px');

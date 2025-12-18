@@ -5,11 +5,12 @@ import {
     drag,
     select,
 } from "d3";
-import { PointerContext, PointerProps, PointerType } from "../types/Pointer";
+import { PointerContext, PointerProps, PointerType, PointerWithValue, MultiPointerRef, defaultPointerContext } from "../types/Pointer";
 import { getCoordByValue, getEffectiveAngles } from "./arc";
 import { Gauge } from "../types/Gauge";
 import * as utils from "./utils";
 import * as arcHooks from "./arc";
+import * as labelsHooks from "./labels";
 import { GaugeType } from "../types/GaugeComponentProps";
 
 export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
@@ -32,7 +33,10 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     const userExplicitlyConfiguredPointer = gauge.originalProps?.pointer !== undefined;
     const showPointerForGrafana = isGrafana && userExplicitlyConfiguredPointer && !pointer.hide;
     
-    if ((isFirstAnimation || resize) && (!isGrafana || showPointerForGrafana)) 
+    // Only init pointer on first animation OR on resize when animation is enabled
+    // When animation is disabled and not first render, skip init and just update position
+    const shouldInitPointer = isFirstAnimation || (resize && pointer.animate !== false);
+    if (shouldInitPointer && (!isGrafana || showPointerForGrafana)) 
         initPointer(gauge, useCurrentPercent);
     
     let shouldAnimate = (!resize || isFirstAnimation) && pointer.animate;
@@ -40,6 +44,10 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
         // Mark that initial animation has been triggered to prevent ResizeObserver from restarting
         if (gauge.initialAnimationTriggered) {
             gauge.initialAnimationTriggered.current = true;
+        }
+        // Mark animation as in progress
+        if (gauge.animationInProgress) {
+            gauge.animationInProgress.current = true;
         }
         
         // For Grafana type without pointer, animate the doughnut (arc fill animation)
@@ -79,11 +87,39 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                         if (!isGrafana || showPointerForGrafana) {
                             updatePointer(progress, gauge);
                         }
+                        // Update value label in real-time if animateValue is enabled
+                        if (gauge.props.labels?.valueLabel?.animateValue) {
+                            const minValue = gauge.props.minValue as number;
+                            const maxValue = gauge.props.maxValue as number;
+                            const currentValue = minValue + progress * (maxValue - minValue);
+                            labelsHooks.updateValueLabelText(gauge, currentValue);
+                        }
                     }
                     gauge.pointer.current.context.prevProgress = progress;
                 };
+            })
+            .on("end", () => {
+                // Mark animation as complete
+                if (gauge.animationInProgress) {
+                    gauge.animationInProgress.current = false;
+                }
+                // Check if a resize was pending and trigger it now
+                if (gauge.pendingResize?.current) {
+                    gauge.pendingResize.current = false;
+                    // Use requestAnimationFrame to avoid blocking
+                    requestAnimationFrame(() => {
+                        // Import dynamically to avoid circular dependency
+                        const chartHooks = require('./chart');
+                        chartHooks.renderChart(gauge, true);
+                    });
+                }
             });
     } else {
+        // Mark initial animation as triggered even when animation is disabled
+        // so subsequent updates know it's not the first render
+        if (isFirstAnimation && gauge.initialAnimationTriggered) {
+            gauge.initialAnimationTriggered.current = true;
+        }
         // For Grafana, always update the arc fill
         if (isGrafana) {
             arcHooks.updateGrafanaArc(gauge, currentPercent);
@@ -583,4 +619,501 @@ export const setupArcClick = (gauge: Gauge) => {
             onValueChange(value);
         }
     });
+};
+
+// ============================================================================
+// MULTI-POINTER SUPPORT
+// ============================================================================
+
+/**
+ * Check if gauge is in multi-pointer mode
+ */
+export const isMultiPointerMode = (gauge: Gauge): boolean => {
+    return Array.isArray(gauge.props.pointers) && gauge.props.pointers.length > 0;
+};
+
+/**
+ * Draw all pointers in multi-pointer mode
+ */
+export const drawMultiPointers = (gauge: Gauge, resize: boolean = false) => {
+    const pointers = gauge.props.pointers;
+    if (!pointers || pointers.length === 0) return;
+    
+    const isGrafana = gauge.props.type === GaugeType.Grafana;
+    const minValue = gauge.props.minValue as number;
+    const maxValue = gauge.props.maxValue as number;
+    
+    // Initialize multiPointers array if needed
+    if (!gauge.multiPointers?.current) {
+        gauge.multiPointers!.current = [];
+    }
+    if (!gauge.multiPointerAnimationTriggered?.current) {
+        gauge.multiPointerAnimationTriggered!.current = [];
+    }
+    
+    // Ensure we have the right number of animation triggered flags
+    while (gauge.multiPointerAnimationTriggered!.current.length < pointers.length) {
+        gauge.multiPointerAnimationTriggered!.current.push(false);
+    }
+    
+    // Draw each pointer
+    pointers.forEach((pointerConfig, index) => {
+        drawSingleMultiPointer(gauge, pointerConfig, index, resize, minValue, maxValue, isGrafana);
+    });
+    
+    // For Grafana, use primary (first) pointer value for arc fill
+    if (isGrafana && pointers.length > 0) {
+        const primaryPercent = utils.calculatePercentage(minValue, maxValue, pointers[0].value);
+        arcHooks.updateGrafanaArc(gauge, primaryPercent);
+    }
+};
+
+/**
+ * Draw a single pointer in multi-pointer mode
+ */
+const drawSingleMultiPointer = (
+    gauge: Gauge,
+    pointerConfig: PointerWithValue,
+    index: number,
+    resize: boolean,
+    minValue: number,
+    maxValue: number,
+    isGrafana: boolean
+) => {
+    const { defaultPointer } = require("../types/Pointer");
+    
+    // Merge with defaults
+    const pointer: PointerWithValue = { ...defaultPointer, ...pointerConfig };
+    if (pointer.hide) return;
+    
+    const currentPercent = utils.calculatePercentage(minValue, maxValue, pointer.value);
+    const isFirstAnimation = !gauge.multiPointerAnimationTriggered?.current[index];
+    
+    // Get or create pointer ref
+    let pointerRef = gauge.multiPointers!.current[index];
+    if (!pointerRef) {
+        pointerRef = {
+            element: null,
+            path: null,
+            context: { ...defaultPointerContext },
+            index,
+            animationInProgress: false
+        };
+        gauge.multiPointers!.current[index] = pointerRef;
+    }
+    
+    // Setup context for this pointer
+    const pointerRadius = getPointerRadiusForConfig(gauge, pointer);
+    const length = pointer.type === PointerType.Needle ? (pointer.length as number) : 0.2;
+    const typesWithPath = [PointerType.Needle, PointerType.Arrow];
+    
+    // Get previous value from prevProps if available
+    const prevPointers = gauge.prevProps?.current?.pointers;
+    const prevValue = prevPointers?.[index]?.value ?? minValue;
+    const prevPercent = utils.calculatePercentage(minValue, maxValue, prevValue);
+    
+    pointerRef.context = {
+        centerPoint: [0, -pointerRadius / 2],
+        pointerRadius,
+        pathLength: gauge.dimensions.current.outerRadius * length,
+        currentPercent,
+        prevPercent,
+        prevProgress: 0,
+        pathStr: "",
+        shouldDrawPath: typesWithPath.includes(pointer.type as PointerType),
+        prevColor: ""
+    };
+    
+    const useCurrentPercent = resize && !isFirstAnimation;
+    const shouldInitPointer = isFirstAnimation || (resize && pointer.animate !== false);
+    
+    // Create or update pointer element
+    if (shouldInitPointer) {
+        initMultiPointer(gauge, pointerRef, pointer, useCurrentPercent, index);
+    }
+    
+    const shouldAnimate = (!resize || isFirstAnimation) && pointer.animate !== false;
+    
+    if (shouldAnimate) {
+        // Mark animation triggered
+        if (gauge.multiPointerAnimationTriggered) {
+            gauge.multiPointerAnimationTriggered.current[index] = true;
+        }
+        pointerRef.animationInProgress = true;
+        
+        animateMultiPointer(gauge, pointerRef, pointer, index);
+    } else {
+        // Mark animation triggered even when animation is disabled
+        if (isFirstAnimation && gauge.multiPointerAnimationTriggered) {
+            gauge.multiPointerAnimationTriggered.current[index] = true;
+        }
+        // Just update position without animation
+        updateMultiPointer(pointerRef, pointer, currentPercent, gauge, index);
+    }
+};
+
+/**
+ * Initialize a single pointer element in multi-pointer mode
+ */
+const initMultiPointer = (
+    gauge: Gauge,
+    pointerRef: MultiPointerRef,
+    pointer: PointerWithValue,
+    useCurrentPercent: boolean,
+    index: number
+) => {
+    const { shouldDrawPath, centerPoint, pointerRadius, pathLength, currentPercent, prevPercent } = pointerRef.context;
+    const startPercent = useCurrentPercent ? currentPercent : (prevPercent ?? 0);
+    
+    // Get color - use pointer color or arc color
+    const initialColor = pointer.color || arcHooks.getColorByPercentage(currentPercent, gauge);
+    
+    // Remove existing element if any
+    if (pointerRef.element) {
+        pointerRef.element.remove();
+    }
+    
+    // Create new pointer group
+    pointerRef.element = gauge.g.current
+        .append("g")
+        .attr("class", `multi-pointer multi-pointer-${index}`);
+    
+    if (shouldDrawPath) {
+        pointerRef.context.pathStr = calculatePointerPathForConfig(gauge, pointerRef, pointer, startPercent);
+        const pathElement = pointerRef.element.append("path")
+            .attr("d", pointerRef.context.pathStr)
+            .attr("fill", initialColor);
+        
+        // Add stroke if configured
+        const strokeWidth = pointer.strokeWidth || 0;
+        if (strokeWidth > 0) {
+            const strokeColor = pointer.strokeColor || 'rgba(255, 255, 255, 0.8)';
+            pathElement
+                .attr("stroke", strokeColor)
+                .attr("stroke-width", strokeWidth)
+                .attr("stroke-linejoin", "round");
+        }
+        
+        pointerRef.path = pathElement;
+        
+        // Add grab handle if drag is enabled
+        if (gauge.props.onPointerChange && !pointer.hideGrabHandle) {
+            const tipPosition = calculatePointerTipPositionForConfig(gauge, pointerRef, pointer, startPercent);
+            const handleRadius = Math.max(6, pointerRadius * 0.8);
+            pointerRef.element
+                .append("circle")
+                .attr("class", `pointer-grab-handle pointer-grab-handle-${index}`)
+                .attr("cx", tipPosition.x)
+                .attr("cy", tipPosition.y)
+                .attr("r", handleRadius)
+                .attr("fill", "rgba(255, 255, 255, 0.3)")
+                .attr("stroke", initialColor)
+                .attr("stroke-width", 2)
+                .style("cursor", "grab");
+        }
+    }
+    
+    // Add base circle for needle type
+    if (pointer.type === PointerType.Needle) {
+        const needleBaseCircle = pointerRef.element
+            .append("circle")
+            .attr("cx", 0)
+            .attr("cy", 0)
+            .attr("r", pointerRadius)
+            .attr("fill", pointer.baseColor || initialColor);
+        
+        const strokeWidth = pointer.strokeWidth || 0;
+        if (strokeWidth > 0) {
+            const strokeColor = pointer.strokeColor || 'rgba(255, 255, 255, 0.8)';
+            needleBaseCircle
+                .attr("stroke", strokeColor)
+                .attr("stroke-width", strokeWidth);
+        }
+    } else if (pointer.type === PointerType.Blob) {
+        const arcColor = arcHooks.getColorByPercentage(currentPercent, gauge);
+        const strokeColor = pointer.strokeColor || arcColor;
+        const strokeWidth = pointer.strokeWidth !== undefined ? pointer.strokeWidth : 8;
+        
+        pointerRef.element
+            .append("circle")
+            .attr("cx", 0)
+            .attr("cy", 0)
+            .attr("r", pointerRadius)
+            .attr("fill", pointer.baseColor || initialColor)
+            .attr("stroke", strokeColor)
+            .attr("stroke-width", strokeWidth * pointerRadius / 10);
+        
+        pointerRef.context.prevColor = arcColor;
+        
+        if (gauge.props.onPointerChange) {
+            pointerRef.element.select("circle").style("cursor", "grab");
+        }
+    }
+    
+    // Set initial position
+    setMultiPointerPosition(pointerRef, pointer, pointerRadius, startPercent, gauge);
+    
+    // Setup drag if enabled
+    if (gauge.props.onPointerChange) {
+        setupMultiPointerDrag(gauge, pointerRef, pointer, index);
+    }
+};
+
+/**
+ * Animate a single pointer in multi-pointer mode
+ */
+const animateMultiPointer = (
+    gauge: Gauge,
+    pointerRef: MultiPointerRef,
+    pointer: PointerWithValue,
+    index: number
+) => {
+    const { prevPercent, currentPercent, prevProgress } = pointerRef.context;
+    
+    const maxFps = pointer.maxFps ?? 60;
+    const minFrameTime = maxFps > 0 ? 1000 / maxFps : 0;
+    let lastFrameTime = 0;
+    
+    pointerRef.element
+        .transition()
+        .delay(pointer.animationDelay || 100)
+        .ease(pointer.elastic ? easeElastic : easeExpOut)
+        .duration(pointer.animationDuration || 3000)
+        .tween("progress", () => {
+            const currentInterpolatedPercent = interpolateNumber(prevPercent, currentPercent);
+            return (percentOfPercent: number) => {
+                const now = performance.now();
+                if (now - lastFrameTime < minFrameTime) return;
+                lastFrameTime = now;
+                
+                const progress = currentInterpolatedPercent(percentOfPercent);
+                const threshold = pointer.animationThreshold ?? 0.001;
+                
+                if (Math.abs(progress - pointerRef.context.prevProgress) >= threshold || percentOfPercent >= 1) {
+                    updateMultiPointer(pointerRef, pointer, progress, gauge, index);
+                    pointerRef.context.prevProgress = progress;
+                }
+            };
+        })
+        .on("end", () => {
+            pointerRef.animationInProgress = false;
+            
+            // Check if all animations are done
+            const allDone = gauge.multiPointers?.current.every(p => !p?.animationInProgress) ?? true;
+            if (allDone && gauge.pendingResize?.current) {
+                gauge.pendingResize.current = false;
+                requestAnimationFrame(() => {
+                    const chartHooks = require('./chart');
+                    chartHooks.renderChart(gauge, true);
+                });
+            }
+        });
+};
+
+/**
+ * Update a single pointer position in multi-pointer mode
+ */
+const updateMultiPointer = (
+    pointerRef: MultiPointerRef,
+    pointer: PointerWithValue,
+    percentage: number,
+    gauge: Gauge,
+    index: number
+) => {
+    const { pointerRadius, shouldDrawPath, prevColor } = pointerRef.context;
+    
+    setMultiPointerPosition(pointerRef, pointer, pointerRadius, percentage, gauge);
+    
+    if (shouldDrawPath) {
+        pointerRef.context.pathStr = calculatePointerPathForConfig(gauge, pointerRef, pointer, percentage);
+        pointerRef.path?.attr("d", pointerRef.context.pathStr);
+        
+        // Update grab handle position
+        const grabHandle = pointerRef.element?.select(`.pointer-grab-handle-${index}`);
+        if (grabHandle && !grabHandle.empty()) {
+            const tipPosition = calculatePointerTipPositionForConfig(gauge, pointerRef, pointer, percentage);
+            grabHandle.attr("cx", tipPosition.x).attr("cy", tipPosition.y);
+        }
+        
+        // Update color if not fixed
+        if (!pointer.color) {
+            const newColor = arcHooks.getColorByPercentage(percentage, gauge);
+            pointerRef.path?.attr("fill", newColor);
+            grabHandle?.attr("stroke", newColor);
+        }
+    }
+    
+    // Update blob stroke color
+    if (pointer.type === PointerType.Blob && !pointer.strokeColor) {
+        const newColor = arcHooks.getColorByPercentage(percentage, gauge);
+        if (newColor !== prevColor) {
+            pointerRef.element?.select("circle").attr("stroke", newColor);
+            pointerRef.context.prevColor = newColor;
+        }
+    }
+};
+
+/**
+ * Set position for a multi-pointer element
+ * Uses the EXACT same positioning logic as single-pointer mode
+ */
+const setMultiPointerPosition = (
+    pointerRef: MultiPointerRef,
+    pointer: PointerWithValue,
+    pointerRadius: number,
+    percent: number,
+    gauge: Gauge
+) => {
+    const { startAngle, endAngle } = getEffectiveAngles(gauge);
+    const angle = startAngle + percent * (endAngle - startAngle);
+    const innerR = gauge.dimensions.current.innerRadius;
+    const outerR = gauge.dimensions.current.outerRadius;
+    
+    if (pointer.type === PointerType.Blob) {
+        // SAME as single pointer: Position blob based on blobOffset (0 = inner edge, 0.5 = center, 1 = outer edge)
+        const blobOffset = pointer.blobOffset ?? 0.5;
+        const targetRadius = innerR + (outerR - innerR) * blobOffset;
+        const x = targetRadius * Math.sin(angle);
+        const y = -targetRadius * Math.cos(angle);
+        pointerRef.element?.attr("transform", `translate(${x}, ${y})`);
+    } else if (pointer.type === PointerType.Arrow) {
+        // SAME as single pointer: Arrow offset is relative to inner radius (not interpolated)
+        const arrowOffset = pointer.arrowOffset ?? 0.72;
+        const targetRadius = innerR * arrowOffset;
+        const x = targetRadius * Math.sin(angle);
+        const y = -targetRadius * Math.cos(angle);
+        pointerRef.element?.attr("transform", `translate(${x}, ${y})`);
+    } else {
+        // Needle - positioned at center (0, 0)
+        pointerRef.element?.attr("transform", `translate(0, 0)`);
+    }
+};
+
+/**
+ * Get pointer radius for a specific pointer config
+ * Uses the EXACT same formula as single-pointer mode
+ */
+const getPointerRadiusForConfig = (gauge: Gauge, pointer: PointerWithValue): number => {
+    const pointerWidth = pointer.width ?? 15;
+    return pointerWidth * (gauge.dimensions.current.width / 500);
+};
+
+/**
+ * Calculate pointer path for a specific pointer config
+ * Uses the EXACT same logic as single-pointer calculatePointerPath
+ */
+const calculatePointerPathForConfig = (
+    gauge: Gauge,
+    pointerRef: MultiPointerRef,
+    pointer: PointerWithValue,
+    percent: number
+): string => {
+    const { pointerRadius, pathLength } = pointerRef.context;
+    const { startAngle, endAngle } = getEffectiveAngles(gauge);
+    const d3Angle = startAngle + percent * (endAngle - startAngle);
+    
+    // SAME as single pointer calculatePointerPath
+    // Calculate needle tip position using D3 angle convention (same as arc)
+    const tipX = pathLength * Math.sin(d3Angle);
+    const tipY = -pathLength * Math.cos(d3Angle);
+    
+    // Calculate base points perpendicular to the needle direction
+    const perpAngle = d3Angle + Math.PI / 2;
+    const baseOffset = pointerRadius;
+    
+    const leftX = baseOffset * Math.sin(perpAngle);
+    const leftY = -baseOffset * Math.cos(perpAngle);
+    
+    const rightX = -baseOffset * Math.sin(perpAngle);
+    const rightY = baseOffset * Math.cos(perpAngle);
+
+    return `M ${leftX} ${leftY} L ${tipX} ${tipY} L ${rightX} ${rightY}`;
+};
+
+/**
+ * Calculate pointer tip position for a specific pointer config
+ * Uses the EXACT same logic as single-pointer calculatePointerTipPosition
+ */
+const calculatePointerTipPositionForConfig = (
+    gauge: Gauge,
+    pointerRef: MultiPointerRef,
+    pointer: PointerWithValue,
+    percent: number
+): { x: number; y: number } => {
+    const { pathLength } = pointerRef.context;
+    const innerR = gauge.dimensions.current.innerRadius;
+    const { startAngle, endAngle } = getEffectiveAngles(gauge);
+    const d3Angle = startAngle + percent * (endAngle - startAngle);
+    
+    // For Arrow type, calculate position based on arrow offset + local tip
+    if (pointer.type === PointerType.Arrow) {
+        const arrowOffset = pointer.arrowOffset ?? 0.72;
+        const targetRadius = innerR * arrowOffset;
+        
+        // Arrow translation position
+        const transX = targetRadius * Math.sin(d3Angle);
+        const transY = -targetRadius * Math.cos(d3Angle);
+        
+        // Local tip position (arrow path tip)
+        const localTipX = pathLength * Math.sin(d3Angle);
+        const localTipY = -pathLength * Math.cos(d3Angle);
+        
+        return {
+            x: transX + localTipX,
+            y: transY + localTipY,
+        };
+    }
+    
+    // For Needle type, tip is at pathLength from center along the angle
+    return {
+        x: pathLength * Math.sin(d3Angle),
+        y: -pathLength * Math.cos(d3Angle),
+    };
+};
+
+/**
+ * Setup drag behavior for a multi-pointer
+ */
+const setupMultiPointerDrag = (
+    gauge: Gauge,
+    pointerRef: MultiPointerRef,
+    pointer: PointerWithValue,
+    index: number
+) => {
+    const onPointerChange = gauge.props.onPointerChange;
+    if (!onPointerChange) return;
+    
+    const dragBehavior = drag()
+        .on("start", function() {
+            select(this).style("cursor", "grabbing");
+        })
+        .on("drag", (event: any) => {
+            const value = getValueFromPosition(gauge, event.sourceEvent.clientX, event.sourceEvent.clientY);
+            onPointerChange(index, value);
+        })
+        .on("end", function() {
+            select(this).style("cursor", "grab");
+        });
+    
+    // Apply drag to the pointer element
+    pointerRef.element?.call(dragBehavior);
+    
+    // Apply drag to grab handle
+    const grabHandle = pointerRef.element?.select(`.pointer-grab-handle-${index}`);
+    if (grabHandle && !grabHandle.empty()) {
+        grabHandle.call(dragBehavior);
+    }
+};
+
+/**
+ * Clear all multi-pointer elements
+ */
+export const clearMultiPointers = (gauge: Gauge) => {
+    gauge.g.current?.selectAll(".multi-pointer").remove();
+    if (gauge.multiPointers?.current) {
+        gauge.multiPointers.current = [];
+    }
+    if (gauge.multiPointerAnimationTriggered?.current) {
+        gauge.multiPointerAnimationTriggered.current = [];
+    }
 };

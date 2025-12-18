@@ -42,7 +42,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
             { color: "#f44336", tooltip: { text: "Critical!" } },
           ],
         }}
-        pointer={{ type: "needle", color: "#e0e0e0", length: 0.7, width: 8 }}
+        pointer={{ type: "needle", color: "#e0e0e0", length: 0.7, width: 8, maxFps: 30 }}
         labels={{
           valueLabel: {
             formatTextValue: (v) => `${v.toFixed(1)}°C`,
@@ -166,12 +166,13 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           type: "needle",
           elastic: true,
           animationDelay: 50,
-          animationDuration: 1200,
+          animationDuration: 3000,
           length: 0.87,
           width: 24,
           baseColor: "#ffffff",
           strokeWidth: 2,
           strokeColor: "#000000",
+          maxFps: 30,
         }}
         labels={{
           valueLabel: {
@@ -219,11 +220,13 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           type: "needle",
           elastic: true,
           animationDelay: 200,
+          animationDuration: 3000,
           length: 0.87,
           width: 24,
           baseColor: "#ffffff",
           strokeWidth: 2,
           strokeColor: "#000000",
+          maxFps: 30,
         }}
         labels={{
           valueLabel: {
@@ -263,6 +266,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           length: 0.85,
           width: 4,
           baseColor: "#1a1a1a",
+          maxFps: 30,
         }}
         labels={{
           valueLabel: {
@@ -315,7 +319,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
             { limit: 100, color: "#5BE12C", showTick: true },
           ],
         }}
-        pointer={{ type: "arrow", color: "#e0e0e0", width: 15 }}
+        pointer={{ type: "arrow", color: "#e0e0e0", width: 15, maxFps: 30 }}
         labels={{
           valueLabel: {
             formatTextValue: (v) => `${v}%`,
@@ -343,7 +347,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           width: 0.18,
           subArcs: [{ limit: 25, color: "#EA4228" }, { color: "#5BE12C" }],
         }}
-        pointer={{ type: "arrow", color: "#e0e0e0", width: 20 }}
+        pointer={{ type: "arrow", color: "#e0e0e0", width: 20, maxFps: 30 }}
         labels={{
           valueLabel: {
             formatTextValue: (v) => (v <= 25 ? "LOW" : "OK"),
@@ -417,6 +421,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           baseColor: "#9a9996",
           strokeWidth: 1,
           strokeColor: "#5e5c64",
+          maxFps: 30,
         }}
         labels={{
           valueLabel: {
@@ -448,7 +453,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           ],
           effects: { glow: true, glowBlur: 15, glowSpread: 0.5 },
         }}
-        pointer={{ type: "needle", color: "#fff", length: 0.8, width: 6 }}
+        pointer={{ type: "needle", color: "#fff", length: 0.8, width: 6, maxFps: 30 }}
         labels={{
           valueLabel: {
             style: { fontSize: "26px", fill: "#e0f7fa", fontWeight: "300" },
@@ -491,7 +496,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
             { color: "#9c27b0", tooltip: { text: "Extreme - Avoid sun" } },
           ],
         }}
-        pointer={{ type: "needle", color: "#fff", length: 0.75, width: 10 }}
+        pointer={{ type: "needle", color: "#fff", length: 0.75, width: 10, maxFps: 30 }}
         labels={{
           valueLabel: {
             formatTextValue: (v) => {
@@ -563,6 +568,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           length: 0.8,
           width: 4,
           baseColor: "#333",
+          maxFps: 30,
         }}
         labels={{
           valueLabel: {
@@ -630,7 +636,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           cornerRadius: 0,
           subArcs: [{ color: "#3498db" }],
         }}
-        pointer={{ type: "needle", color: "#e74c3c", length: 0.7, width: 6 }}
+        pointer={{ type: "needle", color: "#e74c3c", length: 0.7, width: 6, maxFps: 30 }}
         labels={{
           valueLabel: {
             formatTextValue: (v) => {
@@ -697,7 +703,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
             { color: "#0277bd" },
           ],
         }}
-        pointer={{ type: "blob", color: "#4fc3f7", elastic: true }}
+        pointer={{ type: "blob", color: "#4fc3f7", elastic: true, maxFps: 30 }}
         labels={{
           valueLabel: {
             formatTextValue: (v) => `${Math.round(v)}% RH`,
@@ -736,7 +742,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
             { color: "#EA4228" },
           ],
         }}
-        pointer={{ type: "arrow", color: "#dfa810" }}
+        pointer={{ type: "arrow", color: "#dfa810", maxFps: 30 }}
         labels={{
           valueLabel: { style: { fontSize: "24px", fill: "#e0e0e0" } },
           tickLabels: {
@@ -774,6 +780,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           color: "#e0e0e0",
           elastic: true,
           animationDelay: 0,
+          maxFps: 30,
         }}
         labels={{
           valueLabel: {
@@ -809,7 +816,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
           padding: 0.02,
           width: 0.3,
         }}
-        pointer={{ type: "needle", color: "#e0e0e0", animationDelay: 0 }}
+        pointer={{ type: "needle", color: "#e0e0e0", animationDelay: 0, maxFps: 30 }}
         labels={{
           valueLabel: {
             matchColorWithArc: true,

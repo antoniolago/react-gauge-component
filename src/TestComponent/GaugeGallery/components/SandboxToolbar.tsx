@@ -9,8 +9,9 @@ import {
   Circle, Triangle, ArrowRight, EyeOff,
   Eye, Rainbow, Minus, AlignLeft, AlignCenter, AlignRight,
   Play, Hand, Hash, ArrowUpRight, ArrowDownLeft, ChevronDown,
-  Timer, Settings2, Sparkles
+  Timer, Settings2, Sparkles, Plus, Trash2, Users
 } from 'lucide-react';
+import { PointerWithValue } from '../../../lib/GaugeComponent/types/Pointer';
 
 // Collapsible wrapper for mobile
 const CollapsibleGroup: React.FC<{
@@ -67,6 +68,203 @@ const TYPE_GAUGE_CONFIGS: Record<string, Partial<GaugeComponentProps>> = {
     pointer: { type: 'needle', color: '#fff', length: 0.7, width: 8 },
     labels: { valueLabel: { hide: true }, tickLabels: { hideMinMax: true } },
   },
+};
+
+// Collapsible accordion for individual pointer configuration
+const PointerAccordion: React.FC<{
+  pointer: PointerWithValue;
+  index: number;
+  minValue: number;
+  maxValue: number;
+  onUpdate: (pointer: PointerWithValue) => void;
+  onRemove: () => void;
+  isOnlyPointer?: boolean;
+}> = ({ pointer, index, minValue, maxValue, onUpdate, onRemove, isOnlyPointer }) => {
+  const [isOpen, setIsOpen] = useState(index === 0); // First pointer open by default
+  const pointerType = pointer.type || 'needle';
+  
+  return (
+    <div style={{ 
+      border: '1px solid rgba(255,255,255,0.15)', 
+      borderRadius: '6px', 
+      overflow: 'hidden',
+      background: 'rgba(0,0,0,0.2)'
+    }}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '6px 10px',
+          cursor: 'pointer',
+          background: isOpen ? 'rgba(255,255,255,0.05)' : 'transparent',
+        }}
+      >
+        <span style={{ 
+          width: '12px', 
+          height: '12px', 
+          borderRadius: '2px', 
+          background: pointer.color || '#888',
+          border: '1px solid rgba(255,255,255,0.3)'
+        }} />
+        <span style={{ flex: 1, fontSize: '0.8rem', fontWeight: 500 }}>
+          {pointer.label || `Pointer ${index + 1}`}
+        </span>
+        <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{pointer.value.toFixed(1)}</span>
+        <ChevronDown size={12} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+      </div>
+      
+      {isOpen && (
+        <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          {/* Label */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.7rem', opacity: 0.7, minWidth: '40px' }}>Label</span>
+            <input 
+              type="text" 
+              value={pointer.label || ''} 
+              onChange={(e) => onUpdate({ ...pointer, label: e.target.value })}
+              placeholder={`Pointer ${index + 1}`}
+              style={{ ...styles.toolBtn, flex: 1, padding: '4px 8px', fontSize: '0.75rem', border: '1px solid rgba(255,255,255,0.2)' }}
+            />
+          </div>
+          {/* Value */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.7rem', opacity: 0.7, minWidth: '40px' }}>Value</span>
+            <input 
+              type="range" 
+              min={minValue} 
+              max={maxValue} 
+              step="0.1"
+              value={pointer.value} 
+              onChange={(e) => onUpdate({ ...pointer, value: Number(e.target.value) })}
+              style={{ ...styles.slider, flex: 1 }}
+            />
+            <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '35px' }}>{pointer.value.toFixed(1)}</span>
+          </div>
+          {/* Type */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.7rem', opacity: 0.7, minWidth: '40px' }}>Type</span>
+            <div style={{ display: 'flex', gap: '3px' }}>
+              {[
+                { type: 'needle', icon: <Minus size={12} style={{ transform: 'rotate(-45deg)' }} /> },
+                { type: 'arrow', icon: <Triangle size={12} /> },
+                { type: 'blob', icon: <Circle size={12} /> },
+              ].map(({ type, icon }) => (
+                <button 
+                  key={type}
+                  onClick={() => onUpdate({ ...pointer, type: type as 'needle' | 'arrow' | 'blob' })}
+                  style={{ ...styles.toolBtn, padding: '4px 8px', ...(pointerType === type ? styles.toolBtnActive : {}) }}
+                  type="button"
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Color */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.7rem', opacity: 0.7, minWidth: '40px' }}>Color</span>
+            <input 
+              type="color" 
+              value={pointer.color || '#888888'} 
+              onChange={(e) => onUpdate({ ...pointer, color: e.target.value })}
+              style={styles.colorPicker}
+            />
+            <button
+              onClick={() => onUpdate({ ...pointer, color: undefined })}
+              style={{ ...styles.toolBtn, padding: '3px 8px', fontSize: '0.65rem', ...(!pointer.color ? styles.toolBtnActive : {}) }}
+              type="button"
+              title="Use arc color"
+            >
+              <Rainbow size={10} /> Arc
+            </button>
+            {pointerType === 'needle' && (
+              <>
+                <span style={{ fontSize: '0.65rem', opacity: 0.5 }}>Base</span>
+                <input 
+                  type="color" 
+                  value={pointer.baseColor || '#ffffff'} 
+                  onChange={(e) => onUpdate({ ...pointer, baseColor: e.target.value })}
+                  style={styles.colorPicker}
+                />
+              </>
+            )}
+          </div>
+          {/* Length (for needle) */}
+          {pointerType === 'needle' && (
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.7rem', opacity: 0.7, minWidth: '40px' }}>Length</span>
+              <input 
+                type="range" min="0.3" max="1.5" step="0.05"
+                value={pointer.length ?? 0.7} 
+                onChange={(e) => onUpdate({ ...pointer, length: Number(e.target.value) })}
+                style={{ ...styles.slider, flex: 1 }}
+              />
+              <span style={{ fontSize: '0.65rem', opacity: 0.5, minWidth: '25px' }}>{(pointer.length ?? 0.7).toFixed(2)}</span>
+            </div>
+          )}
+          {/* Width */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.7rem', opacity: 0.7, minWidth: '40px' }}>Width</span>
+            <input 
+              type="range" min="5" max="50" step="1"
+              value={pointer.width ?? 20} 
+              onChange={(e) => onUpdate({ ...pointer, width: Number(e.target.value) })}
+              style={{ ...styles.slider, flex: 1 }}
+            />
+            <span style={{ fontSize: '0.65rem', opacity: 0.5, minWidth: '25px' }}>{pointer.width ?? 20}</span>
+          </div>
+          {/* Offset (for arrow/blob) */}
+          {(pointerType === 'arrow' || pointerType === 'blob') && (
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.7rem', opacity: 0.7, minWidth: '40px' }}>Offset</span>
+              <input 
+                type="range" min="0" max="1.2" step="0.05"
+                value={pointerType === 'arrow' ? (pointer.arrowOffset ?? 0.72) : (pointer.blobOffset ?? 0.5)} 
+                onChange={(e) => onUpdate({ 
+                  ...pointer, 
+                  ...(pointerType === 'arrow' ? { arrowOffset: Number(e.target.value) } : { blobOffset: Number(e.target.value) })
+                })}
+                style={{ ...styles.slider, flex: 1 }}
+              />
+              <span style={{ fontSize: '0.65rem', opacity: 0.5, minWidth: '25px' }}>
+                {(pointerType === 'arrow' ? (pointer.arrowOffset ?? 0.72) : (pointer.blobOffset ?? 0.5)).toFixed(2)}
+              </span>
+            </div>
+          )}
+          {/* Border */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.7rem', opacity: 0.7, minWidth: '40px' }}>Border</span>
+            <input 
+              type="range" min="0" max="4" step="0.5"
+              value={pointer.strokeWidth ?? 0} 
+              onChange={(e) => onUpdate({ ...pointer, strokeWidth: Number(e.target.value) })}
+              style={{ ...styles.slider, flex: 1 }}
+            />
+            {(pointer.strokeWidth ?? 0) > 0 && (
+              <input 
+                type="color" 
+                value={pointer.strokeColor || '#ffffff'} 
+                onChange={(e) => onUpdate({ ...pointer, strokeColor: e.target.value })}
+                style={styles.colorPicker}
+              />
+            )}
+          </div>
+          {/* Remove button - only show if not the only pointer */}
+          {!isOnlyPointer && (
+            <button
+              onClick={onRemove}
+              style={{ ...styles.toolBtn, padding: '4px 8px', marginTop: '4px', color: '#ff6b6b', borderColor: 'rgba(255, 107, 107, 0.3)' }}
+              type="button"
+            >
+              <Trash2 size={12} /> Remove
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 interface SandboxToolbarProps {
@@ -415,109 +613,136 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
         </Col>
 
         <Col xs={12} md={4}>
-          <CollapsibleGroup title="Pointer" icon={<Target size={14} />} isMobile={isMobile}>
+          <CollapsibleGroup title="Pointers" icon={<Target size={14} />} isMobile={isMobile}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Type</span>
-                <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, type: 'needle', hide: false } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.type === 'needle' && !cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
-                  title="Needle" type="button">
-                  <Triangle size={14} style={{ transform: 'rotate(180deg)' }} /><span>Needle</span>
+              {/* Pointers List Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>
+                  {(cfg?.pointers?.length || 1)} pointer{(cfg?.pointers?.length || 1) > 1 ? 's' : ''}
+                </span>
+                <button
+                  onClick={() => {
+                    const currentPointers = cfg?.pointers || [{ 
+                      value: value, 
+                      type: cfg?.pointer?.type || 'needle',
+                      color: cfg?.pointer?.color,
+                      baseColor: cfg?.pointer?.baseColor || '#ffffff',
+                      length: cfg?.pointer?.length ?? 0.7,
+                      width: cfg?.pointer?.width ?? 15,
+                      strokeWidth: cfg?.pointer?.strokeWidth ?? 0,
+                      strokeColor: cfg?.pointer?.strokeColor,
+                    }];
+                    const min = cfg?.minValue ?? 0;
+                    const max = cfg?.maxValue ?? 100;
+                    // Copy last pointer's config but with new color and value
+                    const lastPointer = currentPointers[currentPointers.length - 1];
+                    const newPointers = [...currentPointers, { 
+                      ...lastPointer,
+                      value: min + (max - min) * (0.3 + currentPointers.length * 0.2), 
+                      color: ['#5BE12C', '#F5CD19', '#EA4228', '#60a5fa', '#a855f7'][currentPointers.length % 5],
+                      label: undefined, // Clear label so it auto-generates
+                    }];
+                    onConfigChange({ ...config, pointers: newPointers, pointer: undefined });
+                  }}
+                  style={{ ...styles.toolBtn, padding: '4px 8px', fontSize: '0.7rem' }}
+                  type="button"
+                  title="Add another pointer"
+                >
+                  <Plus size={12} /> Add Pointer
                 </button>
-                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, type: 'blob', hide: false } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.type === 'blob' && !cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
-                  title="Blob" type="button">
-                  <Circle size={14} /><span>Blob</span>
-                </button>
-                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, type: 'arrow', hide: false } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.type === 'arrow' && !cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
-                  title="Arrow" type="button">
-                  <ArrowRight size={14} /><span>Arrow</span>
-                </button>
-                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, hide: true } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.hide ? styles.toolBtnActive : {}) }} 
-                  title="Hide" type="button">
-                  <EyeOff size={14} /><span>Hide</span>
-                </button>
-                </div>
               </div>
-             
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Colors</span>
+              
+              {/* Value Display Mode (when multiple pointers) */}
+              {(cfg?.pointers?.length ?? 0) > 1 && (
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: cfg?.pointer?.color ? undefined : '#464A4F' } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.pointer?.color ? styles.toolBtnActive : {}) }} 
-                  title="Arc color" type="button">
-                  <Rainbow size={14} /><span>Arc</span>
-                </button>
-                {cfg?.pointer?.color && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={styles.sliderLabel}>Color</span>
-                    <input type="color" value={cfg?.pointer?.color || '#464A4F'} 
-                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, color: e.target.value } })} 
-                      style={styles.colorPicker} />
-                  </div>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={styles.sliderLabel}>Base</span>
-                  <input type="color" value={cfg?.pointer?.baseColor || '#ffffff'} 
-                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, baseColor: e.target.value } })} 
-                    style={styles.colorPicker} />
-                </div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Border</span>
-                <input type="range" min="0" max="5" step="0.5" value={cfg?.pointer?.strokeWidth ?? 0} 
-                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, strokeWidth: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, flex: 1 }} />
-                {(cfg?.pointer?.strokeWidth ?? 0) > 0 && (
-                  <input type="color" value={cfg?.pointer?.strokeColor || '#ffffff'} 
-                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, strokeColor: e.target.value } })} 
-                    style={styles.colorPicker} />
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Length</span>
-                <input type="range" min="0.1" max="2" step="0.05" value={cfg?.pointer?.length ?? 0.8} 
-                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, length: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, flex: 1 }} />
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
-                <input type="range" min="1" max="60" step="1" value={cfg?.pointer?.width ?? 15} 
-                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, width: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, flex: 1 }} />
-              </div>
-              {cfg?.pointer?.type === 'arrow' && (
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Offset</span>
-                  <input type="range" min="0" max="1.5" step="0.02" value={cfg?.pointer?.arrowOffset ?? 0.72} 
-                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, arrowOffset: Number(e.target.value) } })} 
-                    style={{ ...styles.slider, flex: 1 }} />
+                  <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>Show values:</span>
+                  {['primary', 'all', 'none'].map((mode) => (
+                    <button 
+                      key={mode}
+                      onClick={() => onConfigChange({ 
+                        ...config, 
+                        labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, multiPointerDisplay: mode as 'primary' | 'all' | 'none' } }
+                      })}
+                      style={{ 
+                        ...styles.toolBtn, 
+                        padding: '2px 6px', 
+                        fontSize: '0.65rem',
+                        ...((cfg?.labels?.valueLabel?.multiPointerDisplay ?? 'primary') === mode ? styles.toolBtnActive : {})
+                      }}
+                      type="button"
+                    >
+                      {mode === 'primary' ? '1st' : mode === 'all' ? 'All' : 'None'}
+                    </button>
+                  ))}
                 </div>
               )}
-              {cfg?.pointer?.type === 'blob' && (
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                  <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Offset</span>
-                  <input type="range" min="-0.5" max="1.5" step="0.02" value={cfg?.pointer?.blobOffset ?? 0.5} 
-                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, blobOffset: Number(e.target.value) } })} 
-                    style={{ ...styles.slider, flex: 1 }} />
-                </div>
-              )}
+              
+              {/* Pointer Accordions - use pointers array if exists, otherwise create from single pointer */}
+              {(cfg?.pointers || [{ 
+                value: value, 
+                type: cfg?.pointer?.type || 'needle',
+                color: cfg?.pointer?.color,
+                baseColor: cfg?.pointer?.baseColor || '#ffffff',
+                length: cfg?.pointer?.length ?? 0.7,
+                width: cfg?.pointer?.width ?? 15,
+                strokeWidth: cfg?.pointer?.strokeWidth ?? 0,
+                strokeColor: cfg?.pointer?.strokeColor,
+                arrowOffset: cfg?.pointer?.arrowOffset,
+                blobOffset: cfg?.pointer?.blobOffset,
+                // Don't inherit hide - pointers in array should always be visible
+              }]).map((pointer: PointerWithValue, index: number) => (
+                <PointerAccordion 
+                  key={index}
+                  pointer={pointer}
+                  index={index}
+                  minValue={cfg?.minValue ?? 0}
+                  maxValue={cfg?.maxValue ?? 100}
+                  isOnlyPointer={(cfg?.pointers?.length ?? 1) <= 1 && !cfg?.pointers}
+                  onUpdate={(updated: PointerWithValue) => {
+                    if (cfg?.pointers) {
+                      // Already in multi-pointer mode - update the array
+                      const pointers = [...cfg.pointers];
+                      pointers[index] = updated;
+                      onConfigChange({ ...config, pointers });
+                      // Sync first pointer value to main value for compatibility
+                      if (index === 0) onValueChange(updated.value);
+                    } else {
+                      // Convert single pointer to pointers array
+                      // Update both config AND value together so gauge renders correctly
+                      onConfigChange({ 
+                        ...config, 
+                        pointers: [updated],
+                        pointer: { ...cfg?.pointer, hide: false } // Ensure pointer is visible
+                      });
+                      onValueChange(updated.value);
+                    }
+                  }}
+                  onRemove={() => {
+                    if (cfg?.pointers && cfg.pointers.length > 1) {
+                      const pointers = cfg.pointers.filter((_: any, i: number) => i !== index);
+                      onConfigChange({ ...config, pointers });
+                    }
+                  }}
+                />
+              ))}
+              
+              {/* Animation Settings (shared) */}
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px', marginTop: '4px' }}>
                 <Timer size={12} style={{ opacity: 0.6 }} />
-                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Animation (Performance can degrade with many gauges)</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Animation
+                <label style={styles.inlineLabel} title="Disable animation completely (drag still works)">
+                  <input type="checkbox" checked={cfg?.pointer?.animate === false} 
+                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animate: !e.target.checked } })} 
+                    style={styles.inlineCheckbox} />
+                  Disable
+                </label></span>
                 <button 
                   onClick={() => {
                     const currentValue = value;
                     const minValue = cfg?.minValue ?? 0;
-                    // Force remount to get a clean animation without flickering
                     onValueChange(minValue);
                     if (onForceRemount) {
                       onForceRemount();
-                      // After remount, set the target value to trigger animation
                       setTimeout(() => onValueChange(currentValue), 100);
                     } else {
                       setTimeout(() => onValueChange(currentValue), 50);
@@ -525,7 +750,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   }} 
                   style={{ ...styles.toolBtn, padding: '4px 10px', marginLeft: 'auto', fontSize: '0.7rem' }} 
                   type="button" 
-                  title="Replay animation from minimum value (clean remount)"
+                  title="Replay animation"
                 >
                   <Play size={12} /> Test
                 </button>
@@ -541,15 +766,8 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Delay</span>
                 <input type="range" min="0" max="1000" step="50" value={cfg?.pointer?.animationDelay ?? 100} 
                   onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationDelay: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, flex: 1 }} title="Animation delay (ms)" />
+                  style={{ ...styles.slider, flex: 1 }} />
                 <span style={{ fontSize: '0.7rem', opacity: 0.6, minWidth: '35px' }}>{cfg?.pointer?.animationDelay ?? 100}ms</span>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Threshold</span>
-                <input type="range" min="0.0001" max="0.01" step="0.0005" value={cfg?.pointer?.animationThreshold ?? 0.001} 
-                  onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationThreshold: Number(e.target.value) } })} 
-                  style={{ ...styles.slider, flex: 1 }} title="Animation update threshold (higher = fewer updates, less smooth)" />
-                <span style={{ fontSize: '0.65rem', opacity: 0.6, minWidth: '40px' }}>{((cfg?.pointer?.animationThreshold ?? 0.001) * 100).toFixed(2)}%</span>
               </div>
                {/* Performance Controls */}
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
@@ -611,6 +829,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
             </div>
           </CollapsibleGroup>
         </Col>
+
         {/* Tick Marks */}
         <Col xs={12} md={4}>
           <CollapsibleGroup title="Tick Marks" icon={<Ruler size={14} />} isMobile={isMobile}>
@@ -751,6 +970,12 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.labels?.valueLabel?.matchColorWithArc ? styles.toolBtnActive : {}) }} type="button">
                   <Rainbow size={14} /><span>Arc</span>
                 </button>
+                <label style={styles.inlineLabel} title="Value label follows pointer during animation">
+                  <input type="checkbox" checked={cfg?.labels?.valueLabel?.animateValue || false} 
+                    onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, animateValue: e.target.checked } } })} 
+                    style={styles.inlineCheckbox} />
+                  Live value
+                </label>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                 <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Size</span>

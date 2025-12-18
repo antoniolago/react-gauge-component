@@ -163,6 +163,12 @@ export const setArcData = (gauge: Gauge) => {
 };
 
 const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undefined) => {
+  // Check if multi-pointer mode with subarcs between pointers
+  const pointers = gauge.props.pointers;
+  if (pointers && pointers.length > 1) {
+    return getGrafanaMultiPointerArcData(gauge);
+  }
+  
   let currentPercentage = percent != undefined ? percent : utils.calculatePercentage(gauge.props.minValue as number,
     gauge.props.maxValue as number,
     gauge.props.value as number);
@@ -181,6 +187,60 @@ const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undef
     color: gauge.props.arc?.emptyColor || '#3a3a3a',
   }
   return [firstSubArc, secondSubArc];
+}
+
+/**
+ * Generate arc data for multi-pointer Grafana mode.
+ * Creates subarcs between each pointer, colored with the next pointer's color.
+ * 
+ * Example with 3 pointers at values 20, 50, 80:
+ * - Arc 1 (0-20): color of pointer 1
+ * - Arc 2 (20-50): color of pointer 2
+ * - Arc 3 (50-80): color of pointer 3
+ * - Arc 4 (80-100): empty color
+ */
+const getGrafanaMultiPointerArcData = (gauge: Gauge) => {
+  const pointers = gauge.props.pointers!;
+  const minValue = gauge.props.minValue as number;
+  const maxValue = gauge.props.maxValue as number;
+  const emptyColor = gauge.props.arc?.emptyColor || '#3a3a3a';
+  
+  // Sort pointers by value
+  const sortedPointers = [...pointers].sort((a, b) => a.value - b.value);
+  
+  // Build arc segments
+  const arcData: Array<{ value: number; color: string }> = [];
+  let prevPercent = 0;
+  
+  for (let i = 0; i < sortedPointers.length; i++) {
+    const pointer = sortedPointers[i];
+    const currentPercent = utils.calculatePercentage(minValue, maxValue, pointer.value);
+    
+    // Arc from previous position to this pointer
+    const segmentSize = currentPercent - prevPercent;
+    if (segmentSize > 0) {
+      // Use this pointer's color for the segment leading up to it
+      const arcColor = getArcDataByPercentage(currentPercent, gauge)?.color;
+      const color = pointer.color || (typeof arcColor === 'string' ? arcColor : '#888');
+      arcData.push({
+        value: segmentSize,
+        color: color
+      });
+    }
+    
+    prevPercent = currentPercent;
+  }
+  
+  // Add remaining empty arc (from last pointer to 100%)
+  const remainingPercent = 1 - prevPercent;
+  if (remainingPercent > 0) {
+    arcData.push({
+      value: remainingPercent,
+      color: emptyColor
+    });
+  }
+  
+  return arcData;
 }
 const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
   const { outerRadius } = gauge.dimensions.current;
@@ -251,9 +311,7 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
     data = gauge.arcData.current
   }
   if (gauge.props.type == GaugeType.Grafana) {
-    console.log('[FLASH_DEBUG] drawArc called with percent:', percent);
     data = getGrafanaMainArcData(gauge, percent);
-    console.log('[FLASH_DEBUG] Grafana arc data:', data);
   }
   let arcPadding = padding || 0;
   let arcCornerRadius = cornerRadius || 0;
@@ -642,7 +700,7 @@ export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
   const padEndpoints = gauge.props.arc?.padEndpoints;
   const arcPadding = padding || 0;
   
-  // Get the new arc data (returns [filledArc, emptyArc])
+  // Get the new arc data
   const data = getGrafanaMainArcData(gauge, percent);
   
   // Create the arc generator with config values for corner and padding
@@ -655,8 +713,11 @@ export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
   // Get existing arc groups
   const existingArcGroups = gauge.doughnut.current.selectAll(".subArc");
   
-  // If arcs don't exist yet, create them (first render)
-  if (existingArcGroups.empty()) {
+  // For multi-pointer mode, the number of segments can change - redraw if mismatch
+  const existingCount = existingArcGroups.size();
+  if (existingArcGroups.empty() || existingCount !== data.length) {
+    // Clear and redraw arcs when segment count changes
+    gauge.doughnut.current.selectAll(".subArc").remove();
     drawArc(gauge, percent);
     return;
   }
@@ -676,8 +737,6 @@ export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
   }
   
   // Update each arc group's path with the corresponding pie data
-  // We need to iterate and update each path individually since D3 data binding
-  // doesn't work well with nested selections
   existingArcGroups.each(function(this: any, _d: any, i: number) {
     if (i < pieData.length) {
       const pathEl = select(this).select("path")

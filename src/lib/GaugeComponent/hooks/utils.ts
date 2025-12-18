@@ -10,6 +10,13 @@ export const calculatePercentage = (minValue: number, maxValue: number, value: n
     return (percentage);
   }
 }
+
+/**
+ * Convert a percentage (0-1) back to a value within the min/max range
+ */
+export const percentToValue = (percent: number, minValue: number, maxValue: number): number => {
+  return minValue + percent * (maxValue - minValue);
+}
 export const isEmptyObject = (obj: any) => {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
