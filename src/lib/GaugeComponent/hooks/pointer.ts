@@ -725,11 +725,13 @@ const drawSingleMultiPointer = (
     };
     
     const useCurrentPercent = resize && !isFirstAnimation;
-    const shouldInitPointer = isFirstAnimation || (resize && pointer.animate !== false);
+    // Init pointer if: first animation, resize, OR element doesn't exist (was cleared)
+    const elementMissing = !pointerRef.element || pointerRef.element.empty?.();
+    const shouldInitPointer = isFirstAnimation || elementMissing || (resize && pointer.animate !== false);
     
     // Create or update pointer element
     if (shouldInitPointer) {
-        initMultiPointer(gauge, pointerRef, pointer, useCurrentPercent, index);
+        initMultiPointer(gauge, pointerRef, pointer, useCurrentPercent || elementMissing, index);
     }
     
     const shouldAnimate = (!resize || isFirstAnimation) && pointer.animate !== false;

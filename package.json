@@ -40,7 +40,8 @@
     "eject": "react-scripts eject",
     "predeploy": "bun run build:demo",
     "deploy": "gh-pages -d build",
-    "pack:local": "bun run build:package && npm pack --pack-destination ./"
+    "pack:local": "bun run build:package && npm pack --pack-destination ./",
+    "docs": "node scripts/generate-docs.js"
   },
   "resolutions": {
     "@types/react": "~17.0.1"
@@ -58,8 +59,6 @@
   },
   "devDependencies": {
     "@babel/cli": "^7.12.8",
-    "bootstrap": "^5.3.8",
-    "@types/d3": "^7.4.0",
     "@babel/core": "^7.6.2",
     "@babel/plugin-proposal-class-properties": "^7.4.4",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
@@ -68,12 +67,14 @@
     "@babel/runtime": "^7.6.2",
     "@eslint/compat": "^1.1.0",
     "@eslint/js": "^9.6.0",
+    "@types/d3": "^7.4.0",
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.1.0",
     "@types/react": "^17.0.1",
     "@types/react-dom": "^17.0.1",
     "babel-preset-react-app": "^8.0.0",
+    "bootstrap": "^5.3.8",
     "cross-env": "^5.2.1",
     "eslint": "9.x",
     "eslint-config-airbnb": "^19.0.4",
@@ -92,10 +93,13 @@
     "prettier": "^3.3.2",
     "react": "^17.0.1",
     "react-bootstrap": "^1.4.0",
+    "react-docgen-typescript-plugin": "^1.0.8",
     "react-dom": "^17.0.1",
     "react-grid-layout": "^1.4.4",
     "react-scripts": "^5.0.1",
     "rimraf": "^2.7.1",
+    "typedoc": "^0.28.15",
+    "typedoc-plugin-markdown": "^4.9.0",
     "typescript": "^5.0.4",
     "typescript-eslint": "^7.14.1"
   },
