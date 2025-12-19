@@ -37,6 +37,7 @@ export const GRAFANA_NEON_CONFIG: Partial<GaugeComponentProps> = {
       matchColorWithArc: true,
       style: { fontSize: '29px', fontWeight: 'bold' },
       offsetY: 25,
+      animateValue: true
     },
     tickLabels: {
       type: 'outer',
