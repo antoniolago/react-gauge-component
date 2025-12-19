@@ -281,13 +281,24 @@ export const addValueText = (gauge: Gauge) => {
   x += valueLabel.offsetX ?? 0;
   y += valueLabel.offsetY ?? 0;
   
+  // Check if animateValue is enabled and animation will occur
+  // If so, show the starting value (prevValue) instead of target value to prevent flicker
+  const shouldAnimate = gauge.props.pointer?.animate !== false;
+  const animateValue = valueLabel.animateValue === true;
+  const minValue = gauge.props.minValue as number;
+  
   // Handle multi-pointer mode
   if (isMultiPointer) {
     if (multiPointerDisplay === 'all') {
-      addMultiPointerValueText(gauge, valueLabel, x, y);
+      addMultiPointerValueText(gauge, valueLabel, x, y, animateValue && shouldAnimate);
     } else {
       // 'primary' - show first pointer value
-      const primaryValue = pointers[0].value;
+      let primaryValue = pointers[0].value;
+      // Use previous value if animateValue is enabled to prevent flicker
+      if (animateValue && shouldAnimate) {
+        const prevPointerValue = gauge.prevProps?.current?.pointers?.[0]?.value;
+        primaryValue = prevPointerValue ?? minValue;
+      }
       addSingleValueText(gauge, valueLabel, primaryValue, x, y);
     }
     return;
@@ -295,6 +306,11 @@ export const addValueText = (gauge: Gauge) => {
   
   // Single pointer mode
   let value = gauge.props.value as number;
+  // Use previous value if animateValue is enabled to prevent flicker
+  if (animateValue && shouldAnimate) {
+    const prevValue = gauge.prevProps?.current?.value;
+    value = prevValue ?? minValue;
+  }
   addSingleValueText(gauge, valueLabel, value, x, y);
 };
 
@@ -350,13 +366,15 @@ const addMultiPointerValueText = (
   gauge: Gauge,
   valueLabel: ValueLabel,
   baseX: number,
-  baseY: number
+  baseY: number,
+  useStartValue: boolean = false
 ) => {
   const pointers = gauge.props.pointers;
   if (!pointers || pointers.length === 0) return;
   
   const maxDecimalDigits = valueLabel?.maxDecimalDigits;
   let valueFontSize = (valueLabel?.style?.fontSize || '35px') as string;
+  const minValue = gauge.props.minValue as number;
   
   // Calculate font size based on gauge dimensions
   let widthFactor = gauge.props.type == GaugeType.Radial ? 0.003 : 0.003;
@@ -373,7 +391,13 @@ const addMultiPointerValueText = (
   let currentY = baseY - totalHeight / 2 + lineHeight / 2;
   
   pointers.forEach((pointer, index) => {
-    const floatValue = utils.floatingNumber(pointer.value, maxDecimalDigits);
+    // Use previous value if useStartValue is true (for animateValue feature)
+    let displayValue = pointer.value;
+    if (useStartValue) {
+      const prevPointerValue = gauge.prevProps?.current?.pointers?.[index]?.value;
+      displayValue = prevPointerValue ?? minValue;
+    }
+    const floatValue = utils.floatingNumber(displayValue, maxDecimalDigits);
     const arcColor = pointer.color || getArcDataByValue(pointer.value, gauge)?.color as string || "white";
     
     let text = '';

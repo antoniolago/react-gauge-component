@@ -123,6 +123,8 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const shouldInitChart = () => {
     const arcsPropsChanged = !shallowEqual(prevProps.current.arc, mergedProps.current.arc);
     const pointerPropsChanged = !shallowEqual(prevProps.current.pointer, mergedProps.current.pointer);
+    // Check multi-pointer array changes (important for multi-pointer animation)
+    const pointersArrayChanged = !shallowEqual(prevProps.current.pointers, mergedProps.current.pointers);
     const labelsPropsChanged = !shallowEqual(prevProps.current.labels, mergedProps.current.labels);
     const typeChanged = prevProps.current.type !== mergedProps.current.type;
     const valueChanged = prevProps.current.value !== mergedProps.current.value;
@@ -134,7 +136,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     const anglesChanged = prevProps.current.startAngle !== mergedProps.current.startAngle || 
                           prevProps.current.endAngle !== mergedProps.current.endAngle;
     
-    return arcsPropsChanged || pointerPropsChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
+    return arcsPropsChanged || pointerPropsChanged || pointersArrayChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
   };
 
   const isHeightProvidedByUser = () => mergedProps.current.style?.height !== undefined;

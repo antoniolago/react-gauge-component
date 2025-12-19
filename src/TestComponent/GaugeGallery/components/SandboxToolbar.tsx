@@ -622,6 +622,12 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 </span>
                 <button
                   onClick={() => {
+                    const isFirstMultiPointer = !cfg?.pointers || cfg.pointers.length === 0;
+                    const min = cfg?.minValue ?? 0;
+                    const max = cfg?.maxValue ?? 100;
+                    
+                    // When creating first multi-pointer setup, use current value for first pointer
+                    // and add offset for the new pointer so they don't overlap
                     const currentPointers = cfg?.pointers || [{ 
                       value: value, 
                       type: cfg?.pointer?.type || 'needle',
@@ -632,17 +638,29 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                       strokeWidth: cfg?.pointer?.strokeWidth ?? 0,
                       strokeColor: cfg?.pointer?.strokeColor,
                     }];
-                    const min = cfg?.minValue ?? 0;
-                    const max = cfg?.maxValue ?? 100;
-                    // Copy last pointer's config but with new color and value
+                    
+                    // Copy last pointer's config but with new color and different value
                     const lastPointer = currentPointers[currentPointers.length - 1];
+                    // Calculate new value with offset to avoid overlap
+                    const range = max - min;
+                    const offset = range * 0.2; // 20% offset from last pointer
+                    let newValue = lastPointer.value + offset;
+                    // Wrap around if exceeds max
+                    if (newValue > max) {
+                      newValue = min + (newValue - max);
+                    }
+                    
                     const newPointers = [...currentPointers, { 
                       ...lastPointer,
-                      value: min + (max - min) * (0.3 + currentPointers.length * 0.2), 
+                      value: newValue, 
                       color: ['#5BE12C', '#F5CD19', '#EA4228', '#60a5fa', '#a855f7'][currentPointers.length % 5],
                       label: undefined, // Clear label so it auto-generates
                     }];
                     onConfigChange({ ...config, pointers: newPointers, pointer: undefined });
+                    // Force remount when switching to multi-pointer mode for the first time
+                    if (isFirstMultiPointer && onForceRemount) {
+                      setTimeout(() => onForceRemount(), 0);
+                    }
                   }}
                   style={{ ...styles.toolBtn, padding: '4px 8px', fontSize: '0.7rem' }}
                   type="button"
@@ -738,14 +756,44 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 </label></span>
                 <button 
                   onClick={() => {
-                    const currentValue = value;
                     const minValue = cfg?.minValue ?? 0;
-                    onValueChange(minValue);
+                    const isMultiPointer = Array.isArray(cfg?.pointers) && cfg.pointers.length > 0;
+                    
+                    // Capture current values before any changes
+                    const currentValue = value;
+                    const currentPointers = isMultiPointer 
+                      ? cfg.pointers.map((p: PointerWithValue) => ({ ...p })) 
+                      : null;
+                    
                     if (onForceRemount) {
-                      onForceRemount();
-                      setTimeout(() => onValueChange(currentValue), 100);
+                      // For multi-pointer mode, reset all pointers to min
+                      if (isMultiPointer && currentPointers) {
+                        const resetPointers = currentPointers.map((p: PointerWithValue) => ({ ...p, value: minValue }));
+                        onConfigChange({ ...config, pointers: resetPointers });
+                      }
+                      onValueChange(minValue);
+                      
+                      // Force remount after state updates are processed
+                      setTimeout(() => {
+                        onForceRemount();
+                        // Restore original values after remount to trigger animation
+                        // Use longer delay to ensure component has fully mounted
+                        setTimeout(() => {
+                          if (isMultiPointer && currentPointers) {
+                            onConfigChange({ ...config, pointers: currentPointers });
+                          }
+                          onValueChange(currentValue);
+                        }, 100);
+                      }, 16); // Wait one frame for state to settle
                     } else {
-                      setTimeout(() => onValueChange(currentValue), 50);
+                      // Without remount, just toggle values
+                      if (isMultiPointer && currentPointers) {
+                        const resetPointers = currentPointers.map((p: PointerWithValue) => ({ ...p, value: minValue }));
+                        onConfigChange({ ...config, pointers: resetPointers });
+                        setTimeout(() => onConfigChange({ ...config, pointers: currentPointers }), 100);
+                      }
+                      onValueChange(minValue);
+                      setTimeout(() => onValueChange(currentValue), 100);
                     }
                   }} 
                   style={{ ...styles.toolBtn, padding: '4px 10px', marginLeft: 'auto', fontSize: '0.7rem' }} 

@@ -29,6 +29,9 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     if ((updatedValue || (pointersChanged && !otherLayoutChanged)) && !isFirstRender) {
         // Clear and redraw pointers for pointer config changes
         if (pointersChanged) {
+            // Clear both single and multi pointer elements to prevent phantom pointers
+            // when switching between modes or updating pointer configs
+            pointerHooks.clearPointerElement(gauge);
             pointerHooks.clearMultiPointers(gauge);
         }
         renderChart(gauge, false);
@@ -51,7 +54,11 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         // Mark old groups for removal after new content is ready
         gauge.svg.current.selectAll("g.gauge-content").classed("gauge-content-old", true);
         // Create new groups (will be positioned correctly after measurement)
-        gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
+        // Start hidden to prevent flash at (0,0) before transform is applied
+        gauge.g.current = gauge.svg.current.append("g")
+            .attr("class", "gauge-content")
+            .style("visibility", "hidden")
+            .style("opacity", "0");
         gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
     } else {
         // First render or no existing SVG - create new
