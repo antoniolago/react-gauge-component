@@ -65,6 +65,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const pendingResize = useRef<boolean>(false);
   const multiPointers = useRef<MultiPointerRef[]>([]);
   const multiPointerAnimationTriggered = useRef<boolean[]>([]);
+  const hasBeenInitialized = useRef<boolean>(false); // Track if component has ever been initialized
   
   // State to trigger re-render when custom content needs to be rendered
   const [customContentNode, setCustomContentNode] = useState<HTMLElement | null>(null);
@@ -119,23 +120,42 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   };
 
   // Determine if chart should be re-initialized based on prop changes
-  // IMPORTANT: Only trigger on RELIABLE changes (primitive values)
-  // shallowEqual on objects (arc, pointer, labels) gives false positives when
-  // parent components create new object references on each render
+  // IMPORTANT: Use JSON.stringify for deep comparison of objects to detect ACTUAL changes
+  // shallowEqual gives false positives when parent creates new object references each render
   const shouldInitChart = () => {
+    // Use JSON.stringify for deep comparison of complex objects
+    const arcsPropsChanged = JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc);
+    const pointerPropsChanged = JSON.stringify(prevProps.current.pointer) !== JSON.stringify(mergedProps.current.pointer);
+    const pointersArrayChanged = JSON.stringify(prevProps.current.pointers) !== JSON.stringify(mergedProps.current.pointers);
+    const labelsPropsChanged = JSON.stringify(prevProps.current.labels) !== JSON.stringify(mergedProps.current.labels);
+    
+    // Primitive value comparisons
     const typeChanged = prevProps.current.type !== mergedProps.current.type;
     const valueChanged = prevProps.current.value !== mergedProps.current.value;
     const minValueChanged = prevProps.current.minValue !== mergedProps.current.minValue;
     const maxValueChanged = prevProps.current.maxValue !== mergedProps.current.maxValue;
-    // Check if onValueChange callback changed (for drag interaction toggle)
     const interactionChanged = (prevProps.current.onValueChange !== undefined) !== (mergedProps.current.onValueChange !== undefined);
-    // Check if custom angles changed
     const anglesChanged = prevProps.current.startAngle !== mergedProps.current.startAngle || 
                           prevProps.current.endAngle !== mergedProps.current.endAngle;
     
-    // Only trigger re-init for reliable primitive value changes
-    // Arc/pointer/labels config changes require component remount
-    return typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
+    const result = arcsPropsChanged || pointerPropsChanged || pointersArrayChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
+    
+    if (result) {
+      console.log('[shouldInitChart] TRIGGERED:', {
+        arcsPropsChanged,
+        pointerPropsChanged,
+        pointersArrayChanged,
+        labelsPropsChanged,
+        typeChanged,
+        valueChanged,
+        minValueChanged,
+        maxValueChanged,
+        interactionChanged,
+        anglesChanged
+      });
+    }
+    
+    return result;
   };
 
   const isHeightProvidedByUser = () => mergedProps.current.style?.height !== undefined;
@@ -144,19 +164,24 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   // Initialize and update chart on prop changes
   useLayoutEffect(() => {
     updateMergedProps();
-    isFirstRun.current = isEmptyObject(container.current);
+    
+    // Use dedicated flag instead of checking container content
+    // Container can appear "empty" after removing old content, but it's not first render
+    const isFirstRender = !hasBeenInitialized.current;
+    isFirstRun.current = isFirstRender;
     
     if (CONSTANTS.debugLogs) {
       console.log("isHeightProvidedByUser:", isHeightProvidedByUser());
       console.log("isHeightPresentInParentNode:", isHeightPresentInParentNode());
     }
     
-    if (isFirstRun.current) {
+    if (isFirstRender) {
       container.current = select(svgRef.current);
+      hasBeenInitialized.current = true;
     }
     
     if (shouldInitChart()) {
-      chartHooks.initChart(gauge, isFirstRun.current);
+      chartHooks.initChart(gauge, isFirstRender);
     }
     
     gauge.prevProps.current = mergedProps.current;

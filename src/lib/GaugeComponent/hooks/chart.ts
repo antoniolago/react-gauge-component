@@ -14,14 +14,27 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     const { angles } = gauge.dimensions.current;
     
     let updatedValue = gauge.prevProps.current.value !== gauge.props.value;
+    
+    // Count existing elements for debugging
+    const existingSvg = gauge.container.current.select("svg");
+    const existingGaugeContents = existingSvg.empty() ? 0 : existingSvg.selectAll("g.gauge-content").size();
+    const existingDoughnuts = existingSvg.empty() ? 0 : existingSvg.selectAll("g.doughnut").size();
+    
+    console.log('[initChart] ENTRY:', {
+        isFirstRender,
+        updatedValue,
+        existingGaugeContents,
+        existingDoughnuts,
+        hasSvg: !existingSvg.empty()
+    });
+    
     if (updatedValue && !isFirstRender) {
+        console.log('[initChart] FAST PATH - value only, no new groups created');
         renderChart(gauge, false);
         return;
     }
     
     // Invalidate measured bounds when layout-affecting props change
-    // This forces a proper two-pass recalculation for accurate sizing
-    // Uses shallowEqual instead of JSON.stringify for better performance
     const layoutPropsChanged = 
         !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc) ||
         !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer) ||
@@ -34,16 +47,23 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     }
     
     // For subsequent renders (not first), reuse the existing SVG and create new groups
-    // IMPORTANT: Don't clear old content yet - keep it visible until new layout is ready
-    const existingSvg = gauge.container.current.select("svg");
     if (!existingSvg.empty() && !isFirstRender) {
+        console.log('[initChart] SUBSEQUENT RENDER - REMOVING old content, creating fresh groups');
         gauge.svg.current = existingSvg;
-        // Mark old groups for removal after new content is ready
-        gauge.svg.current.selectAll("g.gauge-content").classed("gauge-content-old", true);
-        // Create new groups (will be positioned correctly after measurement)
+        // CRITICAL FIX: Remove old content IMMEDIATELY to prevent duplicate gauges
+        // The two-pass system was keeping old content visible, causing duplicates
+        gauge.svg.current.selectAll("g.gauge-content").remove();
+        gauge.svg.current.selectAll("g.gauge-content-old").remove();
+        // Create fresh groups
         gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
         gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
+        
+        // Log after creation
+        const afterGaugeContents = gauge.svg.current.selectAll("g.gauge-content").size();
+        const afterDoughnuts = gauge.svg.current.selectAll("g.doughnut").size();
+        console.log('[initChart] AFTER creating fresh groups:', { afterGaugeContents, afterDoughnuts });
     } else {
+        console.log('[initChart] FIRST RENDER - creating fresh SVG and groups');
         // First render or no existing SVG - create new
         gauge.container.current.select("svg").remove();
         gauge.svg.current = gauge.container.current.append("svg")
@@ -156,7 +176,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             // Skip to showing the result directly (no need for pass 2)
             gauge.renderPass!.current = 2;
             // Remove old content immediately since we're going straight to final render
+            const removedCount = gauge.svg.current.selectAll("g.gauge-content-old").size();
             gauge.svg.current.selectAll("g.gauge-content-old").remove();
+            console.log('[renderChart] Removed gauge-content-old:', removedCount);
         } else if (currentPass === 1) {
             // PASS 1: First render - use tight layout with minimal padding
             // This will likely clip some content, but we'll measure and fix it
@@ -392,7 +414,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                     renderChart(gauge, true);
                     
                     // Remove old content after new content is rendered
-                    gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                    const removedCount = gauge.svg.current.selectAll("g.gauge-content-old").size();
+            gauge.svg.current.selectAll("g.gauge-content-old").remove();
+            console.log('[renderChart] Removed gauge-content-old:', removedCount);
                     
                     // Reset for next resize
                     gauge.renderPass!.current = 1;
@@ -412,7 +436,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                         gauge.g.current
                             ?.style("visibility", "visible")
                             .style("opacity", "1");
-                        gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                        const removedCount = gauge.svg.current.selectAll("g.gauge-content-old").size();
+            gauge.svg.current.selectAll("g.gauge-content-old").remove();
+            console.log('[renderChart] Removed gauge-content-old:', removedCount);
                         gauge.renderPass!.current = 1;
                     });
                 }
@@ -428,7 +454,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                     gauge.g.current
                         ?.style("visibility", "visible")
                         .style("opacity", "1");
-                    gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                    const removedCount = gauge.svg.current.selectAll("g.gauge-content-old").size();
+            gauge.svg.current.selectAll("g.gauge-content-old").remove();
+            console.log('[renderChart] Removed gauge-content-old:', removedCount);
                     gauge.renderPass!.current = 1;
                 });
             }
