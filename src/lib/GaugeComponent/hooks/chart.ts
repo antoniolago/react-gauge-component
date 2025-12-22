@@ -34,6 +34,16 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         return;
     }
     
+    // CRITICAL: Skip full re-init if animation is in progress
+    // This prevents creating duplicate gauge-content groups during animations
+    if (gauge.animationInProgress?.current && !isFirstRender) {
+        console.log('[initChart] SKIPPING - animation in progress, will re-init after animation completes');
+        if (gauge.pendingResize) {
+            gauge.pendingResize.current = true;
+        }
+        return;
+    }
+    
     // Invalidate measured bounds when layout-affecting props change
     const layoutPropsChanged = 
         !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc) ||
