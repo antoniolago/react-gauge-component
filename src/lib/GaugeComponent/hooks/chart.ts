@@ -13,34 +13,21 @@ import { GaugeLayout } from "./coordinateSystem";
 export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     const { angles } = gauge.dimensions.current;
     
-    // Check for value changes only (single pointer mode) - fast path for animation
     let updatedValue = gauge.prevProps.current.value !== gauge.props.value;
-    
-    // Check if only pointers changed (not other layout props)
-    const pointersChanged = !shallowEqual(gauge.prevProps.current.pointers, gauge.props.pointers);
-    const otherLayoutChanged = 
-        !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc) ||
-        !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer) ||
-        !shallowEqual(gauge.prevProps.current.labels, gauge.props.labels) ||
-        gauge.prevProps.current.type !== gauge.props.type ||
-        gauge.prevProps.current.marginInPercent !== gauge.props.marginInPercent;
-    
-    // For value-only or pointers-only changes, just re-render without full layout recalc
-    if ((updatedValue || (pointersChanged && !otherLayoutChanged)) && !isFirstRender) {
-        // Clear and redraw pointers for pointer config changes
-        if (pointersChanged) {
-            // Clear both single and multi pointer elements to prevent phantom pointers
-            // when switching between modes or updating pointer configs
-            pointerHooks.clearPointerElement(gauge);
-            pointerHooks.clearMultiPointers(gauge);
-        }
+    if (updatedValue && !isFirstRender) {
         renderChart(gauge, false);
         return;
     }
     
     // Invalidate measured bounds when layout-affecting props change
     // This forces a proper two-pass recalculation for accurate sizing
-    const layoutPropsChanged = otherLayoutChanged || pointersChanged;
+    // Uses shallowEqual instead of JSON.stringify for better performance
+    const layoutPropsChanged = 
+        !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc) ||
+        !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer) ||
+        !shallowEqual(gauge.prevProps.current.labels, gauge.props.labels) ||
+        gauge.prevProps.current.type !== gauge.props.type ||
+        gauge.prevProps.current.marginInPercent !== gauge.props.marginInPercent;
     
     if (layoutPropsChanged && gauge.measuredBounds) {
         gauge.measuredBounds.current = null;
@@ -54,11 +41,7 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         // Mark old groups for removal after new content is ready
         gauge.svg.current.selectAll("g.gauge-content").classed("gauge-content-old", true);
         // Create new groups (will be positioned correctly after measurement)
-        // Start hidden to prevent flash at (0,0) before transform is applied
-        gauge.g.current = gauge.svg.current.append("g")
-            .attr("class", "gauge-content")
-            .style("visibility", "hidden")
-            .style("opacity", "0");
+        gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
         gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
     } else {
         // First render or no existing SVG - create new
@@ -455,40 +438,24 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         // Uses shallowEqual instead of JSON.stringify for better performance
         let arcsPropsChanged = !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc);
         let pointerPropsChanged = !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer);
-        let pointersChanged = !shallowEqual(gauge.prevProps.current.pointers, gauge.props.pointers);
         let valueChanged = gauge.prevProps.current.value !== gauge.props.value;
         let ticksChanged = !shallowEqual(gauge.prevProps.current.labels?.tickLabels, labels.tickLabels);
         let valueLabelChanged = !shallowEqual(gauge.prevProps.current.labels?.valueLabel, labels.valueLabel);
-        
-        // Check if in multi-pointer mode
-        const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
-        
-        let shouldRedrawArcs = arcsPropsChanged || (isMultiPointer && pointersChanged);
+        let shouldRedrawArcs = arcsPropsChanged;
         if (shouldRedrawArcs) {
             arcHooks.clearArcs(gauge);
             arcHooks.setArcData(gauge);
             arcHooks.setupArcs(gauge, resize);
         }
-        
-        // Handle pointer updates
-        if (isMultiPointer) {
-            // Multi-pointer mode - redraw if pointers changed
-            if (pointersChanged || valueChanged) {
-                pointerHooks.drawMultiPointers(gauge, resize);
-            }
-        } else {
-            // Single pointer mode
-            var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
-            if (shouldRedrawPointer) {
-                pointerHooks.drawPointer(gauge);
-            }
+        var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
+        if (shouldRedrawPointer) {
+            pointerHooks.drawPointer(gauge);
         }
-        
         if (arcsPropsChanged || ticksChanged) {
             labelsHooks.clearTicks(gauge);
             labelsHooks.setupTicks(gauge);
         }
-        if (valueChanged || valueLabelChanged || pointersChanged) {
+        if (valueChanged || valueLabelChanged) {
             labelsHooks.clearValueLabel(gauge);
             labelsHooks.setupValueLabel(gauge);
         }

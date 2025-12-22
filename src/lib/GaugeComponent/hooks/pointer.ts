@@ -520,26 +520,12 @@ export const getValueFromPosition = (gauge: Gauge, clientX: number, clientY: num
 };
 
 /**
- * Check if the user is on a mobile device
- */
-const isMobileDevice = (): boolean => {
-    if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-           ('ontouchstart' in window) ||
-           (navigator.maxTouchPoints > 0);
-};
-
-/**
  * Set up drag behavior for the pointer element
  * This allows users to grab and drag the pointer to set values
- * Disabled on mobile devices to prevent scrolling issues
  */
 export const setupPointerDrag = (gauge: Gauge) => {
     const onValueChange = gauge.props.onValueChange;
     if (!onValueChange) return; // Only enable drag if callback is provided
-    
-    // Disable drag on mobile devices to prevent scrolling issues
-    if (isMobileDevice()) return;
     
     const pointerElement = gauge.pointer.current.element;
     if (!pointerElement) return;
@@ -607,16 +593,12 @@ export const setupPointerDrag = (gauge: Gauge) => {
 /**
  * Set up click-to-set behavior on the arc
  * Allows users to click anywhere on the arc to set the value
- * Disabled on mobile devices to prevent scrolling issues
  */
 export const setupArcClick = (gauge: Gauge) => {
     // Note: Click behavior is now handled separately from drag
     // The arc click will set value on single click (no drag)
     const onValueChange = gauge.props.onValueChange;
     if (!onValueChange) return;
-    
-    // Disable on mobile devices to prevent scrolling issues
-    if (isMobileDevice()) return;
     
     const arcElement = gauge.doughnut.current;
     if (!arcElement) return;
@@ -742,14 +724,8 @@ const drawSingleMultiPointer = (
         prevColor: ""
     };
     
-    // Init pointer if: first animation, resize, OR element doesn't exist (was cleared)
-    const elementMissing = !pointerRef.element || pointerRef.element.empty?.();
-    const shouldInitPointer = isFirstAnimation || elementMissing || (resize && pointer.animate !== false);
-    
-    // Determine if we should start at current position or previous position
-    // Use current position only when resizing (not animating) AND not first animation
-    // When element is missing due to clear, we want to start at PREVIOUS position to animate from there
-    const useCurrentPercent = resize && !isFirstAnimation && !elementMissing;
+    const useCurrentPercent = resize && !isFirstAnimation;
+    const shouldInitPointer = isFirstAnimation || (resize && pointer.animate !== false);
     
     // Create or update pointer element
     if (shouldInitPointer) {
@@ -916,14 +892,6 @@ const animateMultiPointer = (
                 if (Math.abs(progress - pointerRef.context.prevProgress) >= threshold || percentOfPercent >= 1) {
                     updateMultiPointer(pointerRef, pointer, progress, gauge, index);
                     pointerRef.context.prevProgress = progress;
-                    
-                    // Update value label in real-time if animateValue is enabled (for primary pointer)
-                    if (index === 0 && gauge.props.labels?.valueLabel?.animateValue) {
-                        const minValue = gauge.props.minValue as number;
-                        const maxValue = gauge.props.maxValue as number;
-                        const currentValue = minValue + progress * (maxValue - minValue);
-                        labelsHooks.updateValueLabelText(gauge, currentValue);
-                    }
                 }
             };
         })
@@ -1105,7 +1073,6 @@ const calculatePointerTipPositionForConfig = (
 
 /**
  * Setup drag behavior for a multi-pointer
- * Disabled on mobile devices to prevent scrolling issues
  */
 const setupMultiPointerDrag = (
     gauge: Gauge,
@@ -1115,9 +1082,6 @@ const setupMultiPointerDrag = (
 ) => {
     const onPointerChange = gauge.props.onPointerChange;
     if (!onPointerChange) return;
-    
-    // Disable drag on mobile devices to prevent scrolling issues
-    if (isMobileDevice()) return;
     
     const dragBehavior = drag()
         .on("start", function() {

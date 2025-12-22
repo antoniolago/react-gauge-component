@@ -119,13 +119,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   };
 
   // Determine if chart should be re-initialized based on prop changes
-  // Uses shallowEqual instead of JSON.stringify for better performance
+  // IMPORTANT: Only trigger on RELIABLE changes (primitive values)
+  // shallowEqual on objects (arc, pointer, labels) gives false positives when
+  // parent components create new object references on each render
   const shouldInitChart = () => {
-    const arcsPropsChanged = !shallowEqual(prevProps.current.arc, mergedProps.current.arc);
-    const pointerPropsChanged = !shallowEqual(prevProps.current.pointer, mergedProps.current.pointer);
-    // Check multi-pointer array changes (important for multi-pointer animation)
-    const pointersArrayChanged = !shallowEqual(prevProps.current.pointers, mergedProps.current.pointers);
-    const labelsPropsChanged = !shallowEqual(prevProps.current.labels, mergedProps.current.labels);
     const typeChanged = prevProps.current.type !== mergedProps.current.type;
     const valueChanged = prevProps.current.value !== mergedProps.current.value;
     const minValueChanged = prevProps.current.minValue !== mergedProps.current.minValue;
@@ -136,7 +133,9 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     const anglesChanged = prevProps.current.startAngle !== mergedProps.current.startAngle || 
                           prevProps.current.endAngle !== mergedProps.current.endAngle;
     
-    return arcsPropsChanged || pointerPropsChanged || pointersArrayChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
+    // Only trigger re-init for reliable primitive value changes
+    // Arc/pointer/labels config changes require component remount
+    return typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
   };
 
   const isHeightProvidedByUser = () => mergedProps.current.style?.height !== undefined;
