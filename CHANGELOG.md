@@ -7,6 +7,35 @@
 
 ### New Features
   - Now grafana type supports pointers. #37
+  ```
+  <GaugeComponent
+  type="grafana"
+  minValue={0}
+  maxValue={100}
+  value={50}
+  pointers={[
+      {
+        value: 50,
+        type: "needle",
+        baseColor: "#ffffff",
+        length: 0.87,
+        width: 24,
+        strokeWidth: 2,
+        strokeColor: "#000000"
+      },
+      {
+        value: 30,
+        type: "needle",
+        color: "#F5CD19",
+        baseColor: "#ffffff",
+        length: 0.87,
+        width: 24,
+        strokeWidth: 2,
+        strokeColor: "#000000"
+      }
+    ]}
+/>
+  ```
   - Added support for multiple pointers. #48
   - Added support for live editor. #25
   - Added a lot of unit tests #24
