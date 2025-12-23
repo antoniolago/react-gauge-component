@@ -68,7 +68,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const hasBeenInitialized = useRef<boolean>(false); // Track if component has ever been initialized
   
   // State to trigger re-render when custom content needs to be rendered
-  const [customContentNode, setCustomContentNode] = useState<HTMLElement | null>(null);
+  const [customContentItems, setCustomContentItems] = useState<any[]>([]);
 
   // Use a ref for gauge so the ResizeObserver always has access to current props
   const gaugeRef = useRef<Gauge | null>(null);
@@ -171,10 +171,20 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     
     // Check if custom content needs to be rendered via React portal
     const customContentConfig = customContent.current as any;
-    if (customContentConfig?.domNode) {
-      setCustomContentNode(customContentConfig.domNode);
+    if (Array.isArray(customContentConfig?.items) && customContentConfig.items.length > 0) {
+      setCustomContentItems(customContentConfig.items);
+    } else if (customContentConfig?.domNode && customContentConfig?.renderContent) {
+      // Backward compatible single-item config
+      setCustomContentItems([
+        {
+          domNode: customContentConfig.domNode,
+          renderContent: customContentConfig.renderContent,
+          value: customContentConfig.value,
+          arcColor: customContentConfig.arcColor,
+        },
+      ]);
     } else {
-      setCustomContentNode(null);
+      setCustomContentItems([]);
     }
   }, [props]);
 
@@ -239,14 +249,20 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
 
   // Render custom content via React portal if configured
   const renderCustomContent = () => {
-    if (!customContentNode) return null;
-    
-    const config = customContent.current as CustomContentConfig;
-    if (!config?.renderContent) return null;
-    
-    return createPortal(
-      config.renderContent(config.value, config.arcColor),
-      customContentNode
+    if (!customContentItems || customContentItems.length === 0) return null;
+
+    return (
+      <>
+        {customContentItems
+          .filter((it) => it?.domNode && it?.renderContent)
+          .map((it, idx) =>
+            createPortal(
+              it.renderContent(it.value, it.arcColor),
+              it.domNode,
+              `gauge-custom-content-${idx}`
+            )
+          )}
+      </>
     );
   };
 

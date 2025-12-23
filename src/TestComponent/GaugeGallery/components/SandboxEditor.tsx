@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle, useRef } from 'react';
-import { Copy, Check, Shuffle, ClipboardPaste } from 'lucide-react';
+import { Copy, Check, Shuffle, ClipboardPaste, Sliders } from 'lucide-react';
 import GaugeComponent from '../../../lib';
 import { SandboxToolbar } from './SandboxToolbar';
 import { styles, createStyles } from '../styles';
@@ -31,7 +31,7 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   const [gaugeAlign, setGaugeAlign] = useState<'left' | 'center' | 'right'>('center');
   const [copied, setCopied] = useState(false);
   const [key, setKey] = useState(0);
-  const [interactionEnabled, setInteractionEnabled] = useState(false);
+  const [interactionEnabled, setInteractionEnabled] = useState(true);
   const [isHorizontalLayout, setIsHorizontalLayout] = useState(window.innerWidth >= LAYOUT_BREAKPOINT);
 
   // Handle responsive layout
@@ -327,6 +327,100 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                 pointerEvents: 'none',
                 background: 'linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.3) 50%)',
               }} />
+            </div>
+            
+            {/* Value & Range - Below gauge */}
+            <div style={{
+              width: sandboxWidth,
+              maxWidth: '100%',
+              marginTop: '12px',
+              padding: '8px 12px',
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <Sliders size={14} style={{ opacity: 0.6 }} />
+                <input type="range" min={config?.minValue ?? 0} max={config?.maxValue ?? 100} value={value} 
+                  onChange={(e) => { setValue(Number(e.target.value)); if (autoAnimate) setAutoAnimate(false); }} 
+                  style={{ ...styles.slider, flex: 1, minWidth: '100px' }} step="0.1" />
+                <span style={{ fontWeight: 700, color: '#60a5fa', minWidth: '45px', fontSize: '0.85rem' }}>{value.toFixed(1)}</span>
+                <label style={{ ...styles.inlineLabel, fontSize: '0.75rem' }}>
+                  <input type="checkbox" checked={autoAnimate} onChange={(e) => setAutoAnimate(e.target.checked)} style={styles.inlineCheckbox} />
+                  Auto
+                </label>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>Min</span>
+                <input type="number" value={config?.minValue ?? 0} 
+                  onChange={(e) => {
+                    const newMin = Number(e.target.value);
+                    setConfig({ ...config, minValue: newMin });
+                    if (value < newMin) setValue(newMin);
+                  }}
+                  style={{ ...styles.toolBtn, width: '55px', padding: '3px 5px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)', fontSize: '0.75rem' }}
+                />
+                <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>Max</span>
+                <input type="number" value={config?.maxValue ?? 100} 
+                  onChange={(e) => {
+                    const newMax = Number(e.target.value);
+                    setConfig({ ...config, maxValue: newMax });
+                    if (value > newMax) setValue(newMax);
+                  }}
+                  style={{ ...styles.toolBtn, width: '55px', padding: '3px 5px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)', fontSize: '0.75rem' }}
+                />
+              </div>
+            </div>
+            
+            {/* Type selector - Below Value & Range */}
+            <div style={{
+              width: sandboxWidth,
+              maxWidth: '100%',
+              marginTop: '8px',
+              display: 'flex',
+              gap: '8px',
+            }}>
+              {(['semicircle', 'radial', 'grafana'] as const).map((gaugeType) => (
+                <button 
+                  key={gaugeType}
+                  onClick={() => setConfig({ ...config, type: gaugeType })} 
+                  style={{ 
+                    flex: 1,
+                    background: config?.type === gaugeType ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    border: config?.type === gaugeType ? '2px solid #3b82f6' : '2px solid transparent',
+                    borderRadius: '8px',
+                    padding: '6px 4px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    transition: 'all 0.15s ease',
+                    minWidth: 0,
+                  }} 
+                  title={gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)} 
+                  type="button"
+                >
+                  <div style={{ width: '100%', height: '40px', pointerEvents: 'none' }}>
+                    <GaugeComponent 
+                      type={gaugeType}
+                      arc={{ width: 0.2, subArcs: [{ limit: 40, color: '#5BE12C' }, { limit: 70, color: '#F5CD19' }, { color: '#EA4228' }] }}
+                      pointer={{ type: 'needle', color: '#fff', length: 0.7, width: 8 }}
+                      labels={{ valueLabel: { hide: true }, tickLabels: { hideMinMax: true } }}
+                      value={50} 
+                    />
+                  </div>
+                  <span style={{ 
+                    fontSize: '0.65rem', 
+                    fontWeight: config?.type === gaugeType ? 600 : 400,
+                    color: config?.type === gaugeType ? '#60a5fa' : 'rgba(255,255,255,0.6)',
+                    marginTop: '2px',
+                  }}>
+                    {gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
           

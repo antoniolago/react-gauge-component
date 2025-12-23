@@ -8,7 +8,37 @@ import { GaugeType } from '../types/GaugeComponentProps';
 import { getArcDataByValue, getCoordByValue, getEffectiveAngles } from './arc';
 import { Labels, ValueLabel } from '../types/Labels';
 import { Arc, SubArc } from '../types/Arc';
+
+const registerCustomContentItem = (
+  gauge: Gauge,
+  domNode: HTMLElement,
+  renderContent: (value: number, arcColor: string) => React.ReactNode,
+  value: number,
+  arcColor: string
+) => {
+  if (!gauge.customContent) {
+    gauge.customContent = { current: {} };
+  }
+
+  const current: any = gauge.customContent.current as any;
+  if (!Array.isArray(current.items)) {
+    current.items = [];
+  }
+
+  current.items.push({ domNode, renderContent, value, arcColor });
+
+  // Backward compatibility: keep single-node fields in sync with the most recent item
+  current.domNode = domNode;
+  current.renderContent = renderContent;
+  current.value = value;
+  current.arcColor = arcColor;
+};
 export const setupLabels = (gauge: Gauge) => {
+  // Reset custom content items for this render pass (value label + tick labels)
+  if (gauge.customContent?.current) {
+    const cc: any = gauge.customContent.current as any;
+    cc.items = [];
+  }
   setupValueLabel(gauge);
   setupTicks(gauge);
 }
@@ -20,40 +50,110 @@ export const setupTicks = (gauge: Gauge) => {
   let labels = gauge.props.labels as Labels;
   let minValue = gauge.props.minValue as number;
   let maxValue = gauge.props.maxValue as number;
+
+  // Pre-compute radial offsets for auto-spacing closely-spaced ticks
+  const autoSpaceOffsets = computeAutoSpaceOffsets(gauge);
+
+  let tickRenderIndex = 0;
   if (CONSTANTS.debugTicksRadius) {
     for (let index = 0; index < maxValue; index++) {
       let indexTick = mapTick(index, gauge);
-      addTick(indexTick, gauge);
+      addTick(indexTick, gauge, tickRenderIndex++);
     }
   } else if (!labels.tickLabels?.hideMinMax) {
     let alreadyHaveMinValueTick = labels.tickLabels?.ticks?.some((tick: Tick) => tick.value == minValue);
     if (!alreadyHaveMinValueTick) {
       //Add min value tick
       let minValueTick = mapTick(minValue, gauge);
-      addTick(minValueTick, gauge);
+      addTick(minValueTick, gauge, tickRenderIndex++);
     }
     let alreadyHaveMaxValueTick = labels.tickLabels?.ticks?.some((tick: Tick) => tick.value == maxValue);
     if (!alreadyHaveMaxValueTick) {
       // //Add max value tick
       let maxValueTick = mapTick(maxValue, gauge);
-      addTick(maxValueTick, gauge);
+      addTick(maxValueTick, gauge, tickRenderIndex++);
     }
   }
   if (labels.tickLabels?.ticks?.length as number > 0) {
     labels.tickLabels?.ticks?.forEach((tick: Tick) => {
-      addTick(tick, gauge);
+      // Attach auto-space offset if computed
+      const tickValue = tick.value as number;
+      if (autoSpaceOffsets.has(tickValue)) {
+        (tick as any).__autoSpaceOffset = autoSpaceOffsets.get(tickValue);
+      }
+      addTick(tick, gauge, tickRenderIndex++);
     });
   }
-  addArcTicks(gauge);
+  addArcTicks(gauge, () => tickRenderIndex++);
 }
 
-export const addArcTicks = (gauge: Gauge) => {
+export const addArcTicks = (gauge: Gauge, nextIndex?: () => number) => {
   gauge.arcData.current?.map((subArc: SubArc) => {
     if (subArc.showTick) return subArc.limit;
   }).forEach((tickValue: any) => {
-    if (tickValue) addTick(mapTick(tickValue, gauge), gauge);
+    if (tickValue) addTick(mapTick(tickValue, gauge), gauge, nextIndex ? nextIndex() : undefined);
   });
 }
+
+/**
+ * Compute radial offsets for closely-spaced tick labels to prevent overlap.
+ * Returns a Map of tickValue -> offset direction (+1 = outward, -1 = inward).
+ */
+const computeAutoSpaceOffsets = (gauge: Gauge): Map<number, number> => {
+  const offsets = new Map<number, number>();
+  const labels = gauge.props.labels as Labels;
+  
+  // Only compute if autoSpaceTickLabels is enabled
+  if (!labels?.tickLabels?.autoSpaceTickLabels) {
+    return offsets;
+  }
+  
+  const minValue = gauge.props.minValue as number;
+  const maxValue = gauge.props.maxValue as number;
+  const range = maxValue - minValue;
+  if (range <= 0) return offsets;
+  
+  // Collect all tick values (from ticks array + min/max if not hidden)
+  const tickValues: number[] = [];
+  
+  if (!labels.tickLabels?.hideMinMax) {
+    const hasTicks = labels.tickLabels?.ticks || [];
+    if (!hasTicks.some(t => t.value === minValue)) tickValues.push(minValue);
+    if (!hasTicks.some(t => t.value === maxValue)) tickValues.push(maxValue);
+  }
+  
+  labels.tickLabels?.ticks?.forEach(tick => {
+    if (tick.value !== undefined) tickValues.push(tick.value);
+  });
+  
+  // Sort by value
+  tickValues.sort((a, b) => a - b);
+  
+  // Threshold: if two ticks are closer than 3% of range, they need spacing
+  const proximityThreshold = range * 0.03;
+  
+  // Detect clusters of close ticks and assign alternating offsets
+  for (let i = 0; i < tickValues.length - 1; i++) {
+    const current = tickValues[i];
+    const next = tickValues[i + 1];
+    const distance = next - current;
+    
+    if (distance < proximityThreshold) {
+      // These two are too close - assign angular offsets to shift them along the arc
+      // First tick: shift slightly counter-clockwise (-1)
+      // Second tick: shift slightly clockwise (+1)
+      if (!offsets.has(current)) {
+        offsets.set(current, -1);
+      }
+      if (!offsets.has(next)) {
+        offsets.set(next, 1);
+      }
+    }
+  }
+  
+  return offsets;
+};
+
 export const mapTick = (value: number, gauge: Gauge): Tick => {
   const { tickLabels } = gauge.props.labels as Labels;
   return {
@@ -181,14 +281,43 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   }
   
   let coords = getLabelCoordsByValue(tickValue, gauge, centerToArcLengthSubtract);
-  let tickValueStyle = tick.valueConfig?.style || (labels?.tickLabels?.defaultTickValueConfig?.style || {});
-  tickValueStyle = { ...tickValueStyle };
+  
+  // Apply auto-space angular offset for closely-spaced ticks
+  // This shifts the label position along the arc curve (not radially)
+  const autoSpaceOffset = (tick as any).__autoSpaceOffset as number | undefined;
+  if (typeof autoSpaceOffset === 'number') {
+    // Angular offset in degrees - shift along the arc
+    const angularOffsetDegrees = 4 * autoSpaceOffset;  // ~4 degrees per direction
+    const angleRad = (angle * Math.PI) / 180;
+    const offsetAngleRad = ((angle + angularOffsetDegrees) * Math.PI) / 180;
+    
+    // Calculate tangent direction and apply offset along the arc
+    const tangentX = -Math.sin(angleRad);
+    const tangentY = Math.cos(angleRad);
+    const offsetAmount = angularOffsetDegrees * 0.5 * scaleFactor;  // Scale with gauge size
+    
+    coords.x += tangentX * offsetAmount;
+    coords.y += tangentY * offsetAmount;
+  }
+  const defaultTickValueConfig = labels?.tickLabels?.defaultTickValueConfig || defaultTickLabels.defaultTickValueConfig;
+  const tickValueConfig = tick.valueConfig || defaultTickValueConfig;
+  // IMPORTANT: Merge styles so per-tick style overrides don't wipe defaults (e.g. empty {} -> black text)
+  const defaultStyle = defaultTickValueConfig?.style || {};
+  const tickOverrideStyle = tick.valueConfig?.style || {};
+  let tickValueStyle = { ...defaultStyle, ...tickOverrideStyle };
+
+  // If configured, allow tick labels to be rendered as custom React content
+  const arcColor = getArcDataByValue(tickValue, gauge)?.color as string || "white";
+  if (tickValueConfig?.renderContent) {
+    addCustomTickContent(gauge, tickValueConfig, tickValue, arcColor, coords.x, coords.y);
+    return;
+  }
   let text = '';
-  let maxDecimalDigits = tick.valueConfig?.maxDecimalDigits || labels?.tickLabels?.defaultTickValueConfig?.maxDecimalDigits;
+  let maxDecimalDigits = tick.valueConfig?.maxDecimalDigits || defaultTickValueConfig?.maxDecimalDigits;
   if (tick.valueConfig?.formatTextValue) {
     text = tick.valueConfig.formatTextValue(utils.floatingNumber(tickValue, maxDecimalDigits));
-  } else if (labels?.tickLabels?.defaultTickValueConfig?.formatTextValue) {
-    text = labels.tickLabels.defaultTickValueConfig.formatTextValue(utils.floatingNumber(tickValue, maxDecimalDigits));
+  } else if (defaultTickValueConfig?.formatTextValue) {
+    text = defaultTickValueConfig.formatTextValue(utils.floatingNumber(tickValue, maxDecimalDigits));
   } else if (gauge.props.minValue === 0 && gauge.props.maxValue === 100) {
     text = utils.floatingNumber(tickValue, maxDecimalDigits).toString();
     text += "%";
@@ -218,8 +347,10 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   tickValueStyle.textAnchor = tickAnchor as any;
   addText(text, coords.x, coords.y, gauge, tickValueStyle, CONSTANTS.tickValueClassname);
 }
-export const addTick = (tick: Tick, gauge: Gauge) => {
+export const addTick = (tick: Tick, gauge: Gauge, renderIndex?: number) => {
   const { labels } = gauge.props;
+  // Attach render index for staggering calculations without changing public API
+  (tick as any).__renderIndex = renderIndex;
   //Make validation for sequence of values respecting DEFAULT -> DEFAULT FROM USER -> SPECIFIC TICK VALUE
   var _shouldHideTickLine = shouldHideTickLine(tick, gauge);
   var _shouldHideTickValue = shouldHideTickValue(tick, gauge);
@@ -489,8 +620,45 @@ const addCustomValueContent = (
   
   // Get the DOM node and store it for React to render into
   const domNode = container.node();
-  if (domNode && gauge.customContent) {
-    (gauge.customContent.current as any).domNode = domNode;
+  if (domNode) {
+    registerCustomContentItem(gauge, domNode as any, valueLabel.renderContent!, value, arcColor);
+  }
+};
+
+const addCustomTickContent = (
+  gauge: Gauge,
+  tickValueConfig: any,
+  value: number,
+  arcColor: string,
+  x: number,
+  y: number
+) => {
+  const contentWidth = tickValueConfig.contentWidth || 60;
+  const contentHeight = tickValueConfig.contentHeight || 30;
+
+  const foreignObject = gauge.g.current
+    .append("foreignObject")
+    .attr("class", CONSTANTS.tickValueClassname)
+    .attr("x", x - contentWidth / 2)
+    .attr("y", y - contentHeight / 2)
+    .attr("width", contentWidth)
+    .attr("height", contentHeight)
+    .style("overflow", "visible");
+
+  const container = foreignObject
+    .append("xhtml:div")
+    .attr("class", "gauge-custom-tick-content")
+    .style("width", "100%")
+    .style("height", "100%")
+    .style("display", "flex")
+    .style("align-items", "center")
+    .style("justify-content", "center")
+    .style("overflow", "visible")
+    .style("pointer-events", "none");
+
+  const domNode = container.node();
+  if (domNode) {
+    registerCustomContentItem(gauge, domNode as any, tickValueConfig.renderContent, value, arcColor);
   }
 };
 

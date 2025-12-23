@@ -1,6 +1,39 @@
 import { ReactElement } from 'react';
 import { RANDOM_RANGES, COLOR_THEMES } from './presets';
 import { GaugeComponentProps } from '../../lib/GaugeComponent/types/GaugeComponentProps';
+import { PointerType } from '../../lib';
+
+const generateFibonacciTicks = (min: number, max: number): { value: number }[] => {
+  const range = max - min;
+  const ticks: { value: number }[] = [];
+  if (range <= 0) {
+    return [{ value: min }];
+  }
+
+  let a = 1;
+  let b = 1;
+  const seen = new Set<number>();
+  const push = (v: number) => {
+    const rounded = Number(v);
+    if (!seen.has(rounded)) {
+      seen.add(rounded);
+      ticks.push({ value: rounded });
+    }
+  };
+
+  push(min);
+  while (true) {
+    const next = min + b;
+    if (next >= max) break;
+    push(next);
+    const c = a + b;
+    a = b;
+    b = c;
+  }
+  push(max);
+
+  return ticks;
+};
 
 /**
  * Default Grafana Neon configuration for the editor
@@ -8,7 +41,7 @@ import { GaugeComponentProps } from '../../lib/GaugeComponent/types/GaugeCompone
 export const GRAFANA_NEON_CONFIG: Partial<GaugeComponentProps> = {
   type: 'grafana',
   minValue: 0,
-  maxValue: 1000,
+  maxValue: 108,
   arc: {
     width: 0.55,
     cornerRadius: 0,
@@ -42,11 +75,16 @@ export const GRAFANA_NEON_CONFIG: Partial<GaugeComponentProps> = {
     tickLabels: {
       type: 'outer',
       hideMinMax: false,
+      autoSpaceTickLabels: true,
       ticks: [
         { value: 0 },
-        { value: 250 },
-        { value: 500 },
-        { value: 1000 },
+        { value: 4 },
+        { value: 8 },
+        { value: 15},
+        { value: 16 },
+        { value: 23 },
+        { value: 42 },
+        { value: 108 },
       ],
     },
   },

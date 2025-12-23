@@ -1,3 +1,5 @@
+import React from 'react';
+
 /** Visual effects for ticks */
 export interface TickEffects {
     /** Enable glow effect on tick lines */
@@ -15,6 +17,12 @@ export interface TickLabels {
     hideMinMax?: boolean;
     /** Wheter the ticks are inside or outside the arcs */
     type?: "inner" | "outer";
+    /** 
+     * When true, automatically detects closely-spaced ticks and separates them 
+     * along the arc to prevent overlap. Useful when you have 
+     * ticks like 15 and 16 that would otherwise render on top of each other.
+     */
+    autoSpaceTickLabels?: boolean;
     /** List of desired ticks */
     ticks?: Array<Tick>;
     /** Default tick value label configs, this will apply to all 
@@ -39,6 +47,15 @@ export interface Tick {
 export interface TickValueConfig {
     /** This function allows to customize the rendered tickValue label */
     formatTextValue?: (value: any) => string;
+    /**
+     * Render a custom React element instead of text for the tick value label.
+     * Receives the current tick value and arc color as parameters.
+     */
+    renderContent?: (value: number, arcColor: string) => React.ReactNode;
+    /** Width of the foreignObject container (only used when renderContent is provided). */
+    contentWidth?: number;
+    /** Height of the foreignObject container (only used when renderContent is provided). */
+    contentHeight?: number;
     /** This enables configuration for the number of decimal digits of the 
      * central value label */
     maxDecimalDigits?: number;
@@ -86,6 +103,7 @@ const defaultTickList: Tick[] = [];
 export const defaultTickLabels: TickLabels = {
     type: 'outer',
     hideMinMax: false,
+    autoSpaceTickLabels: false,
     ticks: defaultTickList,
     defaultTickValueConfig: defaultTickValueConfig,
     defaultTickLineConfig: defaultTickLineConfig

@@ -1,12 +1,19 @@
 # Changelog
 
-## v1.2.64 -> v2.0.0
+## v1.2.64 -> v2.0.0-rc
 
 > Note: This version is a full overhaul of the Gauge component and will surely require a lot of patches along the way, so upgrade with care.
 
 
 ### New Features
+
   - Now grafana type supports pointers. #37
+  - Added support for multiple pointers. #48
+
+
+<img width="450" height="322" alt="image" src="https://github.com/user-attachments/assets/f527b7c8-6b23-4d90-b1b7-7f135226d0e2" />
+<details>
+
   ```
   <GaugeComponent
   type="grafana"
@@ -36,11 +43,20 @@
     ]}
 />
   ```
-  - Added support for multiple pointers. #48
+  </details>
+
+  - Pointers are now INPUTS too, just set `onValueChange` and try to grab the pointer through arcs.
+  - DEMO editor with copy/paste function, very helpful to build gauges.
+  - Added some CSS/SVG effects like glow, blur and shadows
+  - Grafana second arc can be configured
+  - Strokes can be configured for pointers.
+  - You can remove padding of the initial/final arcs  via `arc.padEndpoints`. #75
   - Added support for live editor. #25
   - Added a lot of unit tests #24
   - Added support components in labels. #69 #74 
   - Added `distanceFromText` to `TickLineConfig` and default tick config.
+  - Added `autoSpaceTickLabels` to automatically separate closely-spaced tick labels along the arc (e.g., 15 and 16 won't overlap anymore).
+  - The most special one for me: proper resizing and placing, no elements are cut from the frame, the whole gauge painting gets compressed dynamically to keep all elements visible.
 
 ### Bug Fixes
   - Added pointer existence/count validation utilities to detect mismatches and recover.

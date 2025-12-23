@@ -1,14 +1,24 @@
+import React from 'react';
 import { GaugeComponentProps } from './GaugeComponentProps';
 import { SubArc } from './Arc';
 import { Dimensions } from './Dimensions';
 import { MultiPointerRef } from './Pointer';
 
 /** Custom content configuration for React element rendering in value label */
+export interface CustomContentItem {
+    domNode: HTMLElement;
+    renderContent: (value: number, arcColor: string) => React.ReactNode;
+    value: number;
+    arcColor: string;
+}
+
 export interface CustomContentConfig {
     containerId: string;
     renderContent: (value: number, arcColor: string) => React.ReactNode;
     value: number;
     arcColor: string;
+    domNode?: HTMLElement;
+    items?: CustomContentItem[];
 }
 
 export interface Gauge {

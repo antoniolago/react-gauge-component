@@ -28,7 +28,7 @@ const CollapsibleGroup: React.FC<{
   }, [isMobile]);
 
   return (
-    <div style={{ ...styles.toolbarGroup, height: isMobile ? 'auto' : '100%' }}>
+    <div style={{ ...styles.toolbarGroup }}>
       <div 
         onClick={() => isMobile && setIsOpen(!isOpen)}
         style={{
@@ -846,43 +846,79 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   15fps
                 </button>
               </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%', flexWrap: 'wrap' }}>
                 <button onClick={() => onInteractionChange(!interactionEnabled)} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(interactionEnabled ? styles.toolBtnActive : {}) }} 
                   title="Drag" type="button">
-                  <Hand size={14} /><span>Drag and drop</span>
+                  <Hand size={14} /><span>Drag</span>
                 </button>
-                {interactionEnabled && (
-                  <label style={styles.inlineLabel} title="Hide grab handle circle at pointer tip">
-                    <input type="checkbox" checked={cfg?.pointer?.hideGrabHandle || false} 
-                      onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, hideGrabHandle: e.target.checked } })} 
-                      style={styles.inlineCheckbox} />
-                    No circle
-                  </label>
-                )}
                 <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, elastic: !cfg?.pointer?.elastic } })} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.elastic ? styles.toolBtnActive : {}) }} 
                   title="Elastic" type="button">
-                  <Move size={14} /><span>Elastic movement</span>
+                  <Move size={14} /><span>Elastic</span>
                 </button>
                 <button onClick={() => onConfigChange({ ...config, pointer: { ...cfg?.pointer, animationDelay: cfg?.pointer?.animationDelay === 0 ? 200 : 0 } })} 
                   style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.pointer?.animationDelay === 0 ? styles.toolBtnActive : {}) }} 
                   title="Instant" type="button">
-                  <Play size={14} /><span>Instant movement</span>
+                  <Play size={14} /><span>Instant</span>
                 </button>
               </div>
+              {interactionEnabled && (
+                <label style={{ ...styles.inlineLabel, fontSize: '0.75rem' }} title="Hide grab handle circle at pointer tip">
+                  <input type="checkbox" checked={cfg?.pointer?.hideGrabHandle || false} 
+                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, hideGrabHandle: e.target.checked } })} 
+                    style={styles.inlineCheckbox} />
+                  Hide grab circle
+                </label>
+              )}
                 </div>
               </div>
             </div>
           </CollapsibleGroup>
         </Col>
 
-        {/* Tick Marks */}
-        <Col xs={12} md={4}>
+        {/* Label + Tick Marks in same column */}
+        <Col xs={12} md={4} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <CollapsibleGroup title="Label" icon={<Tag size={14} />} isMobile={isMobile}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: !cfg?.labels?.valueLabel?.hide } } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.labels?.valueLabel?.hide ? styles.toolBtnActive : {}) }} type="button">
+                  {cfg?.labels?.valueLabel?.hide ? <EyeOff size={14} /> : <Eye size={14} />}<span>Show</span>
+                </button>
+                <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, matchColorWithArc: !cfg?.labels?.valueLabel?.matchColorWithArc } } })} 
+                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.labels?.valueLabel?.matchColorWithArc ? styles.toolBtnActive : {}) }} type="button">
+                  <Rainbow size={14} /><span>Arc</span>
+                </button>
+                <label style={styles.inlineLabel} title="Value label follows pointer during animation">
+                  <input type="checkbox" checked={cfg?.labels?.valueLabel?.animateValue || false} 
+                    onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, animateValue: e.target.checked } } })} 
+                    style={styles.inlineCheckbox} />
+                  Live
+                </label>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '35px' }}>Size</span>
+                <input type="range" min="12" max="72" step="1" value={parseInt(cfg?.labels?.valueLabel?.style?.fontSize || '35')} 
+                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: false, style: { ...cfg?.labels?.valueLabel?.style, fontSize: `${e.target.value}px` } } } })} 
+                  style={{ ...styles.slider, flex: 1 }} />
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '35px' }}>X</span>
+                <input type="range" min="-50" max="50" step="1" value={cfg?.labels?.valueLabel?.offsetX ?? 0} 
+                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetX: Number(e.target.value) } } })} 
+                  style={{ ...styles.slider, flex: 1 }} />
+                <span style={{ ...styles.sliderLabel, minWidth: '35px' }}>Y</span>
+                <input type="range" min="-150" max="150" step="1" value={cfg?.labels?.valueLabel?.offsetY ?? 0} 
+                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetY: Number(e.target.value) } } })} 
+                  style={{ ...styles.slider, flex: 1 }} />
+              </div>
+            </div>
+          </CollapsibleGroup>
           <CollapsibleGroup title="Tick Marks" icon={<Ruler size={14} />} isMobile={isMobile}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ ...styles.sliderLabel, marginRight: '4px' }}>Every</span>
                 {[
                   { label: 'None', interval: 0 }, 
                   { label: '5', interval: 5 }, 
@@ -902,6 +938,60 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                     onConfigChange({ ...config, labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, type: cfg?.labels?.tickLabels?.type || 'outer', ticks, hideMinMax: t.interval === 0 } } });
                   }} style={{ ...styles.toolBtn, padding: '4px 8px' }} type="button">{t.label}</button>
                 ))}
+                <button
+                  onClick={() => {
+                    const min = cfg?.minValue ?? 0;
+                    const max = cfg?.maxValue ?? 100;
+                    const range = max - min;
+
+                    // Fibonacci ticks starting at min, using fib steps (1,1,2,3,5...)
+                    // Example for min=0: 0,1,2,3,5,8,13,...
+                    // Example for min=10: 10,11,12,13,15,18,23,...
+                    const ticks: { value: number }[] = [];
+                    if (range <= 0) {
+                      ticks.push({ value: min });
+                    } else {
+                      let a = 1;
+                      let b = 1;
+                      const seen = new Set<number>();
+                      const push = (v: number) => {
+                        const rounded = Number(v);
+                        if (!seen.has(rounded)) {
+                          seen.add(rounded);
+                          ticks.push({ value: rounded });
+                        }
+                      };
+
+                      push(min);
+                      while (true) {
+                        const next = min + b;
+                        if (next >= max) break;
+                        push(next);
+                        const c = a + b;
+                        a = b;
+                        b = c;
+                      }
+                      push(max);
+                    }
+
+                    onConfigChange({
+                      ...config,
+                      labels: {
+                        ...cfg?.labels,
+                        tickLabels: {
+                          ...cfg?.labels?.tickLabels,
+                          type: cfg?.labels?.tickLabels?.type || 'outer',
+                          ticks,
+                          hideMinMax: false,
+                        },
+                      },
+                    });
+                  }}
+                  style={{ ...styles.toolBtn, padding: '4px 8px' }}
+                  type="button"
+                >
+                  Fib
+                </button>
               </div>
               <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, type: 'outer' } } })} 
@@ -923,6 +1013,10 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickValueConfig: { ...cfg?.labels?.tickLabels?.defaultTickValueConfig, hide: !cfg?.labels?.tickLabels?.defaultTickValueConfig?.hide } } } })} 
                   style={{ ...styles.toolBtn, padding: '4px 8px', ...(cfg?.labels?.tickLabels?.defaultTickValueConfig?.hide ? {} : styles.toolBtnActive) }} type="button">
                   <Hash size={12} /><span>Labels</span>
+                </button>
+                <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, autoSpaceTickLabels: !cfg?.labels?.tickLabels?.autoSpaceTickLabels } } })} 
+                  style={{ ...styles.toolBtn, padding: '4px 8px', ...(cfg?.labels?.tickLabels?.autoSpaceTickLabels ? styles.toolBtnActive : {}) }} type="button" title="Auto-space closely-spaced tick labels">
+                  <span>Auto Space</span>
                 </button>
               </div>
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -965,173 +1059,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickLineConfig: { ...cfg?.labels?.tickLabels?.defaultTickLineConfig, distanceFromText: Number(e.target.value) } } } })} 
                   style={{ ...styles.slider, flex: 1 }} title="Distance between tick line and text" />
               </div>
-            </div>
-          </CollapsibleGroup>
-        </Col>
-
-        {/* Type */}
-        <Col xs={12} md={4}>
-          <CollapsibleGroup title="Type" icon={<Palette size={14} />} isMobile={isMobile} defaultOpen={true}>
-            <div style={{ display: 'flex', justifyContent: 'stretch', gap: '8px', width: '100%' }}>
-              {(['semicircle', 'radial', 'grafana'] as const).map((gaugeType) => (
-                <button 
-                  key={gaugeType}
-                  onClick={() => onConfigChange({ ...config, type: gaugeType })} 
-                  style={{ 
-                    flex: 1,
-                    background: cfg?.type === gaugeType ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                    border: cfg?.type === gaugeType ? '2px solid #3b82f6' : '2px solid transparent',
-                    borderRadius: '8px',
-                    padding: '8px 6px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    transition: 'all 0.15s ease',
-                    minWidth: 0,
-                  }} 
-                  title={gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)} 
-                  type="button"
-                >
-                  <div style={{ width: '100%', height: '60px', pointerEvents: 'none' }}>
-                    <GaugeComponent 
-                      {...TYPE_GAUGE_CONFIGS[gaugeType]} 
-                      value={50} 
-                    />
-                  </div>
-                  <span style={{ 
-                    fontSize: '0.7rem', 
-                    fontWeight: cfg?.type === gaugeType ? 600 : 400,
-                    color: cfg?.type === gaugeType ? '#60a5fa' : 'rgba(255,255,255,0.6)',
-                    marginTop: '4px',
-                  }}>
-                    {gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </CollapsibleGroup>
-        </Col>
-        <Col xs={12} md={4}>
-          <CollapsibleGroup title="Label" icon={<Tag size={14} />} isMobile={isMobile}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: !cfg?.labels?.valueLabel?.hide } } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(!cfg?.labels?.valueLabel?.hide ? styles.toolBtnActive : {}) }} type="button">
-                  {cfg?.labels?.valueLabel?.hide ? <EyeOff size={14} /> : <Eye size={14} />}<span>Show</span>
-                </button>
-                <button onClick={() => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, matchColorWithArc: !cfg?.labels?.valueLabel?.matchColorWithArc } } })} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', ...(cfg?.labels?.valueLabel?.matchColorWithArc ? styles.toolBtnActive : {}) }} type="button">
-                  <Rainbow size={14} /><span>Arc</span>
-                </button>
-                <label style={styles.inlineLabel} title="Value label follows pointer during animation">
-                  <input type="checkbox" checked={cfg?.labels?.valueLabel?.animateValue || false} 
-                    onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, animateValue: e.target.checked } } })} 
-                    style={styles.inlineCheckbox} />
-                  Live value
-                </label>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Size</span>
-                <input type="range" min="12" max="72" step="1" value={parseInt(cfg?.labels?.valueLabel?.style?.fontSize || '35')} 
-                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, hide: false, style: { ...cfg?.labels?.valueLabel?.style, fontSize: `${e.target.value}px` } } } })} 
-                  style={{ ...styles.slider, flex: 1 }} />
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>X Offset</span>
-                <input type="range" min="-50" max="50" step="1" value={cfg?.labels?.valueLabel?.offsetX ?? 0} 
-                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetX: Number(e.target.value) } } })} 
-                  style={{ ...styles.slider, flex: 1 }} />
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Y Offset</span>
-                <input type="range" min="-150" max="150" step="1" value={cfg?.labels?.valueLabel?.offsetY ?? 0} 
-                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, valueLabel: { ...cfg?.labels?.valueLabel, offsetY: Number(e.target.value) } } })} 
-                  style={{ ...styles.slider, flex: 1 }} />
-              </div>
-            </div>
-          </CollapsibleGroup>
-        </Col>
-
-        <Col xs={12} md={4}>
-          <CollapsibleGroup title="Size & Align" icon={<Move size={14} />} isMobile={isMobile}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Width</span>
-                <input type="range" min="150" max="600" step="10" value={parseInt(sandboxWidth)} 
-                  onChange={(e) => onSizeChange(`${e.target.value}px`, sandboxHeight)} 
-                  style={{ ...styles.slider, flex: 1 }} />
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Height</span>
-                <input type="range" min="100" max="400" step="10" value={parseInt(sandboxHeight)} 
-                  onChange={(e) => onSizeChange(sandboxWidth, `${e.target.value}px`)} 
-                  style={{ ...styles.slider, flex: 1 }} />
-              </div>
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                <button onClick={() => onAlignChange('left')} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', flex: 1, ...(gaugeAlign === 'left' ? styles.toolBtnActive : {}) }} type="button">
-                  <AlignLeft size={14} />
-                </button>
-                <button onClick={() => onAlignChange('center')} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', flex: 1, ...(gaugeAlign === 'center' ? styles.toolBtnActive : {}) }} type="button">
-                  <AlignCenter size={14} />
-                </button>
-                <button onClick={() => onAlignChange('right')} 
-                  style={{ ...styles.toolBtn, padding: '6px 10px', flex: 1, ...(gaugeAlign === 'right' ? styles.toolBtnActive : {}) }} type="button">
-                  <AlignRight size={14} />
-                </button>
-              </div>
-            </div>
-          </CollapsibleGroup>
-        </Col>
-        <Col xs={12}>
-          <CollapsibleGroup title="Value & Range" icon={<Sliders size={14} />} isMobile={isMobile} defaultOpen={true}>
-            <div style={styles.buttonRow}>
-              {[0, 25, 50, 75, 100].map((val) => {
-                const min = cfg?.minValue ?? 0; const max = cfg?.maxValue ?? 100;
-                const actualValue = min + (val / 100) * (max - min);
-                return (
-                  <button key={val} onClick={() => onValueChange(actualValue)} 
-                    style={{ ...styles.toolBtn, padding: '4px 6px', ...(Math.abs(value - actualValue) < 0.01 ? styles.toolBtnActive : {}) }} type="button">
-                    {val}%
-                  </button>
-                );
-              })}
-              <input type="range" min={cfg?.minValue ?? 0} max={cfg?.maxValue ?? 100} value={value} 
-                onChange={(e) => { onValueChange(Number(e.target.value)); if (autoAnimate) onAutoAnimateChange(false); }} 
-                style={{ ...styles.slider, flex: 1, minWidth: '120px' }} step="0.1" />
-              <span style={{ ...styles.sliderValue, fontWeight: 700, color: '#60a5fa', minWidth: '45px' }}>{value.toFixed(1)}</span>
-              <label style={styles.inlineLabel}>
-                <input type="checkbox" checked={autoAnimate} onChange={(e) => onAutoAnimateChange(e.target.checked)} style={styles.inlineCheckbox} />
-                Auto
-              </label>
-              <span style={{ marginLeft: '12px', borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Min</span>
-                <input 
-                  type="number" 
-                  value={cfg?.minValue ?? 0} 
-                  onChange={(e) => {
-                    const newMin = Number(e.target.value);
-                    onConfigChange({ ...config, minValue: newMin });
-                    if (value < newMin) onValueChange(newMin);
-                  }}
-                  style={{ ...styles.toolBtn, width: '60px', padding: '4px 6px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
-                  title="Min value"
-                />
-                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Max</span>
-                <input 
-                  type="number" 
-                  value={cfg?.maxValue ?? 100} 
-                  onChange={(e) => {
-                    const newMax = Number(e.target.value);
-                    onConfigChange({ ...config, maxValue: newMax });
-                    if (value > newMax) onValueChange(newMax);
-                  }}
-                  style={{ ...styles.toolBtn, width: '60px', padding: '4px 6px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)' }}
-                  title="Max value"
-                />
-              </span>
             </div>
           </CollapsibleGroup>
         </Col>
