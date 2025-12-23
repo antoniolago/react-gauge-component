@@ -759,15 +759,15 @@ export const clearOuterArcs = (gauge: Gauge) => {
 
 export const validateArcs = (gauge: Gauge) => {
   // Debug: log when validation is triggered
-  if (typeof window !== 'undefined' && (window as any).__GAUGE_DEBUG__) {
-    console.log('[GaugeComponent] validateArcs called:', {
-      minValue: gauge.props.minValue,
-      maxValue: gauge.props.maxValue,
-      gradient: gauge.props.arc?.gradient,
-      subArcsCount: gauge.props.arc?.subArcs?.length,
-      subArcLimits: gauge.props.arc?.subArcs?.map(s => s.limit)
-    });
-  }
+  // if (typeof window !== 'undefined' && (window as any).__GAUGE_DEBUG__) {
+  //   console.log('[GaugeComponent] validateArcs called:', {
+  //     minValue: gauge.props.minValue,
+  //     maxValue: gauge.props.maxValue,
+  //     gradient: gauge.props.arc?.gradient,
+  //     subArcsCount: gauge.props.arc?.subArcs?.length,
+  //     subArcLimits: gauge.props.arc?.subArcs?.map(s => s.limit)
+  //   });
+  // }
   verifySubArcsLimits(gauge);
 }
 /**

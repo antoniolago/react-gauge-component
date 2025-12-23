@@ -171,7 +171,7 @@ To regenerate, run: \`yarn docs\`
 
 // Main execution
 function main() {
-  console.log('Generating API documentation...');
+  //console.debug('Generating API documentation...');
   
   // Ensure docs directory exists
   const docsDir = path.dirname(OUTPUT_FILE);
@@ -184,7 +184,7 @@ function main() {
   for (const file of TYPE_FILES) {
     const filePath = path.join(TYPES_DIR, file);
     if (fs.existsSync(filePath)) {
-      console.log(`  Parsing ${file}...`);
+      //console.debug(`  Parsing ${file}...`);
       const interfaces = parseTypeFile(filePath);
       allInterfaces.push(...interfaces);
     } else {
@@ -195,8 +195,8 @@ function main() {
   const markdown = generateMarkdown(allInterfaces);
   fs.writeFileSync(OUTPUT_FILE, markdown);
   
-  console.log(`\nGenerated ${OUTPUT_FILE}`);
-  console.log(`  - ${allInterfaces.length} interfaces/enums documented`);
+  //console.debug(`\nGenerated ${OUTPUT_FILE}`);
+  //console.debug(`  - ${allInterfaces.length} interfaces/enums documented`);
 }
 
 main();

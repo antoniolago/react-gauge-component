@@ -54,6 +54,8 @@ export interface TickLineConfig {
     length?: number;
     /** The distance of the tick's line from the arc */
     distanceFromArc?: number;
+    /** The distance between the tick's line and the text label */
+    distanceFromText?: number;
     /** The color of the tick's line */
     color?: string;
     /** If true will hide the tick line */
@@ -67,6 +69,7 @@ const defaultTickLineConfig: TickLineConfig = {
     length: 7,
     width: 1,
     distanceFromArc: 3,
+    distanceFromText: 2,
     hide: false
 };
 

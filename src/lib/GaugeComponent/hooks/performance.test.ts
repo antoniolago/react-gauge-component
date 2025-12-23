@@ -34,7 +34,7 @@ describe('Performance Tests', () => {
       const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
       const maxTime = Math.max(...times);
       
-      console.log(`Layout calc - Avg: ${avgTime.toFixed(3)}ms, Max: ${maxTime.toFixed(3)}ms`);
+      //console.debug(`Layout calc - Avg: ${avgTime.toFixed(3)}ms, Max: ${maxTime.toFixed(3)}ms`);
       
       expect(avgTime).toBeLessThan(THRESHOLDS.layoutCalculation);
     });
@@ -50,7 +50,7 @@ describe('Performance Tests', () => {
       }
       
       const elapsed = performance.now() - start;
-      console.log(`100 layout calculations: ${elapsed.toFixed(2)}ms`);
+      //console.debug(`100 layout calculations: ${elapsed.toFixed(2)}ms`);
       
       expect(elapsed).toBeLessThan(THRESHOLDS.layoutBatch100);
     });
@@ -72,7 +72,7 @@ describe('Performance Tests', () => {
       const firstHalf = batchTimes.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
       const secondHalf = batchTimes.slice(5).reduce((a, b) => a + b, 0) / 5;
       
-      console.log(`First 5 batches avg: ${firstHalf.toFixed(2)}ms, Last 5: ${secondHalf.toFixed(2)}ms`);
+      //console.debug(`First 5 batches avg: ${firstHalf.toFixed(2)}ms, Last 5: ${secondHalf.toFixed(2)}ms`);
       
       // Second half should not be more than 50% slower
       expect(secondHalf).toBeLessThan(firstHalf * 1.5);
@@ -92,7 +92,7 @@ describe('Performance Tests', () => {
       }
       
       const avgTime = (performance.now() - start) / iterations;
-      console.log(`Stability check avg: ${(avgTime * 1000).toFixed(3)}μs`);
+      //console.debug(`Stability check avg: ${(avgTime * 1000).toFixed(3)}μs`);
       
       expect(avgTime).toBeLessThan(THRESHOLDS.stabilityCheck);
     });
@@ -130,7 +130,7 @@ describe('Performance Tests', () => {
       }
       
       const frameTime = performance.now() - frameStart;
-      console.log(`Frame time for ${gaugeCount} gauge updates: ${frameTime.toFixed(2)}ms`);
+      //console.debug(`Frame time for ${gaugeCount} gauge updates: ${frameTime.toFixed(2)}ms`);
       
       // Should complete well under frame budget (leaving time for rendering)
       expect(frameTime).toBeLessThan(frameBudget * 0.5);
@@ -170,7 +170,7 @@ describe('Performance Tests', () => {
       
       const elapsed = performance.now() - start;
       const perPath = elapsed / iterations;
-      console.log(`Pointer path calc: ${(perPath * 1000).toFixed(3)}μs per path`);
+      //console.debug(`Pointer path calc: ${(perPath * 1000).toFixed(3)}μs per path`);
       
       // Should be very fast
       expect(perPath).toBeLessThan(0.1);
@@ -196,7 +196,7 @@ describe('Performance Tests', () => {
       const finalMemory = process.memoryUsage?.().heapUsed ?? 0;
       const memoryGrowth = finalMemory - initialMemory;
       
-      console.log(`Memory growth after 1000 calcs: ${(memoryGrowth / 1024).toFixed(2)}KB`);
+      //console.debug(`Memory growth after 1000 calcs: ${(memoryGrowth / 1024).toFixed(2)}KB`);
       
       // Allow up to 2MB growth (accounting for test overhead and GC timing)
       if (initialMemory > 0) {
@@ -242,7 +242,7 @@ describe('Performance Tests', () => {
       const avgCycle = cycleTimes.reduce((a, b) => a + b, 0) / cycleTimes.length;
       const maxCycle = Math.max(...cycleTimes);
       
-      console.log(`Gallery update cycle - Avg: ${avgCycle.toFixed(2)}ms, Max: ${maxCycle.toFixed(2)}ms`);
+      //console.debug(`Gallery update cycle - Avg: ${avgCycle.toFixed(2)}ms, Max: ${maxCycle.toFixed(2)}ms`);
       
       // Each update cycle should be fast
       expect(avgCycle).toBeLessThan(5);
@@ -291,9 +291,9 @@ describe('Performance Tests', () => {
       }
       
       const maxFrameTime = Math.max(...frameResults.map(r => r.time));
-      console.log('Staggered animation frame times:', frameResults.map(r => 
-        `${r.activeGauges} active: ${r.time.toFixed(2)}ms`
-      ).join(', '));
+      // console.log('Staggered animation frame times:', frameResults.map(r => 
+      //   `${r.activeGauges} active: ${r.time.toFixed(2)}ms`
+      // ).join(', '));
       
       expect(maxFrameTime).toBeLessThan(8); // Half frame budget
     });
@@ -323,7 +323,7 @@ describe('Performance Tests', () => {
         prevLayout = layout;
       }
       
-      console.log(`Renders: ${renderCount} out of ${sizes.length} size changes`);
+      //console.debug(`Renders: ${renderCount} out of ${sizes.length} size changes`);
       
       // Should only render for significant changes
       expect(renderCount).toBeLessThan(sizes.length);
@@ -346,7 +346,7 @@ describe('Performance Tests', () => {
       }
       
       const elapsed = performance.now() - start;
-      console.log(`100 stability checks: ${elapsed.toFixed(2)}ms, ${stableCount} stable`);
+      //console.debug(`100 stability checks: ${elapsed.toFixed(2)}ms, ${stableCount} stable`);
       
       expect(elapsed).toBeLessThan(1);
     });

@@ -258,7 +258,7 @@ describe('Render Count Tests', () => {
       tracker.stop();
       const opCount = tracker.getCount();
       
-      console.log(`Initial render DOM operations: ${opCount} (budget: ${PERFORMANCE_BUDGETS.maxDomOpsInitialRender})`);
+      //console.debug(`Initial render DOM operations: ${opCount} (budget: ${PERFORMANCE_BUDGETS.maxDomOpsInitialRender})`);
       
       expect(opCount).toBeLessThanOrEqual(PERFORMANCE_BUDGETS.maxDomOpsInitialRender);
     });
@@ -272,7 +272,7 @@ describe('Render Count Tests', () => {
       tracker.stop();
       const opCount = tracker.getCount();
       
-      console.log(`Value change DOM operations: ${opCount} (budget: ${PERFORMANCE_BUDGETS.maxDomOpsValueChange})`);
+      //console.debug(`Value change DOM operations: ${opCount} (budget: ${PERFORMANCE_BUDGETS.maxDomOpsValueChange})`);
       
       expect(opCount).toBeLessThanOrEqual(PERFORMANCE_BUDGETS.maxDomOpsValueChange);
     });
@@ -291,7 +291,7 @@ describe('Render Count Tests', () => {
       tracker.stop();
       const opCount = tracker.getCount();
       
-      console.log(`Animation frame DOM operations: ${opCount} (budget: ${PERFORMANCE_BUDGETS.maxDomOpsPerAnimationFrame})`);
+      //console.debug(`Animation frame DOM operations: ${opCount} (budget: ${PERFORMANCE_BUDGETS.maxDomOpsPerAnimationFrame})`);
       
       expect(opCount).toBeLessThanOrEqual(PERFORMANCE_BUDGETS.maxDomOpsPerAnimationFrame);
     });
@@ -314,7 +314,7 @@ describe('Render Count Tests', () => {
       const totalOps = tracker.getCount();
       const perFrameAvg = totalOps / ANIMATION_FRAMES;
       
-      console.log(`60-frame animation total: ${totalOps} ops, avg per frame: ${perFrameAvg.toFixed(1)}`);
+      //console.debug(`60-frame animation total: ${totalOps} ops, avg per frame: ${perFrameAvg.toFixed(1)}`);
       
       // Total should be frames × per-frame budget
       expect(totalOps).toBeLessThanOrEqual(ANIMATION_FRAMES * PERFORMANCE_BUDGETS.maxDomOpsPerAnimationFrame);
@@ -345,7 +345,7 @@ describe('Render Count Tests', () => {
       
       const isStable = isLayoutStable(layout1, layout2, 0.01); // 1% tolerance
       
-      console.log(`Layout stability check: ${isStable ? 'STABLE (skip render)' : 'CHANGED (render needed)'}`);
+      //console.debug(`Layout stability check: ${isStable ? 'STABLE (skip render)' : 'CHANGED (render needed)'}`);
       
       // Small changes should be considered stable
       expect(isStable).toBe(true);
@@ -357,7 +357,7 @@ describe('Render Count Tests', () => {
       
       const isStable = isLayoutStable(layout1, layout2, 0.01);
       
-      console.log(`Significant resize: ${isStable ? 'STABLE (BUG!)' : 'CHANGED (correct)'}`);
+      //console.debug(`Significant resize: ${isStable ? 'STABLE (BUG!)' : 'CHANGED (correct)'}`);
       
       // Significant changes should trigger re-render
       expect(isStable).toBe(false);
@@ -396,7 +396,7 @@ describe('Render Count Tests', () => {
       mockStringify(prevProps.minValue) !== mockStringify(newProps.minValue);
       mockStringify(prevProps.maxValue) !== mockStringify(newProps.maxValue);
       
-      console.log(`JSON.stringify calls: ${stringifyCount} (budget: ${PERFORMANCE_BUDGETS.maxJsonStringifyPerRender})`);
+      //console.debug(`JSON.stringify calls: ${stringifyCount} (budget: ${PERFORMANCE_BUDGETS.maxJsonStringifyPerRender})`);
       
       // Each comparison does 2 stringify calls
       expect(stringifyCount).toBeLessThanOrEqual(PERFORMANCE_BUDGETS.maxJsonStringifyPerRender);
@@ -415,7 +415,7 @@ describe('Render Count Tests', () => {
       const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
       const maxTime = Math.max(...times);
       
-      console.log(`Layout calc: avg ${avgTime.toFixed(3)}ms, max ${maxTime.toFixed(3)}ms (budget: ${PERFORMANCE_BUDGETS.maxLayoutCalcTimeMs}ms)`);
+      //console.debug(`Layout calc: avg ${avgTime.toFixed(3)}ms, max ${maxTime.toFixed(3)}ms (budget: ${PERFORMANCE_BUDGETS.maxLayoutCalcTimeMs}ms)`);
       
       expect(avgTime).toBeLessThan(PERFORMANCE_BUDGETS.maxLayoutCalcTimeMs);
     });
@@ -445,7 +445,7 @@ describe('Render Count Tests', () => {
       const elapsed = performance.now() - start;
       const simulatedMobileTime = elapsed * MOBILE_SLOWDOWN;
       
-      console.log(`Mobile render simulation: ${simulatedMobileTime.toFixed(2)}ms (budget: ${FRAME_BUDGET}ms)`);
+      //console.debug(`Mobile render simulation: ${simulatedMobileTime.toFixed(2)}ms (budget: ${FRAME_BUDGET}ms)`);
       
       // Should complete within frame budget even with slowdown
       expect(simulatedMobileTime).toBeLessThan(FRAME_BUDGET);
@@ -472,7 +472,7 @@ describe('Render Count Tests', () => {
       const elapsed = performance.now() - start;
       const opCount = tracker.getCount();
       
-      console.log(`30 gauge animations: ${opCount} ops in ${elapsed.toFixed(2)}ms (budget: ${FRAME_BUDGET}ms)`);
+      //console.debug(`30 gauge animations: ${opCount} ops in ${elapsed.toFixed(2)}ms (budget: ${FRAME_BUDGET}ms)`);
       
       // JS execution should be fast; DOM operations are the bottleneck
       expect(elapsed).toBeLessThan(FRAME_BUDGET / 2); // Leave room for actual DOM work
@@ -503,7 +503,7 @@ describe('Render Count Tests', () => {
       
       // In a real test, we'd measure heap growth
       // Here we just verify the loop completes quickly
-      console.log(`Animation loop iterations: ${iterations}, sample allocations: ${allocations.length}`);
+      //console.debug(`Animation loop iterations: ${iterations}, sample allocations: ${allocations.length}`);
       
       expect(iterations).toBe(1000); // Sanity check
     });
@@ -535,7 +535,7 @@ describe('Render Count Tests', () => {
       tracker.stop();
       
       const initialOps = tracker.getCount();
-      console.log(`Initial render: ${initialOps} ops (baseline: ${BASELINE.initialRender})`);
+      //console.debug(`Initial render: ${initialOps} ops (baseline: ${BASELINE.initialRender})`);
       
       // Allow 10% regression tolerance
       expect(initialOps).toBeLessThanOrEqual(BASELINE.initialRender * 1.1);
@@ -563,7 +563,7 @@ describe('Render Count Tests', () => {
         results.push({ arcCount, ops: tracker.getCount() });
       }
       
-      console.log('Arc count scaling:', results.map(r => `${r.arcCount} arcs: ${r.ops} ops`).join(', '));
+      //console.debug('Arc count scaling:', results.map(r => `${r.arcCount} arcs: ${r.ops} ops`).join(', '));
       
       // Verify linear scaling (not quadratic)
       const ratio1to5 = results[1].ops / results[0].ops;
@@ -614,7 +614,7 @@ describe('Animation Performance Specific Tests', () => {
     const avgFrameTime = frameTimings.reduce((a, b) => a + b, 0) / FRAMES;
     const maxFrameTime = Math.max(...frameTimings);
     
-    console.log(`Tween callback: avg ${(avgFrameTime * 1000).toFixed(1)}μs, max ${(maxFrameTime * 1000).toFixed(1)}μs`);
+    //console.debug(`Tween callback: avg ${(avgFrameTime * 1000).toFixed(1)}μs, max ${(maxFrameTime * 1000).toFixed(1)}μs`);
     
     // Should be well under 1ms per frame
     expect(avgFrameTime).toBeLessThan(1);
@@ -652,7 +652,7 @@ describe('Animation Performance Specific Tests', () => {
     const elapsed = performance.now() - start;
     const perLookup = elapsed / LOOKUPS;
     
-    console.log(`Color lookups: ${LOOKUPS} in ${elapsed.toFixed(2)}ms, ${(perLookup * 1000).toFixed(2)}μs each`);
+    //console.debug(`Color lookups: ${LOOKUPS} in ${elapsed.toFixed(2)}ms, ${(perLookup * 1000).toFixed(2)}μs each`);
     
     // Should be very fast
     expect(perLookup).toBeLessThan(0.01); // 10μs per lookup

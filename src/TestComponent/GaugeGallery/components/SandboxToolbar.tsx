@@ -959,6 +959,12 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickLineConfig: { ...cfg?.labels?.tickLabels?.defaultTickLineConfig, distanceFromArc: Number(e.target.value) } } } })} 
                   style={{ ...styles.slider, flex: 1 }} title="Distance from arc" />
               </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span style={{ ...styles.sliderLabel, minWidth: '50px' }}>Text Gap</span>
+                <input type="range" min="0" max="20" step="1" value={cfg?.labels?.tickLabels?.defaultTickLineConfig?.distanceFromText ?? 2} 
+                  onChange={(e) => onConfigChange({ ...config, labels: { ...cfg?.labels, tickLabels: { ...cfg?.labels?.tickLabels, defaultTickLineConfig: { ...cfg?.labels?.tickLabels?.defaultTickLineConfig, distanceFromText: Number(e.target.value) } } } })} 
+                  style={{ ...styles.slider, flex: 1 }} title="Distance between tick line and text" />
+              </div>
             </div>
           </CollapsibleGroup>
         </Col>

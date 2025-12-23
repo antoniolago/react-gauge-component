@@ -46,12 +46,18 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     // For subsequent renders (not first), reuse the existing SVG and create new groups
     if (!existingSvg.empty() && !isFirstRender) {
         gauge.svg.current = existingSvg;
+        // DEBUG: Log pointer state before removal
+        const pointerCountBefore = gauge.svg.current.selectAll('.pointer').size();
+        //console.debug('[initChart] Before removal - pointer count:', pointerCountBefore);
+        
         // CRITICAL FIX: Remove old content IMMEDIATELY to prevent duplicate gauges
         gauge.svg.current.selectAll("g.gauge-content").remove();
         gauge.svg.current.selectAll("g.gauge-content-old").remove();
         // Create fresh groups
         gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
         gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
+        
+        //console.debug('[initChart] After removal - will call addPointerElement');
     } else {
         // First render or no existing SVG - create new
         gauge.container.current.select("svg").remove();
@@ -110,7 +116,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                 gauge.pendingResize.current = true;
             }
             if (CONSTANTS.debugLogs) {
-                console.log('[renderChart] Skipping resize - animation in progress, marked pending');
+                //console.debug('[renderChart] Skipping resize - animation in progress, marked pending');
             }
             return;
         }
@@ -125,7 +131,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         // Skip render if dimensions are not available yet
         if (parentWidth <= 0 || parentHeight <= 0) {
             if (CONSTANTS.debugLogs) {
-                console.log('[renderChart] Skipping render - invalid dimensions:', { width: parentWidth, height: parentHeight });
+                //console.debug('[renderChart] Skipping render - invalid dimensions:', { width: parentWidth, height: parentHeight });
             }
             // Ensure gauge is visible even if we skip (it may have been hidden before)
             gauge.svg.current?.style("visibility", "visible").style("opacity", "1");
@@ -144,7 +150,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         const hasPreviousBounds = gauge.measuredBounds?.current != null;
         
         if (CONSTANTS.debugLogs) {
-            console.log(`[renderChart] Pass ${currentPass} - Container:`, { width: parentWidth, height: parentHeight, hasPreviousBounds });
+            //console.debug(`[renderChart] Pass ${currentPass} - Container:`, { width: parentWidth, height: parentHeight, hasPreviousBounds });
         }
         
         let layout: coordinateSystem.GaugeLayout;
@@ -191,7 +197,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             );
             
             if (CONSTANTS.debugLogs) {
-                console.log('[renderChart] Pass 2 - Optimized layout from bounds:', {
+                //console.debug('[renderChart] Pass 2 - Optimized layout from bounds:', {
                     measuredBounds: gauge.measuredBounds.current,
                     newRadius: layout.outerRadius,
                     viewBox: layout.viewBox.toString()
@@ -216,7 +222,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         }
         
         if (CONSTANTS.debugLogs) {
-            console.log(`[renderChart] Pass ${currentPass} - Layout:`, {
+            //console.debug(`[renderChart] Pass ${currentPass} - Layout:`, {
                 outerRadius: layout.outerRadius,
                 viewBox: layout.viewBox.toString(),
                 gaugeCenter: layout.gaugeCenter
@@ -233,7 +239,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             if (stable) {
                 // Layout hasn't changed significantly, skip re-render but ensure visibility
                 if (CONSTANTS.debugLogs) {
-                    console.log('[renderChart] Layout stable, skipping re-render');
+                    //console.debug('[renderChart] Layout stable, skipping re-render');
                 }
                 // Still ensure gauge is visible
                 const isHidden = gauge.svg.current?.style("visibility") === "hidden";
@@ -303,7 +309,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             .on("mouseleave", () => arcHooks.hideTooltip(gauge))
             .on("mouseout", () => arcHooks.hideTooltip(gauge));
         
-        clearChart(gauge);
+        clearChart(gauge, currentPass);
         arcHooks.setArcData(gauge);
         
         // For Grafana type with animation, start the arc at prevPercent (or 0) 
@@ -340,6 +346,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         
         // Only draw pointer on pass 2 (visible pass) to avoid animation interference
         // On pass 1, content is hidden for measurement only - no need to animate
+        const pointerCountBeforeDraw = gauge.g.current?.selectAll('.pointer').size() ?? 0;
+        //console.debug('[renderChart] Before drawPointer - pass:', currentPass, 'resize:', resize, 'pointerCount:', pointerCountBeforeDraw);
+        
         if (currentPass === 2) {
             // Check if multi-pointer mode is enabled
             if (pointerHooks.isMultiPointerMode(gauge)) {
@@ -347,6 +356,12 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             } else if (!gauge.props?.pointer?.hide) {
                 pointerHooks.drawPointer(gauge, resize);
             }
+            
+            const pointerCountAfterDraw = gauge.g.current?.selectAll('.pointer').size() ?? 0;
+            const viewBox = gauge.svg.current?.attr('viewBox') ?? 'none';
+            const gTransform = gauge.g.current?.attr('transform') ?? 'none';
+            const { outerRadius, innerRadius } = gauge.dimensions.current;
+            //console.debug('[renderChart] After drawPointer - pointerCount:', pointerCountAfterDraw, 'viewBox:', viewBox, 'gTransform:', gTransform, 'outerRadius:', outerRadius);
         }
         
         // Setup value label AFTER pointers so it renders on top
@@ -363,6 +378,20 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             gauge.g.current
                 .style("visibility", "visible")
                 .style("opacity", "1");
+            
+            // CRITICAL FIX: Ensure pointer element itself has visibility set directly
+            // Not just inherited from parent - this fixes pointer vanishing during resize
+            gauge.g.current?.select('.pointer')
+                .style("visibility", "visible")
+                .style("opacity", "1");
+            gauge.g.current?.selectAll('.multi-pointer')
+                .style("visibility", "visible")
+                .style("opacity", "1");
+            
+            // DEBUG: Verify visibility was set
+            const gVisibility = gauge.g.current?.style('visibility');
+            const pointerVisibility = gauge.g.current?.select('.pointer')?.style('visibility');
+            //console.debug('[renderChart] After setting visibility - g:', gVisibility, 'pointer:', pointerVisibility);
         }
         
         // Set up pointer drag if onValueChange callback is provided
@@ -388,7 +417,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                     };
                     
                     if (CONSTANTS.debugLogs) {
-                        console.log('[renderChart] Measured bounds:', gauge.measuredBounds!.current);
+                        //console.debug('[renderChart] Measured bounds:', gauge.measuredBounds!.current);
                     }
                     
                     // Hide old content before pass 2
@@ -408,7 +437,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                 } catch (e) {
                     // getBBox can fail if element is not rendered
                     if (CONSTANTS.debugLogs) {
-                        console.log('[renderChart] Could not measure bounds:', e);
+                        //console.debug('[renderChart] Could not measure bounds:', e);
                     }
                     // Make visible anyway using rAF as fallback
                     requestAnimationFrame(() => {
@@ -500,11 +529,16 @@ export const centerGraph = (gauge: Gauge) => {
     // Kept for backward compatibility only
 };
 
-export const clearChart = (gauge: Gauge) => {
+export const clearChart = (gauge: Gauge, currentPass: number = 2) => {
     //Remove the old stuff
     labelsHooks.clearTicks(gauge);
     labelsHooks.clearValueLabel(gauge);
-    pointerHooks.clearPointerElement(gauge);
-    pointerHooks.clearMultiPointers(gauge);
+    // CRITICAL FIX: Only clear pointer on pass 2 (when we're about to redraw it)
+    // On pass 1, we measure but don't redraw pointer - clearing it would leave it empty
+    // if resize stops before pass 2 completes
+    if (currentPass === 2) {
+        pointerHooks.clearPointerElement(gauge);
+        pointerHooks.clearMultiPointers(gauge);
+    }
     arcHooks.clearArcs(gauge);
 };

@@ -13,7 +13,90 @@ import * as arcHooks from "./arc";
 import * as labelsHooks from "./labels";
 import { GaugeType } from "../types/GaugeComponentProps";
 
+// ============================================================================
+// DIAGNOSTICS: Track unwanted behaviors during rendering
+// ============================================================================
+export interface PointerDiagnostics {
+    pointerVanishCount: number;
+    pointerMismatchCount: number;
+    stalePointerCleanups: number;
+    resizeInterruptions: number;
+    animationInterruptions: number;
+    lastVanishTimestamp: number | null;
+    lastMismatchDetails: { expected: number; actual: number } | null;
+}
+
+// Global diagnostics tracker (reset per gauge instance in production)
+const diagnostics: PointerDiagnostics = {
+    pointerVanishCount: 0,
+    pointerMismatchCount: 0,
+    stalePointerCleanups: 0,
+    resizeInterruptions: 0,
+    animationInterruptions: 0,
+    lastVanishTimestamp: null,
+    lastMismatchDetails: null,
+};
+
+export const getDiagnostics = (): PointerDiagnostics => ({ ...diagnostics });
+export const resetDiagnostics = (): void => {
+    diagnostics.pointerVanishCount = 0;
+    diagnostics.pointerMismatchCount = 0;
+    diagnostics.stalePointerCleanups = 0;
+    diagnostics.resizeInterruptions = 0;
+    diagnostics.animationInterruptions = 0;
+    diagnostics.lastVanishTimestamp = null;
+    diagnostics.lastMismatchDetails = null;
+};
+
+/**
+ * Ensure pointer element exists, recreate if missing
+ * Tracks vanish events for diagnostics
+ */
+export const ensurePointerExists = (gauge: Gauge): boolean => {
+    const isMultiPointer = isMultiPointerMode(gauge);
+    
+    if (isMultiPointer) {
+        const expectedCount = gauge.props.pointers?.length ?? 0;
+        const actualCount = gauge.g.current?.selectAll('.multi-pointer').size() ?? 0;
+        
+        if (actualCount < expectedCount) {
+            diagnostics.pointerVanishCount++;
+            diagnostics.lastVanishTimestamp = Date.now();
+            console.warn(`[GaugeComponent] Pointer vanished during resize! Expected: ${expectedCount}, Found: ${actualCount}. Recreating...`);
+            return false;
+        }
+    } else {
+        const pointerExists = gauge.pointer.current?.element && 
+                              !gauge.g.current?.select('.pointer').empty();
+        
+        if (!pointerExists && !gauge.props.pointer?.hide) {
+            diagnostics.pointerVanishCount++;
+            diagnostics.lastVanishTimestamp = Date.now();
+            console.warn(`[GaugeComponent] Single pointer vanished during resize! Recreating...`);
+            return false;
+        }
+    }
+    
+    return true;
+};
+
 export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
+    // DEBUG: Log entry with visual state
+    const pointerElementExists = gauge.pointer.current?.element != null;
+    const pointerInDOM = gauge.g.current?.select('.pointer').empty() === false;
+    const pointerElement = gauge.g.current?.select('.pointer');
+    const transform = pointerElement?.attr?.('transform') ?? 'none';
+    const visibility = pointerElement?.style?.('visibility') ?? 'unknown';
+    const opacity = pointerElement?.style?.('opacity') ?? 'unknown';
+    //console.debug('[drawPointer] Entry - resize:', resize, 'elementRef:', pointerElementExists, 'inDOM:', pointerInDOM, 'transform:', transform, 'visibility:', visibility, 'opacity:', opacity);
+    
+    // CRITICAL: Check if pointer exists before drawing, recreate if vanished during resize
+    if (resize && !ensurePointerExists(gauge)) {
+        // Pointer vanished - force reinit
+        //console.debug('[drawPointer] Pointer vanished! Calling addPointerElement...');
+        addPointerElement(gauge);
+    }
+    
     gauge.pointer.current.context = setupContext(gauge);
     const { prevPercent, currentPercent, prevProgress } = gauge.pointer.current.context;
     let pointer = gauge.props.pointer as PointerProps;
@@ -36,8 +119,17 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     // Only init pointer on first animation OR on resize when animation is enabled
     // When animation is disabled and not first render, skip init and just update position
     const shouldInitPointer = isFirstAnimation || (resize && pointer.animate !== false);
-    if (shouldInitPointer && (!isGrafana || showPointerForGrafana)) 
+    
+    // DEBUG: Log initPointer decision
+    const pointerChildCount = gauge.pointer.current?.element?.selectAll('*').size() ?? 0;
+    //console.debug('[drawPointer] shouldInitPointer:', shouldInitPointer, 'isFirstAnimation:', isFirstAnimation, 'resize:', resize, 'isGrafana:', isGrafana, 'showPointerForGrafana:', showPointerForGrafana, 'pointerChildCount:', pointerChildCount);
+    
+    if (shouldInitPointer && (!isGrafana || showPointerForGrafana)) {
+        //console.debug('[drawPointer] Calling initPointer...');
         initPointer(gauge, useCurrentPercent);
+        const afterInitCount = gauge.pointer.current?.element?.selectAll('*').size() ?? 0;
+        //console.debug('[drawPointer] After initPointer - childCount:', afterInitCount);
+    }
     
     let shouldAnimate = (!resize || isFirstAnimation) && pointer.animate;
     if (shouldAnimate) {
@@ -130,7 +222,7 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
         }
     }
 };
-const setupContext = (gauge: Gauge): PointerContext => {
+export const setupContext = (gauge: Gauge): PointerContext => {
     const { value } = gauge.props;
     let pointer = gauge.props.pointer as PointerProps;
     let pointerLength = pointer.length as number;
@@ -633,6 +725,23 @@ export const isMultiPointerMode = (gauge: Gauge): boolean => {
 };
 
 /**
+ * Validate that rendered pointer count matches expected count from props
+ * Logs warning and corrects if mismatch detected
+ */
+export const validatePointerCount = (gauge: Gauge): { valid: boolean; expected: number; actual: number } => {
+    const expectedCount = gauge.props.pointers?.length ?? (gauge.props.pointer?.hide ? 0 : 1);
+    const renderedMultiPointers = gauge.g.current?.selectAll('.multi-pointer').size() ?? 0;
+    const renderedSinglePointer = gauge.g.current?.selectAll('.pointer').size() ?? 0;
+    const actualCount = gauge.props.pointers?.length ? renderedMultiPointers : renderedSinglePointer;
+    
+    if (actualCount !== expectedCount) {
+        console.warn(`[GaugeComponent] Pointer count mismatch detected! Expected: ${expectedCount}, Rendered: ${actualCount}. Auto-correcting...`);
+        return { valid: false, expected: expectedCount, actual: actualCount };
+    }
+    return { valid: true, expected: expectedCount, actual: actualCount };
+};
+
+/**
  * Draw all pointers in multi-pointer mode
  */
 export const drawMultiPointers = (gauge: Gauge, resize: boolean = false) => {
@@ -651,9 +760,29 @@ export const drawMultiPointers = (gauge: Gauge, resize: boolean = false) => {
         gauge.multiPointerAnimationTriggered!.current = [];
     }
     
+    // VALIDATION: Check for stale pointers and clean up
+    const currentRenderedCount = gauge.g.current?.selectAll('.multi-pointer').size() ?? 0;
+    if (currentRenderedCount > pointers.length) {
+        console.warn(`[GaugeComponent] Stale multi-pointers detected! Rendered: ${currentRenderedCount}, Expected: ${pointers.length}. Cleaning up...`);
+        // Remove excess pointer elements
+        gauge.g.current?.selectAll('.multi-pointer').each(function(this: any, d: any, i: number) {
+            if (i >= pointers.length) {
+                select(this).remove();
+            }
+        });
+        // Trim the multiPointers array
+        if (gauge.multiPointers?.current) {
+            gauge.multiPointers.current = gauge.multiPointers.current.slice(0, pointers.length);
+        }
+    }
+    
     // Ensure we have the right number of animation triggered flags
     while (gauge.multiPointerAnimationTriggered!.current.length < pointers.length) {
         gauge.multiPointerAnimationTriggered!.current.push(false);
+    }
+    // Trim excess flags
+    if (gauge.multiPointerAnimationTriggered!.current.length > pointers.length) {
+        gauge.multiPointerAnimationTriggered!.current = gauge.multiPointerAnimationTriggered!.current.slice(0, pointers.length);
     }
     
     // Draw each pointer

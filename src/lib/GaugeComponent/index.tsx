@@ -154,8 +154,8 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     isFirstRun.current = isFirstRender;
     
     if (CONSTANTS.debugLogs) {
-      console.log("isHeightProvidedByUser:", isHeightProvidedByUser());
-      console.log("isHeightPresentInParentNode:", isHeightPresentInParentNode());
+      //console.debug("isHeightProvidedByUser:", isHeightProvidedByUser());
+      //console.debug("isHeightPresentInParentNode:", isHeightPresentInParentNode());
     }
     
     if (isFirstRender) {
@@ -194,10 +194,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
       // Log resize event for debugging
       if (CONSTANTS.debugLogs && entries[0]) {
         const entry = entries[0];
-        console.log('[ResizeObserver] Element resized:', {
-          width: entry.contentRect.width,
-          height: entry.contentRect.height
-        });
+        // console.log('[ResizeObserver] Element resized:', {
+        //   width: entry.contentRect.width,
+        //   height: entry.contentRect.height
+        // });
       }
       
       // Use a small delay to ensure layout is stable

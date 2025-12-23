@@ -165,8 +165,11 @@ export const addTickValue = (tick: Tick, gauge: Gauge) => {
   // For outer ticks, centerToArcLengthSubtract is negative to push outward
   // For inner ticks, it's positive to push inward
   let tickLineOffset = _shouldHideTickLine ? 0 : (tickDistanceFromArc + tickLength);
+  // Get distance from text prop, with defaults based on tick type
+  var distanceFromText = tick.lineConfig?.distanceFromText ?? labels?.tickLabels?.defaultTickLineConfig?.distanceFromText;
   // Inner ticks need more padding because text is inside and can overlap more easily
-  let textPadding = isInner ? (15 * scaleFactor) : (5 * scaleFactor);
+  let defaultTextPadding = isInner ? 15 : 5;
+  let textPadding = (distanceFromText ?? defaultTextPadding) * scaleFactor;
   
   let centerToArcLengthSubtract: number;
   if (isInner) {

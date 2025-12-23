@@ -129,38 +129,38 @@ export const clearViewBoxBounds = (gauge: Gauge) => {
 export const logLayoutInfo = (gauge: Gauge, layout: GaugeLayout, parentWidth: number, parentHeight: number) => {
   console.group('🎯 Gauge Layout Information');
   
-  console.log('Parent Container:', {
-    width: parentWidth,
-    height: parentHeight,
-    aspectRatio: (parentWidth / parentHeight).toFixed(2),
-  });
+  // console.log('Parent Container:', {
+  //   width: parentWidth,
+  //   height: parentHeight,
+  //   aspectRatio: (parentWidth / parentHeight).toFixed(2),
+  // });
   
-  console.log('ViewBox:', {
-    x: layout.viewBox.x,
-    y: layout.viewBox.y,
-    width: layout.viewBox.width,
-    height: layout.viewBox.height,
-    string: layout.viewBox.toString(),
-  });
+  // console.log('ViewBox:', {
+  //   x: layout.viewBox.x,
+  //   y: layout.viewBox.y,
+  //   width: layout.viewBox.width,
+  //   height: layout.viewBox.height,
+  //   string: layout.viewBox.toString(),
+  // });
   
-  console.log('Radii:', {
-    outer: layout.outerRadius,
-    inner: layout.innerRadius,
-    arcWidth: layout.outerRadius - layout.innerRadius,
-    arcWidthPercent: ((layout.outerRadius - layout.innerRadius) / layout.outerRadius * 100).toFixed(1) + '%',
-  });
+  // console.log('Radii:', {
+  //   outer: layout.outerRadius,
+  //   inner: layout.innerRadius,
+  //   arcWidth: layout.outerRadius - layout.innerRadius,
+  //   arcWidthPercent: ((layout.outerRadius - layout.innerRadius) / layout.outerRadius * 100).toFixed(1) + '%',
+  // });
   
-  console.log('Center Point:', {
-    x: layout.gaugeCenter.x,
-    y: layout.gaugeCenter.y,
-  });
+  // console.log('Center Point:', {
+  //   x: layout.gaugeCenter.x,
+  //   y: layout.gaugeCenter.y,
+  // });
   
-  console.log('Space Utilization:', {
-    widthUsage: ((layout.outerRadius * 2 / parentWidth) * 100).toFixed(1) + '%',
-    heightUsage: ((layout.outerRadius * 2 / parentHeight) * 100).toFixed(1) + '%',
-  });
+  // console.log('Space Utilization:', {
+  //   widthUsage: ((layout.outerRadius * 2 / parentWidth) * 100).toFixed(1) + '%',
+  //   heightUsage: ((layout.outerRadius * 2 / parentHeight) * 100).toFixed(1) + '%',
+  // });
   
-  console.log('Gauge Type:', gauge.props.type);
+  //console.debug('Gauge Type:', gauge.props.type);
   
   console.groupEnd();
 };
