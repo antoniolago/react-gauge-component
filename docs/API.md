@@ -1,7 +1,7 @@
 # React Gauge Component API Reference
 
 > **Auto-generated from TypeScript types**  
-> Last updated: 2025-12-18
+> Last updated: 2025-12-23
 
 This document is automatically generated from the TypeScript type definitions.
 To regenerate, run: `yarn docs`
@@ -286,6 +286,7 @@ Enum values: Needle, Blob, Arrow
 | `width` | `number` | No | The width of the tick's line |
 | `length` | `number` | No | The length of the tick's line |
 | `distanceFromArc` | `number` | No | The distance of the tick's line from the arc |
+| `distanceFromText` | `number` | No | The distance between the tick's line and the text label |
 | `color` | `string` | No | The color of the tick's line |
 | `hide` | `boolean` | No | If true will hide the tick line |
 | `effects` | `TickEffects` | No | Visual effects for the tick line |

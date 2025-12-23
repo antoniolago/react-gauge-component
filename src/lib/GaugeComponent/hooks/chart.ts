@@ -198,10 +198,10 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             
             if (CONSTANTS.debugLogs) {
                 //console.debug('[renderChart] Pass 2 - Optimized layout from bounds:', {
-                    measuredBounds: gauge.measuredBounds.current,
-                    newRadius: layout.outerRadius,
-                    viewBox: layout.viewBox.toString()
-                });
+                //     measuredBounds: gauge.measuredBounds.current,
+                //     newRadius: layout.outerRadius,
+                //     viewBox: layout.viewBox.toString()
+                // });
             }
         } else {
             // Fallback to optimized layout calculation
@@ -221,13 +221,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             );
         }
         
-        if (CONSTANTS.debugLogs) {
-            //console.debug(`[renderChart] Pass ${currentPass} - Layout:`, {
-                outerRadius: layout.outerRadius,
-                viewBox: layout.viewBox.toString(),
-                gaugeCenter: layout.gaugeCenter
-            });
-        }
+        // if (CONSTANTS.debugLogs) {
+        //         console.debug(`[renderChart] Pass ${currentPass} - Layout:`, {
+        //         outerRadius: layout.outerRadius,
+        //         viewBox: layout.viewBox.toString(),
+        //         gaugeCenter: layout.gaugeCenter
+        //     });
+        // }
         
         // Check for layout stability to prevent infinite resize loops
         if (gauge.prevGSize.current && currentPass > 1) {
