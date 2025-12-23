@@ -15,21 +15,9 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     
     let updatedValue = gauge.prevProps.current.value !== gauge.props.value;
     
-    // Count existing elements for debugging
     const existingSvg = gauge.container.current.select("svg");
-    const existingGaugeContents = existingSvg.empty() ? 0 : existingSvg.selectAll("g.gauge-content").size();
-    const existingDoughnuts = existingSvg.empty() ? 0 : existingSvg.selectAll("g.doughnut").size();
-    
-    console.log('[initChart] ENTRY:', {
-        isFirstRender,
-        updatedValue,
-        existingGaugeContents,
-        existingDoughnuts,
-        hasSvg: !existingSvg.empty()
-    });
     
     if (updatedValue && !isFirstRender) {
-        console.log('[initChart] FAST PATH - value only, no new groups created');
         renderChart(gauge, false);
         return;
     }
@@ -37,7 +25,6 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     // CRITICAL: Skip full re-init if animation is in progress
     // This prevents creating duplicate gauge-content groups during animations
     if (gauge.animationInProgress?.current && !isFirstRender) {
-        console.log('[initChart] SKIPPING - animation in progress, will re-init after animation completes');
         if (gauge.pendingResize) {
             gauge.pendingResize.current = true;
         }
@@ -58,22 +45,14 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     
     // For subsequent renders (not first), reuse the existing SVG and create new groups
     if (!existingSvg.empty() && !isFirstRender) {
-        console.log('[initChart] SUBSEQUENT RENDER - REMOVING old content, creating fresh groups');
         gauge.svg.current = existingSvg;
         // CRITICAL FIX: Remove old content IMMEDIATELY to prevent duplicate gauges
-        // The two-pass system was keeping old content visible, causing duplicates
         gauge.svg.current.selectAll("g.gauge-content").remove();
         gauge.svg.current.selectAll("g.gauge-content-old").remove();
         // Create fresh groups
         gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
         gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
-        
-        // Log after creation
-        const afterGaugeContents = gauge.svg.current.selectAll("g.gauge-content").size();
-        const afterDoughnuts = gauge.svg.current.selectAll("g.doughnut").size();
-        console.log('[initChart] AFTER creating fresh groups:', { afterGaugeContents, afterDoughnuts });
     } else {
-        console.log('[initChart] FIRST RENDER - creating fresh SVG and groups');
         // First render or no existing SVG - create new
         gauge.container.current.select("svg").remove();
         gauge.svg.current = gauge.container.current.append("svg")
@@ -186,9 +165,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             // Skip to showing the result directly (no need for pass 2)
             gauge.renderPass!.current = 2;
             // Remove old content immediately since we're going straight to final render
-            const removedCount = gauge.svg.current.selectAll("g.gauge-content-old").size();
             gauge.svg.current.selectAll("g.gauge-content-old").remove();
-            console.log('[renderChart] Removed gauge-content-old:', removedCount);
         } else if (currentPass === 1) {
             // PASS 1: First render - use tight layout with minimal padding
             // This will likely clip some content, but we'll measure and fix it
@@ -424,9 +401,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                     renderChart(gauge, true);
                     
                     // Remove old content after new content is rendered
-                    const removedCount = gauge.svg.current.selectAll("g.gauge-content-old").size();
-            gauge.svg.current.selectAll("g.gauge-content-old").remove();
-            console.log('[renderChart] Removed gauge-content-old:', removedCount);
+                    gauge.svg.current.selectAll("g.gauge-content-old").remove();
                     
                     // Reset for next resize
                     gauge.renderPass!.current = 1;
@@ -446,9 +421,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                         gauge.g.current
                             ?.style("visibility", "visible")
                             .style("opacity", "1");
-                        const removedCount = gauge.svg.current.selectAll("g.gauge-content-old").size();
-            gauge.svg.current.selectAll("g.gauge-content-old").remove();
-            console.log('[renderChart] Removed gauge-content-old:', removedCount);
+                        gauge.svg.current.selectAll("g.gauge-content-old").remove();
                         gauge.renderPass!.current = 1;
                     });
                 }
@@ -464,9 +437,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                     gauge.g.current
                         ?.style("visibility", "visible")
                         .style("opacity", "1");
-                    const removedCount = gauge.svg.current.selectAll("g.gauge-content-old").size();
-            gauge.svg.current.selectAll("g.gauge-content-old").remove();
-            console.log('[renderChart] Removed gauge-content-old:', removedCount);
+                    gauge.svg.current.selectAll("g.gauge-content-old").remove();
                     gauge.renderPass!.current = 1;
                 });
             }
@@ -481,9 +452,20 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let valueLabelChanged = !shallowEqual(gauge.prevProps.current.labels?.valueLabel, labels.valueLabel);
         let shouldRedrawArcs = arcsPropsChanged;
         if (shouldRedrawArcs) {
+            // Calculate initialArcPercent for Grafana gauges to prevent arc flicker
+            let initialArcPercent: number | undefined = undefined;
+            const isGrafana = gauge.props.type === GaugeType.Grafana;
+            const shouldAnimate = gauge.props.pointer?.animate !== false;
+            if (isGrafana && shouldAnimate) {
+                const minValue = gauge.props.minValue as number;
+                const maxValue = gauge.props.maxValue as number;
+                const prevValue = gauge.prevProps?.current.value ?? minValue;
+                initialArcPercent = utilHooks.calculatePercentage(minValue, maxValue, prevValue);
+            }
+            
             arcHooks.clearArcs(gauge);
             arcHooks.setArcData(gauge);
-            arcHooks.setupArcs(gauge, resize);
+            arcHooks.setupArcs(gauge, resize, initialArcPercent);
         }
         var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
         if (shouldRedrawPointer) {

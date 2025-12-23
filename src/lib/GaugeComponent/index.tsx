@@ -138,24 +138,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     const anglesChanged = prevProps.current.startAngle !== mergedProps.current.startAngle || 
                           prevProps.current.endAngle !== mergedProps.current.endAngle;
     
-    const result = arcsPropsChanged || pointerPropsChanged || pointersArrayChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
-    
-    if (result) {
-      console.log('[shouldInitChart] TRIGGERED:', {
-        arcsPropsChanged,
-        pointerPropsChanged,
-        pointersArrayChanged,
-        labelsPropsChanged,
-        typeChanged,
-        valueChanged,
-        minValueChanged,
-        maxValueChanged,
-        interactionChanged,
-        anglesChanged
-      });
-    }
-    
-    return result;
+    return arcsPropsChanged || pointerPropsChanged || pointersArrayChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
   };
 
   const isHeightProvidedByUser = () => mergedProps.current.style?.height !== undefined;

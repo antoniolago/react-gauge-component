@@ -1,9 +1,15 @@
-import React, { useState, useEffect, cloneElement } from 'react';
+import React, { useState, useEffect, cloneElement, useMemo } from 'react';
 import { styles, createStyles } from '../styles';
 import { copyToClipboardFromJsx } from '../utils';
 import { GaugePreset } from '../types';
 import { GaugeComponentProps } from '../../../lib/GaugeComponent/types/GaugeComponentProps';
 import { Pencil, Copy, Check } from 'lucide-react';
+
+// Detect mobile/touch device
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+};
 
 interface GaugeCardProps {
   preset: GaugePreset;
@@ -45,14 +51,18 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
     onSendToEditor?.(config, localValue);
   };
 
-  // Render gauge with onValueChange for drag interaction
+  // Check if mobile - disable drag to allow scrolling
+  const isMobile = useMemo(() => isMobileDevice(), []);
+
+  // Render gauge with onValueChange for drag interaction (disabled on mobile)
   const renderGauge = () => {
     const element = preset.component(localValue);
     // Clone the element and add onValueChange for drag interaction
+    // Disable on mobile to prevent scroll interference
     return cloneElement(element, {
       ...element.props,
       value: localValue,
-      onValueChange: setLocalValue,
+      onValueChange: isMobile ? undefined : setLocalValue,
     });
   };
 
