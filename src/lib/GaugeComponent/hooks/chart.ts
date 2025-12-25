@@ -11,6 +11,7 @@ import { shallowEqual } from "./utils";
 import * as coordinateSystem from "./coordinateSystem";
 import { GaugeLayout } from "./coordinateSystem";
 export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
+    // console.log('[initChart] Called with isFirstRender:', isFirstRender, 'animationTriggered:', gauge.initialAnimationTriggered?.current);
     const { angles } = gauge.dimensions.current;
     
     let updatedValue = gauge.prevProps.current.value !== gauge.props.value;
@@ -184,12 +185,34 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             gauge.measuredBounds = { current: null };
         }
         
-        const currentPass = gauge.renderPass.current;
+        let currentPass = gauge.renderPass.current;
         const hasPreviousBounds = gauge.measuredBounds?.current != null;
         
-        if (CONSTANTS.debugLogs) {
-            //console.debug(`[renderChart] Pass ${currentPass} - Container:`, { width: parentWidth, height: parentHeight, hasPreviousBounds });
+        // CRITICAL FIX: Skip render entirely if container dimensions haven't changed
+        // This prevents infinite loops from floating-point differences in viewBox calculations
+        const lastDims = gauge.measuredBounds?.current;
+        // console.log('[renderChart] Checking skip conditions:', {
+        //     hasLastDims: !!lastDims,
+        //     containerWidth: lastDims?.containerWidth,
+        //     containerHeight: lastDims?.containerHeight,
+        //     parentWidth,
+        //     parentHeight,
+        //     animationTriggered: gauge.initialAnimationTriggered?.current,
+        //     animationInProgress: gauge.animationInProgress?.current
+        // });
+        if (lastDims?.containerWidth && lastDims?.containerHeight) {
+            const widthSame = Math.abs(parentWidth - lastDims.containerWidth) < 1;
+            const heightSame = Math.abs(parentHeight - lastDims.containerHeight) < 1;
+            if (widthSame && heightSame && gauge.initialAnimationTriggered?.current) {
+                // Container size unchanged after initial animation - skip re-render
+                // Just ensure visibility
+                // console.log('[renderChart] SKIPPING - container unchanged after animation');
+                gauge.svg.current?.style("visibility", "visible").style("opacity", "1");
+                gauge.g.current?.style("visibility", "visible").style("opacity", "1");
+                return;
+            }
         }
+        console.log('[renderChart] PROCEEDING with render');
         
         let layout: coordinateSystem.GaugeLayout;
         
@@ -207,7 +230,10 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                 prevLayout
             );
             // Skip to showing the result directly (no need for pass 2)
+            // CRITICAL: Update both the ref AND local variable to prevent measurement block
+            // from executing when we already have valid cached bounds
             gauge.renderPass!.current = 2;
+            currentPass = 2;
             // Remove old content immediately since we're going straight to final render
             gauge.svg.current.selectAll("g.gauge-content-old").remove();
         } else if (currentPass === 1) {
@@ -276,9 +302,6 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             );
             if (stable) {
                 // Layout hasn't changed significantly, skip re-render but ensure visibility
-                if (CONSTANTS.debugLogs) {
-                    //console.debug('[renderChart] Layout stable, skipping re-render');
-                }
                 // Still ensure gauge is visible
                 const isHidden = gauge.svg.current?.style("visibility") === "hidden";
                 const useFadeIn = gauge.props.fadeInAnimation === true;
@@ -407,6 +430,11 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         
         // NOW make gauge visible - content is drawn at correct starting position
         if (currentPass === 2) {
+            // Update stored container dimensions for future resize detection
+            if (gauge.measuredBounds?.current) {
+                gauge.measuredBounds.current.containerWidth = parentWidth;
+                gauge.measuredBounds.current.containerHeight = parentHeight;
+            }
             const animationDelay = gauge.props.pointer?.animationDelay || 0;
             const useFadeIn = gauge.props.fadeInAnimation === true;
             gauge.svg.current
@@ -451,7 +479,10 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                         width: bbox.width,
                         height: bbox.height,
                         x: bbox.x,
-                        y: bbox.y
+                        y: bbox.y,
+                        originalRadius: layout.outerRadius,  // Store the radius at which bounds were measured
+                        containerWidth: parentWidth,  // Store container dimensions to detect actual resizes
+                        containerHeight: parentHeight
                     };
                     
                     if (CONSTANTS.debugLogs) {

@@ -498,7 +498,7 @@ export const isLayoutStable = (
 export const calculateLayoutFromMeasuredBounds = (
   parentWidth: number,
   parentHeight: number,
-  measuredBounds: { width: number; height: number; x: number; y: number },
+  measuredBounds: { width: number; height: number; x: number; y: number; originalRadius?: number; containerWidth?: number; containerHeight?: number },
   gaugeType: GaugeType,
   arcWidth: number,
   currentLayout: GaugeLayout
@@ -537,7 +537,10 @@ export const calculateLayoutFromMeasuredBounds = (
   const scale = Math.min(scaleX, scaleY);
   
   // Calculate new outer radius based on the scale
-  const newOuterRadius = currentLayout.outerRadius * scale;
+  // CRITICAL: Use the original radius at which bounds were measured, not currentLayout
+  // This prevents compounding scale errors on subsequent renders
+  const baseRadius = measuredBounds.originalRadius || currentLayout.outerRadius;
+  const newOuterRadius = baseRadius * scale;
   const newInnerRadius = newOuterRadius * (1 - arcWidth);
   
   // Calculate new viewBox dimensions

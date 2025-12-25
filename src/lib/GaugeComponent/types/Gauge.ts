@@ -47,7 +47,7 @@ export interface Gauge {
     /** Tracks render pass for two-pass optimization (1 = initial, 2 = optimized) */
     renderPass?: React.MutableRefObject<number>;
     /** Stores measured bounds from first render pass */
-    measuredBounds?: React.MutableRefObject<{ width: number; height: number; x: number; y: number } | null>;
+    measuredBounds?: React.MutableRefObject<{ width: number; height: number; x: number; y: number; originalRadius?: number; containerWidth?: number; containerHeight?: number } | null>;
     /** Tracks if initial animation has been triggered (prevents ResizeObserver from restarting animation) */
     initialAnimationTriggered?: React.MutableRefObject<boolean>;
     /** Tracks if animation is currently in progress (prevents resize from interrupting) */

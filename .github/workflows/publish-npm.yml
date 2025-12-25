@@ -187,11 +187,12 @@ jobs:
             npm publish --access public
           fi
 
-  # Deploy demo to GitHub Pages
+  # Deploy demo to GitHub Pages (only for stable releases)
   deploy-demo:
     name: Deploy Demo to GitHub Pages
     runs-on: ubuntu-latest
     needs: [build]
+    if: ${{ !contains(github.ref, '-') }}  # Only deploy stable releases (no prerelease tags)
     permissions:
       contents: read
       pages: write
@@ -230,7 +231,7 @@ jobs:
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [publish-npm, deploy-demo]
+    needs: [publish-npm]
     permissions:
       contents: write
     steps:
