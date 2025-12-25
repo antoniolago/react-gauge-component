@@ -1,22 +1,42 @@
-import React, { useEffect, useRef, useLayoutEffect, Suspense } from "react";
+import React, { useEffect, useRef, useLayoutEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { pie, select } from "d3";
 import { defaultGaugeProps, GaugeComponentProps, GaugeType, getGaugeMarginByType } from "./types/GaugeComponentProps";
-import { Gauge } from "./types/Gauge";
+import { Gauge, CustomContentConfig } from "./types/Gauge";
 import * as chartHooks from "./hooks/chart";
 import * as arcHooks from "./hooks/arc";
-import { isEmptyObject, mergeObjects } from "./hooks/utils";
+import { isEmptyObject, mergeObjects, shallowEqual } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
-import { PointerRef, defaultPointerRef } from "./types/Pointer";
+import { PointerRef, defaultPointerRef, MultiPointerRef } from "./types/Pointer";
 import { Arc, getArcWidthByType } from "./types/Arc";
-import { debounce } from "lodash";
-/*
-GaugeComponent creates a gauge chart using D3
-The chart is responsive and will have the same width as the "container"
-The radius of the gauge depends on the width and height of the container
-It will use whichever is smallest of width or height
-The svg element surrounding the gauge will always be square
-"container" is the div where the chart should be placed
-*/
+import CONSTANTS from "./constants";
+
+/**
+ * GaugeComponent - A responsive gauge chart component built with D3
+ * 
+ * Features:
+ * - Responsive design that adapts to container size
+ * - Multiple gauge types: semicircle, radial, grafana
+ * - Customizable arcs, pointers, labels, and tooltips
+ * - Smooth animations with configurable timing
+ * - ResizeObserver for automatic resize handling
+ */
+// CSS keyframes for fade-in animation to prevent initial render flash
+const fadeInKeyframes = `
+@keyframes gaugeComponentFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+`;
+
+// Inject keyframes once
+if (typeof document !== 'undefined' && !document.getElementById('gauge-fade-in-style')) {
+  const style = document.createElement('style');
+  style.id = 'gauge-fade-in-style';
+  style.textContent = fadeInKeyframes;
+  document.head.appendChild(style);
+}
+
 const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const svg = useRef<any>({});
   const tooltip = useRef<any>({});
@@ -27,17 +47,37 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const pointer = useRef<PointerRef>({ ...defaultPointerRef });
   const container = useRef<any>({});
   const arcData = useRef<any>([]);
+  const parentNode = useRef<Element>();
   const pieChart = useRef<any>(pie());
-  const dimensions = useRef<Dimensions>({ ...defaultDimensions });
+  const dimensions = useRef<Dimensions>({ 
+    ...defaultDimensions,
+    margin: { ...defaultDimensions.margin },
+    angles: { ...defaultDimensions.angles }
+  });
   const mergedProps = useRef<GaugeComponentProps>(props as GaugeComponentProps);
   const prevProps = useRef<any>({});
-  const resizeObserver = useRef<any>({});
-  let selectedRef = useRef<any>(null);
+  const prevGSize = useRef<any>(null);
+  const maxGHeight = useRef<any>(null);
+  const svgRef = useRef<any>(null);
+  const customContent = useRef<CustomContentConfig | {}>({});
+  const initialAnimationTriggered = useRef<boolean>(false);
+  const animationInProgress = useRef<boolean>(false);
+  const pendingResize = useRef<boolean>(false);
+  const multiPointers = useRef<MultiPointerRef[]>([]);
+  const multiPointerAnimationTriggered = useRef<boolean[]>([]);
+  const hasBeenInitialized = useRef<boolean>(false); // Track if component has ever been initialized
+  
+  // State to trigger re-render when custom content needs to be rendered
+  const [customContentItems, setCustomContentItems] = useState<any[]>([]);
 
-  var gauge: Gauge = {
+  // Use a ref for gauge so the ResizeObserver always has access to current props
+  const gaugeRef = useRef<Gauge | null>(null);
+  
+  const gauge: Gauge = {
     props: mergedProps.current,
-    resizeObserver,
+    originalProps: props,
     prevProps,
+    resizeObserver: useRef<any>(),
     svg,
     g,
     dimensions,
@@ -48,96 +88,195 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     container,
     arcData,
     pieChart,
-    tooltip
+    tooltip,
+    prevGSize,
+    maxGHeight,
+    customContent,
+    initialAnimationTriggered,
+    animationInProgress,
+    pendingResize,
+    multiPointers,
+    multiPointerAnimationTriggered,
   };
-  //Merged properties will get the default props and overwrite by the user's defined props
-  //To keep the original default props in the object
+  
+  // Keep gaugeRef updated with current gauge (including current props)
+  gaugeRef.current = gauge;
+
+  // Merge default props with user-provided props
   const updateMergedProps = () => {
-    let defaultValues = { ...defaultGaugeProps };
+    const defaultValues = { ...defaultGaugeProps };
     gauge.props = mergedProps.current = mergeObjects(defaultValues, props);
-    if (gauge.props.arc?.width == defaultGaugeProps.arc?.width) {
-      let mergedArc = mergedProps.current.arc as Arc;
+    
+    // Apply type-specific defaults
+    if (gauge.props.arc?.width === defaultGaugeProps.arc?.width) {
+      const mergedArc = mergedProps.current.arc as Arc;
       mergedArc.width = getArcWidthByType(gauge.props.type as GaugeType);
     }
-    if (gauge.props.marginInPercent == defaultGaugeProps.marginInPercent) mergedProps.current.marginInPercent = getGaugeMarginByType(gauge.props.type as GaugeType);
+    if (gauge.props.marginInPercent === defaultGaugeProps.marginInPercent) {
+      mergedProps.current.marginInPercent = getGaugeMarginByType(gauge.props.type as GaugeType);
+    }
+    
     arcHooks.validateArcs(gauge);
-  }
+  };
 
+  // Determine if chart should be re-initialized based on prop changes
+  // IMPORTANT: Use JSON.stringify for deep comparison of objects to detect ACTUAL changes
+  // shallowEqual gives false positives when parent creates new object references each render
   const shouldInitChart = () => {
-    let arcsPropsChanged = (JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc));
-    let pointerPropsChanged = (JSON.stringify(prevProps.current.pointer) !== JSON.stringify(mergedProps.current.pointer));
-    let valueChanged = (JSON.stringify(prevProps.current.value) !== JSON.stringify(mergedProps.current.value));
-    let minValueChanged = (JSON.stringify(prevProps.current.minValue) !== JSON.stringify(mergedProps.current.minValue));
-    let maxValueChanged = (JSON.stringify(prevProps.current.maxValue) !== JSON.stringify(mergedProps.current.maxValue));
-    return arcsPropsChanged || pointerPropsChanged || valueChanged || minValueChanged || maxValueChanged;
-  }
+    // Use JSON.stringify for deep comparison of complex objects
+    const arcsPropsChanged = JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc);
+    const pointerPropsChanged = JSON.stringify(prevProps.current.pointer) !== JSON.stringify(mergedProps.current.pointer);
+    const pointersArrayChanged = JSON.stringify(prevProps.current.pointers) !== JSON.stringify(mergedProps.current.pointers);
+    const labelsPropsChanged = JSON.stringify(prevProps.current.labels) !== JSON.stringify(mergedProps.current.labels);
+    
+    // Primitive value comparisons
+    const typeChanged = prevProps.current.type !== mergedProps.current.type;
+    const valueChanged = prevProps.current.value !== mergedProps.current.value;
+    const minValueChanged = prevProps.current.minValue !== mergedProps.current.minValue;
+    const maxValueChanged = prevProps.current.maxValue !== mergedProps.current.maxValue;
+    const interactionChanged = (prevProps.current.onValueChange !== undefined) !== (mergedProps.current.onValueChange !== undefined);
+    const anglesChanged = prevProps.current.startAngle !== mergedProps.current.startAngle || 
+                          prevProps.current.endAngle !== mergedProps.current.endAngle;
+    
+    return arcsPropsChanged || pointerPropsChanged || pointersArrayChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
+  };
+
+  const isHeightProvidedByUser = () => mergedProps.current.style?.height !== undefined;
+  const isHeightPresentInParentNode = () => parentNode.current?.clientHeight !== 0;
+
+  // Initialize and update chart on prop changes
   useLayoutEffect(() => {
     updateMergedProps();
-    isFirstRun.current = isEmptyObject(container.current)
-    if (isFirstRun.current) container.current = select(selectedRef.current);
-    if (shouldInitChart()) chartHooks.initChart(gauge, isFirstRun.current);
+    
+    // Use dedicated flag instead of checking container content
+    // Container can appear "empty" after removing old content, but it's not first render
+    const isFirstRender = !hasBeenInitialized.current;
+    isFirstRun.current = isFirstRender;
+    
+    if (CONSTANTS.debugLogs) {
+      //console.debug("isHeightProvidedByUser:", isHeightProvidedByUser());
+      //console.debug("isHeightPresentInParentNode:", isHeightPresentInParentNode());
+    }
+    
+    if (isFirstRender) {
+      container.current = select(svgRef.current);
+      hasBeenInitialized.current = true;
+    }
+    
+    if (shouldInitChart()) {
+      chartHooks.initChart(gauge, isFirstRender);
+    }
+    
     gauge.prevProps.current = mergedProps.current;
+    
+    // Check if custom content needs to be rendered via React portal
+    const customContentConfig = customContent.current as any;
+    if (Array.isArray(customContentConfig?.items) && customContentConfig.items.length > 0) {
+      setCustomContentItems(customContentConfig.items);
+    } else if (customContentConfig?.domNode && customContentConfig?.renderContent) {
+      // Backward compatible single-item config
+      setCustomContentItems([
+        {
+          domNode: customContentConfig.domNode,
+          renderContent: customContentConfig.renderContent,
+          value: customContentConfig.value,
+          arcColor: customContentConfig.arcColor,
+        },
+      ]);
+    } else {
+      setCustomContentItems([]);
+    }
   }, [props]);
 
-  // useEffect(() => {
-  //   const observer = new MutationObserver(function () {
-  //     setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
-  //     if (!selectedRef.current?.offsetParent) return;
-
-  //     chartHooks.renderChart(gauge, true);
-  //     observer.disconnect()
-  //   });
-  //   observer.observe(selectedRef.current?.parentNode, {attributes: true, subtree: false});
-  //   return () => observer.disconnect();
-  // }, [selectedRef.current?.parentNode?.offsetWidth, selectedRef.current?.parentNode?.offsetHeight]);
-
+  // Set up ResizeObserver for responsive resizing
   useEffect(() => {
-    const handleResize = () => chartHooks.renderChart(gauge, true);
-    //Set up resize event listener to re-render the chart everytime the window is resized
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [props]);
-
-  // useEffect(() => {
-  //   console.log(selectedRef.current?.offsetWidth)
-  //   // workaround to trigger recomputing of gauge size on first load (e.g. F5)
-  //   setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
-  // }, [selectedRef.current?.parentNode]);
-  useEffect(() => {
-    const element = selectedRef.current;
+    const element = svgRef.current;
     if (!element) return;
 
-    // Create observer instance
-    const observer = new ResizeObserver(() => {
-      chartHooks.renderChart(gauge, true);
-    });
-
-    // Store observer reference
-    gauge.resizeObserver.current = observer;
-
-    // Observe parent node
-    if (element.parentNode) {
-      observer.observe(element.parentNode);
-    }
-
-    // Cleanup
-    return () => {
-      if (gauge.resizeObserver) {
-        gauge.resizeObserver.current?.disconnect();
-        delete gauge.resizeObserver.current;
+    let resizeTimeout: ReturnType<typeof setTimeout>;
+    
+    const handleResize = (entries: ResizeObserverEntry[]) => {
+      // Cancel any pending resize to debounce rapid changes
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
       }
+      
+      // Log resize event for debugging
+      if (CONSTANTS.debugLogs && entries[0]) {
+        const entry = entries[0];
+        // console.log('[ResizeObserver] Element resized:', {
+        //   width: entry.contentRect.width,
+        //   height: entry.contentRect.height
+        // });
+      }
+      
+      // Use a small delay to ensure layout is stable
+      resizeTimeout = setTimeout(() => {
+        requestAnimationFrame(() => {
+          // Use gaugeRef.current to always get the latest gauge with current props
+          if (gaugeRef.current) {
+            chartHooks.renderChart(gaugeRef.current, true);
+          }
+        });
+      }, 16); // ~1 frame
+    };
+
+    const observer = new ResizeObserver(handleResize);
+    
+    // Observe the gauge container itself, not its parent
+    // This ensures we get accurate dimensions when we resize
+    observer.observe(element);
+
+    return () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      observer.disconnect();
     };
   }, []);
 
-  const { id, style, className, type } = props;
+  const { id, style, className } = props;
+  
+  // Container must properly fill its parent and not overflow
+  const containerStyle: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+    maxWidth: '100%',
+    maxHeight: '100%',
+    overflow: 'hidden',
+    ...style,
+  };
+
+  // Render custom content via React portal if configured
+  const renderCustomContent = () => {
+    if (!customContentItems || customContentItems.length === 0) return null;
+
+    return (
+      <>
+        {customContentItems
+          .filter((it) => it?.domNode && it?.renderContent)
+          .map((it, idx) =>
+            createPortal(
+              it.renderContent(it.value, it.arcColor),
+              it.domNode,
+              `gauge-custom-content-${idx}`
+            )
+          )}
+      </>
+    );
+  };
+
   return (
-    <div
-      id={id}
-      className={`${gauge.props.type}-gauge${className ? ' ' + className : ''}`}
-      style={style}
-      ref={(svg) => (selectedRef.current = svg)}
-    />
+    <>
+      <div
+        id={id}
+        className={`gauge${className ? ' ' + className : ''}`}
+        style={containerStyle}
+        ref={(ref) => (svgRef.current = ref)}
+      />
+      {renderCustomContent()}
+    </>
   );
 };
-export { GaugeComponent };
+
 export default GaugeComponent;

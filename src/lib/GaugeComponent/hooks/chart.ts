@@ -7,21 +7,101 @@ import * as arcHooks from "./arc";
 import * as labelsHooks from "./labels";
 import * as pointerHooks from "./pointer";
 import * as utilHooks from "./utils";
+import { shallowEqual } from "./utils";
+import * as coordinateSystem from "./coordinateSystem";
+import { GaugeLayout } from "./coordinateSystem";
 export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     const { angles } = gauge.dimensions.current;
-    if (gauge.resizeObserver?.current?.disconnect) {
-        gauge.resizeObserver?.current?.disconnect();
+    
+    let updatedValue = gauge.prevProps.current.value !== gauge.props.value;
+    
+    // Check for multi-pointer value changes (values changed but structure/count is the same)
+    const prevPointers = gauge.prevProps.current.pointers;
+    const currPointers = gauge.props.pointers;
+    const isMultiPointerMode = Array.isArray(currPointers) && currPointers.length > 0;
+    let multiPointerValuesChanged = false;
+    
+    if (isMultiPointerMode && Array.isArray(prevPointers) && prevPointers.length === currPointers.length) {
+        // Check if only values changed (not structure)
+        multiPointerValuesChanged = currPointers.some((p, i) => p.value !== prevPointers[i]?.value);
+        
+        // Check if structure (non-value properties) changed
+        const structureChanged = currPointers.some((p, i) => {
+            const prev = prevPointers[i];
+            if (!prev) return true;
+            // Compare non-value properties
+            return p.type !== prev.type ||
+                   p.color !== prev.color ||
+                   p.length !== prev.length ||
+                   p.width !== prev.width ||
+                   p.hide !== prev.hide;
+        });
+        
+        // Only use fast path if values changed but structure didn't
+        if (multiPointerValuesChanged && !structureChanged) {
+            updatedValue = true;
+        }
     }
-    let updatedValue = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
-    if (updatedValue && !isFirstRender) {
+    
+    const existingSvg = gauge.container.current.select("svg");
+    
+    // Detect mode transition (single-pointer <-> multi-pointer)
+    // Mode transitions require full re-init even during animation
+    const wasMultiPointerMode = Array.isArray(prevPointers) && prevPointers.length > 0;
+    const modeTransition = wasMultiPointerMode !== isMultiPointerMode;
+    
+    if (updatedValue && !isFirstRender && !modeTransition) {
         renderChart(gauge, false);
         return;
     }
-    gauge.container.current.select("svg").remove();
-    gauge.svg.current = gauge.container.current.append("svg");
-    gauge.g.current = gauge.svg.current.append("g"); //Used for margins
-    gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
-    //gauge.outerDougnut.current = gauge.g.current.append("g").attr("class", "doughnut");
+    
+    // CRITICAL: Skip full re-init if animation is in progress
+    // This prevents creating duplicate gauge-content groups during animations
+    // EXCEPTION: Mode transitions must always complete to prevent duplicate pointers
+    if (gauge.animationInProgress?.current && !isFirstRender && !modeTransition) {
+        if (gauge.pendingResize) {
+            gauge.pendingResize.current = true;
+        }
+        return;
+    }
+    
+    // Invalidate measured bounds when layout-affecting props change
+    const layoutPropsChanged = 
+        !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc) ||
+        !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer) ||
+        !shallowEqual(gauge.prevProps.current.labels, gauge.props.labels) ||
+        gauge.prevProps.current.type !== gauge.props.type ||
+        gauge.prevProps.current.marginInPercent !== gauge.props.marginInPercent;
+    
+    if (layoutPropsChanged && gauge.measuredBounds) {
+        gauge.measuredBounds.current = null;
+    }
+    
+    // For subsequent renders (not first), reuse the existing SVG and create new groups
+    if (!existingSvg.empty() && !isFirstRender) {
+        gauge.svg.current = existingSvg;
+        // DEBUG: Log pointer state before removal
+        const pointerCountBefore = gauge.svg.current.selectAll('.pointer').size();
+        //console.debug('[initChart] Before removal - pointer count:', pointerCountBefore);
+        
+        // CRITICAL FIX: Remove old content IMMEDIATELY to prevent duplicate gauges
+        gauge.svg.current.selectAll("g.gauge-content").remove();
+        gauge.svg.current.selectAll("g.gauge-content-old").remove();
+        // Create fresh groups
+        gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
+        gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
+        
+        //console.debug('[initChart] After removal - will call addPointerElement');
+    } else {
+        // First render or no existing SVG - create new
+        gauge.container.current.select("svg").remove();
+        gauge.svg.current = gauge.container.current.append("svg")
+            .style("visibility", "hidden")  // Start hidden to prevent pass 1 flash
+            .style("opacity", "0");
+        gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
+        gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
+    }
+    
     calculateAngles(gauge);
     gauge.pieChart.current
         .value((d: any) => d.value)
@@ -29,12 +109,25 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         .startAngle(angles.startAngle)
         .endAngle(angles.endAngle)
         .sort(null);
-    //Set up pointer
-    pointerHooks.addPointerElement(gauge);
+    //Set up pointer element only for single-pointer mode
+    //In multi-pointer mode, elements are created by drawMultiPointers in renderChart
+    const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
+    if (!isMultiPointer) {
+        pointerHooks.addPointerElement(gauge);
+    }
     renderChart(gauge, true);
 }
 export const calculateAngles = (gauge: Gauge) => {
     const { angles } = gauge.dimensions.current;
+    
+    // Use custom angles if provided (convert degrees to radians)
+    if (gauge.props.startAngle !== undefined && gauge.props.endAngle !== undefined) {
+        angles.startAngle = (gauge.props.startAngle * Math.PI) / 180;
+        angles.endAngle = (gauge.props.endAngle * Math.PI) / 180;
+        return;
+    }
+    
+    // Default angles by gauge type
     if (gauge.props.type == GaugeType.Semicircle) {
         angles.startAngle = -Math.PI / 2 + 0.02;
         angles.endAngle = Math.PI / 2 - 0.02;
@@ -51,128 +144,461 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     const { dimensions } = gauge;
     let arc = gauge.props.arc as Arc;
     let labels = gauge.props.labels as Labels;
-    //if resize recalculate dimensions, clear chart and redraw
-    //if not resize, treat each prop separately
+
     if (resize) {
-        updateDimensions(gauge);
-        //Set dimensions of svg element and translations
-        gauge.g.current.attr(
-            "transform",
-            "translate(" + dimensions.current.margin.left + ", " + 35 + ")"
-        );
-        //Set the radius to lesser of width or height and remove the margins
-        //Calculate the new radius
-        calculateRadius(gauge);
+        // Skip resize render if animation is currently in progress
+        // This prevents the pointer/arc from being redrawn at wrong position
+        // Mark that a resize is pending so we can render after animation completes
+        if (gauge.animationInProgress?.current) {
+            if (gauge.pendingResize) {
+                gauge.pendingResize.current = true;
+            }
+            if (CONSTANTS.debugLogs) {
+                //console.debug('[renderChart] Skipping resize - animation in progress, marked pending');
+            }
+            return;
+        }
+        
+        var parentNode = gauge.container.current.node() as HTMLElement;
+        if (!parentNode) return;
+        
+        var rect = parentNode.getBoundingClientRect();
+        var parentWidth = rect.width;
+        var parentHeight = rect.height;
+        
+        // Skip render if dimensions are not available yet
+        if (parentWidth <= 0 || parentHeight <= 0) {
+            if (CONSTANTS.debugLogs) {
+                //console.debug('[renderChart] Skipping render - invalid dimensions:', { width: parentWidth, height: parentHeight });
+            }
+            // Ensure gauge is visible even if we skip (it may have been hidden before)
+            gauge.svg.current?.style("visibility", "visible").style("opacity", "1");
+            return;
+        }
+        
+        // Initialize render pass tracking
+        if (!gauge.renderPass) {
+            gauge.renderPass = { current: 1 };
+        }
+        if (!gauge.measuredBounds) {
+            gauge.measuredBounds = { current: null };
+        }
+        
+        const currentPass = gauge.renderPass.current;
+        const hasPreviousBounds = gauge.measuredBounds?.current != null;
+        
+        if (CONSTANTS.debugLogs) {
+            //console.debug(`[renderChart] Pass ${currentPass} - Container:`, { width: parentWidth, height: parentHeight, hasPreviousBounds });
+        }
+        
+        let layout: coordinateSystem.GaugeLayout;
+        
+        // On resize with existing bounds, skip pass 1 and go directly to optimized layout
+        if (currentPass === 1 && hasPreviousBounds && gauge.measuredBounds!.current) {
+            // We already have measured bounds - use them directly for a smooth resize
+            // Scale the previous layout to the new container size
+            const prevLayout = gauge.prevGSize.current;
+            layout = coordinateSystem.calculateLayoutFromMeasuredBounds(
+                parentWidth,
+                parentHeight,
+                gauge.measuredBounds!.current,
+                gauge.props.type as GaugeType,
+                arc.width as number,
+                prevLayout
+            );
+            // Skip to showing the result directly (no need for pass 2)
+            gauge.renderPass!.current = 2;
+            // Remove old content immediately since we're going straight to final render
+            gauge.svg.current.selectAll("g.gauge-content-old").remove();
+        } else if (currentPass === 1) {
+            // PASS 1: First render - use tight layout with minimal padding
+            // This will likely clip some content, but we'll measure and fix it
+            layout = coordinateSystem.calculateTightLayout(
+                parentWidth,
+                parentHeight,
+                gauge.props.type as GaugeType,
+                arc.width as number,
+                typeof gauge.props.marginInPercent === 'number' 
+                    ? gauge.props.marginInPercent 
+                    : 0
+            );
+        } else if (currentPass === 2 && gauge.measuredBounds.current) {
+            // PASS 2: Use measured bounds to calculate optimal layout
+            const prevLayout = gauge.prevGSize.current;
+            layout = coordinateSystem.calculateLayoutFromMeasuredBounds(
+                parentWidth,
+                parentHeight,
+                gauge.measuredBounds.current,
+                gauge.props.type as GaugeType,
+                arc.width as number,
+                prevLayout
+            );
+            
+            if (CONSTANTS.debugLogs) {
+                //console.debug('[renderChart] Pass 2 - Optimized layout from bounds:', {
+                //     measuredBounds: gauge.measuredBounds.current,
+                //     newRadius: layout.outerRadius,
+                //     viewBox: layout.viewBox.toString()
+                // });
+            }
+        } else {
+            // Fallback to optimized layout calculation
+            const paddingConfig = coordinateSystem.extractPaddingConfig(
+                labels,
+                gauge.props.pointer?.length
+            );
+            layout = coordinateSystem.calculateOptimizedLayout(
+                parentWidth,
+                parentHeight,
+                gauge.props.type as GaugeType,
+                arc.width as number,
+                paddingConfig,
+                typeof gauge.props.marginInPercent === 'number' 
+                    ? gauge.props.marginInPercent 
+                    : 0
+            );
+        }
+        
+        // if (CONSTANTS.debugLogs) {
+        //         console.debug(`[renderChart] Pass ${currentPass} - Layout:`, {
+        //         outerRadius: layout.outerRadius,
+        //         viewBox: layout.viewBox.toString(),
+        //         gaugeCenter: layout.gaugeCenter
+        //     });
+        // }
+        
+        // Check for layout stability to prevent infinite resize loops
+        if (gauge.prevGSize.current && currentPass > 1) {
+            const stable = coordinateSystem.isLayoutStable(
+                gauge.prevGSize.current,
+                layout,
+                0.005 // 0.5% tolerance
+            );
+            if (stable) {
+                // Layout hasn't changed significantly, skip re-render but ensure visibility
+                if (CONSTANTS.debugLogs) {
+                    //console.debug('[renderChart] Layout stable, skipping re-render');
+                }
+                // Still ensure gauge is visible
+                const isHidden = gauge.svg.current?.style("visibility") === "hidden";
+                const useFadeIn = gauge.props.fadeInAnimation === true;
+                if (isHidden && useFadeIn) {
+                    const animDelay = gauge.props.pointer?.animationDelay || 0;
+                    gauge.svg.current
+                        ?.style("visibility", "visible")
+                        .style("opacity", "0")
+                        .style("animation", `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards`);
+                } else {
+                    gauge.svg.current?.style("visibility", "visible").style("opacity", "1").style("animation", "none");
+                }
+                gauge.g.current
+                    ?.style("visibility", "visible")
+                    .style("opacity", "1");
+                return;
+            }
+        }
+        gauge.prevGSize.current = layout;
+        
+        // Update dimensions from the new layout
+        coordinateSystem.updateDimensionsFromLayout(dimensions.current, layout);
+        
+        // Configure SVG with proper viewBox and dimensions
+        // SVG is always visible - we hide/show the content groups instead
+        const shouldHideNewContent = currentPass === 1 && gauge.renderPass!.current === 1;
+        const hasOldContent = !gauge.svg.current.selectAll("g.gauge-content-old").empty();
+        
+        // Only show SVG if we have old content to display OR we're on pass 2
+        // On first render pass 1, keep SVG hidden until pass 2
+        const shouldShowSvg = hasOldContent || !shouldHideNewContent;
+        
+        gauge.svg.current
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .style("max-width", "100%")
+            .style("max-height", "100%")
+            .style("display", "block")
+            .style("visibility", hasOldContent ? "visible" : "hidden")
+            .style("opacity", hasOldContent ? "1" : "0")
+            .attr('preserveAspectRatio', 'xMidYMid meet');
+        
+        // Only update viewBox when showing new content (pass 2) or if no old content exists
+        // This prevents distortion of old content during pass 1 measurement
+        if (!shouldHideNewContent || !hasOldContent) {
+            gauge.svg.current.attr("viewBox", layout.viewBox.toString());
+        }
+        
+        // Keep new content hidden until it's properly drawn at the starting position
+        // This prevents flash at final value before animation
+        gauge.g.current
+            .style("visibility", "hidden")
+            .style("opacity", "0");
+        
+        // Position the main gauge group at the calculated center
+        gauge.g.current
+            .attr("transform", `translate(${layout.gaugeCenter.x}, ${layout.gaugeCenter.y})`);
+
+        // Position the doughnut (arcs) at the origin relative to g
         gauge.doughnut.current.attr(
             "transform",
-            "translate(" + dimensions.current.outerRadius + ", " + dimensions.current.outerRadius + ")"
+            "translate(0, 0)"
         );
-        //Hide tooltip failsafe (sometimes subarcs events are not fired)
+
         gauge.doughnut.current
             .on("mouseleave", () => arcHooks.hideTooltip(gauge))
-            .on("mouseout", () => arcHooks.hideTooltip(gauge))
-        let arcWidth = arc.width as number;
-        dimensions.current.innerRadius = dimensions.current.outerRadius * (1 - arcWidth);
-        clearChart(gauge);
+            .on("mouseout", () => arcHooks.hideTooltip(gauge));
+        
+        clearChart(gauge, currentPass);
         arcHooks.setArcData(gauge);
-        arcHooks.setupArcs(gauge, resize);
-        labelsHooks.setupLabels(gauge);
-        if (!gauge.props?.pointer?.hide)
-            pointerHooks.drawPointer(gauge, resize);
-        let gaugeTypeHeightCorrection: Record<string, number> = {
-            [GaugeType.Semicircle]: 50,
-            [GaugeType.Radial]: 55,
-            [GaugeType.Grafana]: 55
+        
+        // For Grafana type with animation, start the arc at prevPercent (or 0) 
+        // so it animates from that position instead of flashing at final value
+        // Use initialAnimationTriggered flag to handle ResizeObserver firing after prevProps is set
+        let initialArcPercent: number | undefined = undefined;
+        const isGrafana = gauge.props.type === GaugeType.Grafana;
+        const shouldAnimate = gauge.props.pointer?.animate !== false;
+        const isFirstAnimation = !gauge.initialAnimationTriggered?.current;
+        
+        // Always use 0 for first animation to prevent flash
+        // For multi-pointer mode, use first pointer's value for Grafana arc
+        const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
+        if (isGrafana && shouldAnimate) {
+            // Force 0% on first animation - this is the key fix
+            if (isFirstAnimation) {
+                initialArcPercent = 0;
+            } else {
+                const minValue = gauge.props.minValue as number;
+                const maxValue = gauge.props.maxValue as number;
+                // Use first pointer's value in multi-pointer mode, otherwise use main value
+                const prevPointerValue = gauge.prevProps?.current?.pointers?.[0]?.value;
+                const prevValue = isMultiPointer && prevPointerValue !== undefined 
+                    ? prevPointerValue 
+                    : (gauge.prevProps?.current.value ?? minValue);
+                initialArcPercent = utilHooks.calculatePercentage(minValue, maxValue, prevValue);
+            }
         }
-        let boundHeight = gauge.doughnut.current.node().getBoundingClientRect().height;
-        let boundWidth = gauge.container.current.node().getBoundingClientRect().width;
-        let gaugeType = gauge.props.type as string;
-        gauge.svg.current
-            .attr("width", boundWidth)
-            .attr("height", boundHeight + gaugeTypeHeightCorrection[gaugeType]);
+        
+        arcHooks.setupArcs(gauge, resize, initialArcPercent);
+        
+        // Setup ticks first (under pointers)
+        labelsHooks.setupTicks(gauge);
+        
+        // Only draw pointer on pass 2 (visible pass) to avoid animation interference
+        // On pass 1, content is hidden for measurement only - no need to animate
+        const pointerCountBeforeDraw = gauge.g.current?.selectAll('.pointer').size() ?? 0;
+        //console.debug('[renderChart] Before drawPointer - pass:', currentPass, 'resize:', resize, 'pointerCount:', pointerCountBeforeDraw);
+        
+        if (currentPass === 2) {
+            // Check if multi-pointer mode is enabled
+            if (pointerHooks.isMultiPointerMode(gauge)) {
+                pointerHooks.drawMultiPointers(gauge, resize);
+            } else if (!gauge.props?.pointer?.hide) {
+                pointerHooks.drawPointer(gauge, resize);
+            }
+            
+            const pointerCountAfterDraw = gauge.g.current?.selectAll('.pointer').size() ?? 0;
+            const viewBox = gauge.svg.current?.attr('viewBox') ?? 'none';
+            const gTransform = gauge.g.current?.attr('transform') ?? 'none';
+            const { outerRadius, innerRadius } = gauge.dimensions.current;
+            //console.debug('[renderChart] After drawPointer - pointerCount:', pointerCountAfterDraw, 'viewBox:', viewBox, 'gTransform:', gTransform, 'outerRadius:', outerRadius);
+        }
+        
+        // Setup value label AFTER pointers so it renders on top
+        labelsHooks.setupValueLabel(gauge);
+        
+        // NOW make gauge visible - content is drawn at correct starting position
+        if (currentPass === 2) {
+            const animationDelay = gauge.props.pointer?.animationDelay || 0;
+            const useFadeIn = gauge.props.fadeInAnimation === true;
+            gauge.svg.current
+                .style("visibility", "visible")
+                .style("opacity", useFadeIn ? "0" : "1")
+                .style("animation", useFadeIn ? `gaugeComponentFadeIn 200ms ease-out ${animationDelay}ms forwards` : "none");
+            gauge.g.current
+                .style("visibility", "visible")
+                .style("opacity", "1");
+            
+            // CRITICAL FIX: Ensure pointer element itself has visibility set directly
+            // Not just inherited from parent - this fixes pointer vanishing during resize
+            gauge.g.current?.select('.pointer')
+                .style("visibility", "visible")
+                .style("opacity", "1");
+            gauge.g.current?.selectAll('.multi-pointer')
+                .style("visibility", "visible")
+                .style("opacity", "1");
+            
+            // DEBUG: Verify visibility was set
+            const gVisibility = gauge.g.current?.style('visibility');
+            const pointerVisibility = gauge.g.current?.select('.pointer')?.style('visibility');
+            //console.debug('[renderChart] After setting visibility - g:', gVisibility, 'pointer:', pointerVisibility);
+        }
+        
+        // Set up pointer drag if onValueChange callback is provided
+        // Only set up on second pass when layout is stable
+        if (gauge.props.onValueChange && currentPass === 2) {
+            pointerHooks.setupPointerDrag(gauge);
+            pointerHooks.setupArcClick(gauge);
+        }
+        
+        // After first pass, measure the actual bounds and trigger second pass
+        if (currentPass === 1) {
+            // Measure bounds synchronously - the element exists even if hidden
+            const gElement = gauge.g.current?.node();
+            if (gElement) {
+                try {
+                    // Force layout calculation to get accurate bbox
+                    const bbox = gElement.getBBox();
+                    gauge.measuredBounds!.current = {
+                        width: bbox.width,
+                        height: bbox.height,
+                        x: bbox.x,
+                        y: bbox.y
+                    };
+                    
+                    if (CONSTANTS.debugLogs) {
+                        //console.debug('[renderChart] Measured bounds:', gauge.measuredBounds!.current);
+                    }
+                    
+                    // Hide old content before pass 2
+                    gauge.svg.current.selectAll("g.gauge-content-old")
+                        .style("visibility", "hidden")
+                        .style("opacity", "0");
+                    
+                    // Trigger second pass synchronously - no rAF delay
+                    gauge.renderPass!.current = 2;
+                    renderChart(gauge, true);
+                    
+                    // Remove old content after new content is rendered
+                    gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                    
+                    // Reset for next resize
+                    gauge.renderPass!.current = 1;
+                } catch (e) {
+                    // getBBox can fail if element is not rendered
+                    if (CONSTANTS.debugLogs) {
+                        //console.debug('[renderChart] Could not measure bounds:', e);
+                    }
+                    // Make visible anyway using rAF as fallback
+                    requestAnimationFrame(() => {
+                        const animDelay = gauge.props.pointer?.animationDelay || 0;
+                        const useFadeIn = gauge.props.fadeInAnimation === true;
+                        gauge.svg.current
+                            ?.style("visibility", "visible")
+                            .style("opacity", useFadeIn ? "0" : "1")
+                            .style("animation", useFadeIn ? `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards` : "none");
+                        gauge.g.current
+                            ?.style("visibility", "visible")
+                            .style("opacity", "1");
+                        gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                        gauge.renderPass!.current = 1;
+                    });
+                }
+            } else {
+                // gElement not available - use rAF as fallback
+                requestAnimationFrame(() => {
+                    const animDelay = gauge.props.pointer?.animationDelay || 0;
+                    const useFadeIn = gauge.props.fadeInAnimation === true;
+                    gauge.svg.current
+                        ?.style("visibility", "visible")
+                        .style("opacity", useFadeIn ? "0" : "1")
+                        .style("animation", useFadeIn ? `gaugeComponentFadeIn 200ms ease-out ${animDelay}ms forwards` : "none");
+                    gauge.g.current
+                        ?.style("visibility", "visible")
+                        .style("opacity", "1");
+                    gauge.svg.current.selectAll("g.gauge-content-old").remove();
+                    gauge.renderPass!.current = 1;
+                });
+            }
+        }
     } else {
-        let arcsPropsChanged = (JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc));
-        let pointerPropsChanged = (JSON.stringify(gauge.prevProps.current.pointer) !== JSON.stringify(gauge.props.pointer));
-        let valueChanged = (JSON.stringify(gauge.prevProps.current.value) !== JSON.stringify(gauge.props.value));
-        let ticksChanged = (JSON.stringify(gauge.prevProps.current.labels?.tickLabels) !== JSON.stringify(labels.tickLabels));
-        let shouldRedrawArcs = arcsPropsChanged
+        // Non-resize updates (only data/props changed)
+        // Uses shallowEqual instead of JSON.stringify for better performance
+        let arcsPropsChanged = !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc);
+        let pointerPropsChanged = !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer);
+        let valueChanged = gauge.prevProps.current.value !== gauge.props.value;
+        let ticksChanged = !shallowEqual(gauge.prevProps.current.labels?.tickLabels, labels.tickLabels);
+        let valueLabelChanged = !shallowEqual(gauge.prevProps.current.labels?.valueLabel, labels.valueLabel);
+        
+        // Check for multi-pointer value changes
+        const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
+        const prevPointers = gauge.prevProps.current.pointers;
+        const currPointers = gauge.props.pointers;
+        let multiPointerValuesChanged = false;
+        if (isMultiPointer && Array.isArray(prevPointers)) {
+            multiPointerValuesChanged = currPointers?.some((p, i) => p.value !== prevPointers[i]?.value) ?? false;
+        }
+        
+        let shouldRedrawArcs = arcsPropsChanged;
         if (shouldRedrawArcs) {
+            // Calculate initialArcPercent for Grafana gauges to prevent arc flicker
+            let initialArcPercent: number | undefined = undefined;
+            const isGrafana = gauge.props.type === GaugeType.Grafana;
+            const shouldAnimate = gauge.props.pointer?.animate !== false;
+            if (isGrafana && shouldAnimate) {
+                const minValue = gauge.props.minValue as number;
+                const maxValue = gauge.props.maxValue as number;
+                const prevValue = gauge.prevProps?.current.value ?? minValue;
+                initialArcPercent = utilHooks.calculatePercentage(minValue, maxValue, prevValue);
+            }
+            
             arcHooks.clearArcs(gauge);
             arcHooks.setArcData(gauge);
-            arcHooks.setupArcs(gauge, resize);
+            arcHooks.setupArcs(gauge, resize, initialArcPercent);
         }
-        //If pointer is hidden there's no need to redraw it when only value changes
-        var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
-        if ((shouldRedrawPointer)) {
-            pointerHooks.drawPointer(gauge);
+        
+        // Handle pointer updates - either single or multi-pointer mode
+        if (isMultiPointer) {
+            // In multi-pointer mode, redraw if pointer values changed
+            // Note: single 'value' prop changes don't affect multi-pointer positions
+            if (multiPointerValuesChanged) {
+                pointerHooks.drawMultiPointers(gauge, false);
+            }
+        } else {
+            // Single pointer mode
+            var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
+            if (shouldRedrawPointer) {
+                pointerHooks.drawPointer(gauge);
+            }
         }
+        
         if (arcsPropsChanged || ticksChanged) {
             labelsHooks.clearTicks(gauge);
             labelsHooks.setupTicks(gauge);
         }
-        if (valueChanged) {
+        if (valueChanged || valueLabelChanged || multiPointerValuesChanged) {
             labelsHooks.clearValueLabel(gauge);
             labelsHooks.setupValueLabel(gauge);
         }
     }
 };
-export const updateDimensions = (gauge: Gauge) => {
-    const { marginInPercent } = gauge.props;
-    const { dimensions } = gauge;
-    var divDimensions = gauge.container.current.node().getBoundingClientRect(),
-        divWidth = divDimensions.width,
-        divHeight = divDimensions.height;
-    if (dimensions.current.fixedHeight == 0) dimensions.current.fixedHeight = divHeight + 200;
-    //Set the new width and horizontal margins
-    let isMarginBox = typeof marginInPercent == 'number';
-    let marginLeft: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).left;
-    let marginRight: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).right;
-    let marginTop: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).top;
-    let marginBottom: number = isMarginBox ? marginInPercent as number : (marginInPercent as GaugeInnerMarginInPercent).bottom;
-    dimensions.current.margin.left = divWidth * marginLeft;
-    dimensions.current.margin.right = divWidth * marginRight;
-    dimensions.current.width = divWidth - dimensions.current.margin.left - dimensions.current.margin.right;
-
-    dimensions.current.margin.top = dimensions.current.fixedHeight * marginTop;
-    dimensions.current.margin.bottom = dimensions.current.fixedHeight * marginBottom;
-    dimensions.current.height = dimensions.current.width / 2 - dimensions.current.margin.top - dimensions.current.margin.bottom;
-    //gauge.height.current = divHeight - dimensions.current.margin.top - dimensions.current.margin.bottom;
-};
+/**
+ * Legacy function kept for backward compatibility during transition
+ * This should eventually be removed as all code migrates to the new coordinate system
+ * @deprecated Use coordinateSystem.calculateGaugeLayout instead
+ */
 export const calculateRadius = (gauge: Gauge) => {
-    const { dimensions } = gauge;
-    //The radius needs to be constrained by the containing div
-    //Since it is a half circle we are dealing with the height of the div
-    //Only needs to be half of the width, because the width needs to be 2 * radius
-    //For the whole arc to fit
-
-    //First check if it is the width or the height that is the "limiting" dimension
-    if (dimensions.current.width < 2 * dimensions.current.height) {
-        //Then the width limits the size of the chart
-        //Set the radius to the width - the horizontal margins
-        dimensions.current.outerRadius = (dimensions.current.width - dimensions.current.margin.left - dimensions.current.margin.right) / 2;
-    } else {
-        dimensions.current.outerRadius =
-            dimensions.current.height - dimensions.current.margin.top - dimensions.current.margin.bottom + 35;
-    }
-    centerGraph(gauge);
+    // This function is now handled by the coordinate system module
+    // Kept for backward compatibility only
 };
 
-//Calculates new margins to make the graph centered
+/**
+ * Legacy function kept for backward compatibility during transition
+ * @deprecated Centering is now handled by coordinateSystem.calculateGaugeCenter
+ */
 export const centerGraph = (gauge: Gauge) => {
-    const { dimensions } = gauge;
-    dimensions.current.margin.left =
-        dimensions.current.width / 2 - dimensions.current.outerRadius + dimensions.current.margin.right;
-    gauge.g.current.attr(
-        "transform",
-        "translate(" + dimensions.current.margin.left + ", " + (dimensions.current.margin.top) + ")"
-    );
+    // This function is now handled by the coordinate system module
+    // Kept for backward compatibility only
 };
 
-
-export const clearChart = (gauge: Gauge) => {
+export const clearChart = (gauge: Gauge, currentPass: number = 2) => {
     //Remove the old stuff
     labelsHooks.clearTicks(gauge);
     labelsHooks.clearValueLabel(gauge);
-    pointerHooks.clearPointerElement(gauge);
+    // CRITICAL FIX: Only clear pointer on pass 2 (when we're about to redraw it)
+    // On pass 1, we measure but don't redraw pointer - clearing it would leave it empty
+    // if resize stops before pass 2 completes
+    if (currentPass === 2) {
+        pointerHooks.clearPointerElement(gauge);
+        pointerHooks.clearMultiPointers(gauge);
+    }
     arcHooks.clearArcs(gauge);
 };
