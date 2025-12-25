@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
 jobs:
   # Test across React versions before release
   test:
@@ -173,9 +177,7 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
+        
   # Deploy demo to GitHub Pages
   deploy-demo:
     name: Deploy Demo to GitHub Pages
