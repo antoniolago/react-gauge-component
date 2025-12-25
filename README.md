@@ -429,7 +429,7 @@ Use `renderContent` to render custom React components instead of plain text for 
  
 API reference is auto-generated from the TypeScript types:
  
-- **[`API.md`](https://github.com/antoniolago/react-gauge-component/blob/main/docs/API.md)**
+- **[`API.md`](https://github.com/antoniolago/react-gauge-component/blob/main/API.md)**
  
 To regenerate it locally, run:
  
