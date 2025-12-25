@@ -176,7 +176,16 @@ jobs:
         run: bun run build:package
 
       - name: Publish to npm
-        run: npm publish --access public
+        run: |
+          # Check if version is a prerelease and add appropriate tag
+          if [[ "${{ steps.get_version.outputs.VERSION }}" == *-* ]]; then
+            # Prerelease version (contains hyphen)
+            PRERELEASE_TAG=$(echo "${{ steps.get_version.outputs.VERSION }}" | sed 's/.*-\([^-]*\)$/\1/')
+            npm publish --access public --tag "$PRERELEASE_TAG"
+          else
+            # Stable release
+            npm publish --access public
+          fi
 
   # Deploy demo to GitHub Pages
   deploy-demo:
