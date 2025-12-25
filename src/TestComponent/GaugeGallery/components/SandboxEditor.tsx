@@ -344,7 +344,18 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <Sliders size={14} style={{ opacity: 0.6 }} />
                 <input type="range" min={config?.minValue ?? 0} max={config?.maxValue ?? 100} value={value} 
-                  onChange={(e) => { setValue(Number(e.target.value)); if (autoAnimate) setAutoAnimate(false); }} 
+                  onChange={(e) => { 
+                    const newValue = Number(e.target.value);
+                    setValue(newValue); 
+                    if (autoAnimate) setAutoAnimate(false);
+                    // Sync to pointers[0] if in multi-pointer mode
+                    const cfg = config as any;
+                    if (cfg?.pointers?.length > 0) {
+                      const pointers = [...cfg.pointers];
+                      pointers[0] = { ...pointers[0], value: newValue };
+                      setConfig({ ...config, pointers });
+                    }
+                  }} 
                   style={{ ...styles.slider, flex: 1, minWidth: '100px' }} step="0.1" />
                 <span style={{ fontWeight: 700, color: '#60a5fa', minWidth: '45px', fontSize: '0.85rem' }}>{value.toFixed(1)}</span>
                 <label style={{ ...styles.inlineLabel, fontSize: '0.75rem' }}>

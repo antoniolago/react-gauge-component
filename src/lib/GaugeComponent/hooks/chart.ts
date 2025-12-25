@@ -15,16 +15,50 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     
     let updatedValue = gauge.prevProps.current.value !== gauge.props.value;
     
+    // Check for multi-pointer value changes (values changed but structure/count is the same)
+    const prevPointers = gauge.prevProps.current.pointers;
+    const currPointers = gauge.props.pointers;
+    const isMultiPointerMode = Array.isArray(currPointers) && currPointers.length > 0;
+    let multiPointerValuesChanged = false;
+    
+    if (isMultiPointerMode && Array.isArray(prevPointers) && prevPointers.length === currPointers.length) {
+        // Check if only values changed (not structure)
+        multiPointerValuesChanged = currPointers.some((p, i) => p.value !== prevPointers[i]?.value);
+        
+        // Check if structure (non-value properties) changed
+        const structureChanged = currPointers.some((p, i) => {
+            const prev = prevPointers[i];
+            if (!prev) return true;
+            // Compare non-value properties
+            return p.type !== prev.type ||
+                   p.color !== prev.color ||
+                   p.length !== prev.length ||
+                   p.width !== prev.width ||
+                   p.hide !== prev.hide;
+        });
+        
+        // Only use fast path if values changed but structure didn't
+        if (multiPointerValuesChanged && !structureChanged) {
+            updatedValue = true;
+        }
+    }
+    
     const existingSvg = gauge.container.current.select("svg");
     
-    if (updatedValue && !isFirstRender) {
+    // Detect mode transition (single-pointer <-> multi-pointer)
+    // Mode transitions require full re-init even during animation
+    const wasMultiPointerMode = Array.isArray(prevPointers) && prevPointers.length > 0;
+    const modeTransition = wasMultiPointerMode !== isMultiPointerMode;
+    
+    if (updatedValue && !isFirstRender && !modeTransition) {
         renderChart(gauge, false);
         return;
     }
     
     // CRITICAL: Skip full re-init if animation is in progress
     // This prevents creating duplicate gauge-content groups during animations
-    if (gauge.animationInProgress?.current && !isFirstRender) {
+    // EXCEPTION: Mode transitions must always complete to prevent duplicate pointers
+    if (gauge.animationInProgress?.current && !isFirstRender && !modeTransition) {
         if (gauge.pendingResize) {
             gauge.pendingResize.current = true;
         }
@@ -75,8 +109,12 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         .startAngle(angles.startAngle)
         .endAngle(angles.endAngle)
         .sort(null);
-    //Set up pointer
-    pointerHooks.addPointerElement(gauge);
+    //Set up pointer element only for single-pointer mode
+    //In multi-pointer mode, elements are created by drawMultiPointers in renderChart
+    const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
+    if (!isMultiPointer) {
+        pointerHooks.addPointerElement(gauge);
+    }
     renderChart(gauge, true);
 }
 export const calculateAngles = (gauge: Gauge) => {
@@ -479,6 +517,16 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let valueChanged = gauge.prevProps.current.value !== gauge.props.value;
         let ticksChanged = !shallowEqual(gauge.prevProps.current.labels?.tickLabels, labels.tickLabels);
         let valueLabelChanged = !shallowEqual(gauge.prevProps.current.labels?.valueLabel, labels.valueLabel);
+        
+        // Check for multi-pointer value changes
+        const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
+        const prevPointers = gauge.prevProps.current.pointers;
+        const currPointers = gauge.props.pointers;
+        let multiPointerValuesChanged = false;
+        if (isMultiPointer && Array.isArray(prevPointers)) {
+            multiPointerValuesChanged = currPointers?.some((p, i) => p.value !== prevPointers[i]?.value) ?? false;
+        }
+        
         let shouldRedrawArcs = arcsPropsChanged;
         if (shouldRedrawArcs) {
             // Calculate initialArcPercent for Grafana gauges to prevent arc flicker
@@ -496,15 +544,27 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             arcHooks.setArcData(gauge);
             arcHooks.setupArcs(gauge, resize, initialArcPercent);
         }
-        var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
-        if (shouldRedrawPointer) {
-            pointerHooks.drawPointer(gauge);
+        
+        // Handle pointer updates - either single or multi-pointer mode
+        if (isMultiPointer) {
+            // In multi-pointer mode, redraw if pointer values changed
+            // Note: single 'value' prop changes don't affect multi-pointer positions
+            if (multiPointerValuesChanged) {
+                pointerHooks.drawMultiPointers(gauge, false);
+            }
+        } else {
+            // Single pointer mode
+            var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
+            if (shouldRedrawPointer) {
+                pointerHooks.drawPointer(gauge);
+            }
         }
+        
         if (arcsPropsChanged || ticksChanged) {
             labelsHooks.clearTicks(gauge);
             labelsHooks.setupTicks(gauge);
         }
-        if (valueChanged || valueLabelChanged) {
+        if (valueChanged || valueLabelChanged || multiPointerValuesChanged) {
             labelsHooks.clearValueLabel(gauge);
             labelsHooks.setupValueLabel(gauge);
         }

@@ -717,7 +717,10 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   maxValue={cfg?.maxValue ?? 100}
                   isOnlyPointer={(cfg?.pointers?.length ?? 1) <= 1 && !cfg?.pointers}
                   onUpdate={(updated: PointerWithValue) => {
-                    if (cfg?.pointers) {
+                    // Check if we have pointers array in config
+                    const hasPointers = cfg?.pointers && cfg.pointers.length > 0;
+                    
+                    if (hasPointers) {
                       // Already in multi-pointer mode - update the array
                       const pointers = [...cfg.pointers];
                       pointers[index] = updated;
@@ -726,13 +729,12 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                       if (index === 0) onValueChange(updated.value);
                     } else {
                       // Convert single pointer to pointers array
-                      // Update both config AND value together so gauge renders correctly
+                      // DON'T call onValueChange here - let the mode transition complete first
+                      // The value will be synced through the pointers array
                       onConfigChange({ 
                         ...config, 
-                        pointers: [updated],
-                        pointer: { ...cfg?.pointer, hide: false } // Ensure pointer is visible
+                        pointers: [updated]
                       });
-                      onValueChange(updated.value);
                     }
                   }}
                   onRemove={() => {

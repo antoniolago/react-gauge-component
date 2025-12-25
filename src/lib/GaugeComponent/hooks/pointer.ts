@@ -521,9 +521,12 @@ const getPointerRadius = (gauge: Gauge) => {
 export const translatePointer = (x: number, y: number, gauge: Gauge) => gauge.pointer.current.element.attr("transform", "translate(" + x + ", " + y + ")");
 export const addPointerElement = (gauge: Gauge) => gauge.pointer.current.element = gauge.g.current.append("g").attr("class", "pointer");
 export const clearPointerElement = (gauge: Gauge) => {
-    gauge.pointer.current.element.selectAll("*").remove();
+    // Safety check - element might not exist in multi-pointer mode
+    if (gauge.pointer.current?.element) {
+        gauge.pointer.current.element.selectAll("*").remove();
+    }
     // Also remove grab handle which is on g.current
-    gauge.g.current.select(".pointer-grab-handle").remove();
+    gauge.g.current?.select(".pointer-grab-handle").remove();
 };
 
 /**
@@ -831,6 +834,9 @@ const drawSingleMultiPointer = (
         gauge.multiPointers!.current[index] = pointerRef;
     }
     
+    // Check if element actually exists in DOM (might have been orphaned)
+    const elementExistsInDOM = pointerRef.element && !gauge.g.current?.select(`.multi-pointer-${index}`).empty();
+    
     // Setup context for this pointer
     const pointerRadius = getPointerRadiusForConfig(gauge, pointer);
     const length = pointer.type === PointerType.Needle ? (pointer.length as number) : 0.2;
@@ -850,11 +856,13 @@ const drawSingleMultiPointer = (
         prevProgress: 0,
         pathStr: "",
         shouldDrawPath: typesWithPath.includes(pointer.type as PointerType),
-        prevColor: ""
+        prevColor: pointerRef.context?.prevColor || ""
     };
     
     const useCurrentPercent = resize && !isFirstAnimation;
-    const shouldInitPointer = isFirstAnimation || (resize && pointer.animate !== false);
+    // Only init pointer if it's first animation OR resize with animation enabled
+    // BUT skip if element already exists in DOM (prevents duplicates on value-only changes)
+    const shouldInitPointer = (isFirstAnimation || (resize && pointer.animate !== false)) && !elementExistsInDOM;
     
     // Create or update pointer element
     if (shouldInitPointer) {
@@ -897,10 +905,14 @@ const initMultiPointer = (
     // Get color - use pointer color or arc color
     const initialColor = pointer.color || arcHooks.getColorByPercentage(currentPercent, gauge);
     
-    // Remove existing element if any
+    // Remove existing element if any (from ref)
     if (pointerRef.element) {
         pointerRef.element.remove();
     }
+    
+    // CRITICAL: Also remove any orphaned DOM elements with same class to prevent duplicates
+    // This handles cases where ref was lost but DOM element still exists
+    gauge.g.current?.selectAll(`.multi-pointer-${index}`).remove();
     
     // Create new pointer group
     pointerRef.element = gauge.g.current
