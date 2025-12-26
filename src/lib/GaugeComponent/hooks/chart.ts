@@ -46,14 +46,9 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     const existingSvg = gauge.container.current.select("svg");
     
     // Detect mode transition (single-pointer <-> multi-pointer)
-    // SIMPLIFIED: Only consider it a mode transition if both prev and curr are defined and differ
-    // This prevents false positives when prevPointers is undefined on first interaction
+    // Mode transitions require full re-init even during animation
     const wasMultiPointerMode = Array.isArray(prevPointers) && prevPointers.length > 0;
-    const currMultiPointerMode = isMultiPointerMode;
-    // Only trigger mode transition if BOTH are defined (not first time setting pointers)
-    // AND they actually differ in mode
-    const prevPointersDefined = prevPointers !== undefined;
-    const modeTransition = prevPointersDefined && (wasMultiPointerMode !== currMultiPointerMode);
+    const modeTransition = wasMultiPointerMode !== isMultiPointerMode;
     
     if (updatedValue && !isFirstRender && !modeTransition) {
         renderChart(gauge, false);
@@ -63,54 +58,28 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     // CRITICAL: Skip full re-init if animation is in progress
     // This prevents creating duplicate gauge-content groups during animations
     // EXCEPTION: Mode transitions must always complete to prevent duplicate pointers
-    // FIX: Do NOT set pendingResize here - this is called for value changes, not resizes
-    // pendingResize should only be set in renderChart when an actual resize is blocked
     if (gauge.animationInProgress?.current && !isFirstRender && !modeTransition) {
+        if (gauge.pendingResize) {
+            gauge.pendingResize.current = true;
+        }
         return;
     }
     
-    // Invalidate measured bounds ONLY when truly layout-affecting props change
-    // CRITICAL: Only clear on first render OR when arc/type/marginInPercent change
-    // Labels and pointer changes don't affect the overall layout/viewBox
-    // Value changes definitely don't - they only move the pointer
-    const arcChanged = JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc);
-    const typeChanged = gauge.prevProps.current.type !== gauge.props.type;
-    const marginChanged = JSON.stringify(gauge.prevProps.current.marginInPercent) !== JSON.stringify(gauge.props.marginInPercent);
-    
-    // Only these three actually affect layout calculations
-    const layoutPropsChanged = isFirstRender || arcChanged || typeChanged || marginChanged;
+    // Invalidate measured bounds when layout-affecting props change
+    const layoutPropsChanged = 
+        !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc) ||
+        !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer) ||
+        !shallowEqual(gauge.prevProps.current.labels, gauge.props.labels) ||
+        gauge.prevProps.current.type !== gauge.props.type ||
+        gauge.prevProps.current.marginInPercent !== gauge.props.marginInPercent;
     
     if (layoutPropsChanged && gauge.measuredBounds) {
         gauge.measuredBounds.current = null;
     }
     
     // For subsequent renders (not first), reuse the existing SVG and create new groups
-    // CRITICAL: Only recreate groups if layout props actually changed - otherwise just update
     if (!existingSvg.empty() && !isFirstRender) {
         gauge.svg.current = existingSvg;
-        
-        // FIX: If layout props haven't changed AND all groups exist, skip group recreation and just render
-        // This prevents unnecessary layout recalculations that cause flickering
-        const existingGroups = gauge.svg.current.select("g.gauge-content");
-        const existingDoughnut = existingGroups.empty() ? null : existingGroups.select("g.doughnut");
-        const hasAllGroups = !existingGroups.empty() && 
-                             existingGroups.node() != null && 
-                             existingDoughnut != null && 
-                             !existingDoughnut.empty() && 
-                             existingDoughnut.node() != null;
-        
-        if (!layoutPropsChanged && !modeTransition && hasAllGroups) {
-            // All groups exist and layout hasn't changed - reuse them
-            gauge.g.current = existingGroups;
-            gauge.doughnut.current = existingDoughnut;
-            
-            // Just call renderChart with the appropriate resize flag
-            const needsResize = gauge.pendingResize?.current === true;
-            if (gauge.pendingResize) gauge.pendingResize.current = false;
-            renderChart(gauge, needsResize);
-            return;
-        }
-        
         // DEBUG: Log pointer state before removal
         const pointerCountBefore = gauge.svg.current.selectAll('.pointer').size();
         //console.debug('[initChart] Before removal - pointer count:', pointerCountBefore);
@@ -121,13 +90,6 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         // Create fresh groups
         gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
         gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
-        
-        // CRITICAL FIX: Restore the transform from previous layout to prevent gauge jumping to 0,0
-        // When groups are recreated, they lose their transform. Use prevGSize which stores the last layout.
-        if (gauge.prevGSize.current && gauge.prevGSize.current.gaugeCenter) {
-            const prevCenter = gauge.prevGSize.current.gaugeCenter;
-            gauge.g.current.attr("transform", `translate(${prevCenter.x}, ${prevCenter.y})`);
-        }
         
         //console.debug('[initChart] After removal - will call addPointerElement');
     } else {
@@ -179,12 +141,6 @@ export const calculateAngles = (gauge: Gauge) => {
 }
 //Renders the chart, should be called every time the window is resized
 export const renderChart = (gauge: Gauge, resize: boolean = false) => {
-    // CRITICAL: Early exit if essential elements don't exist
-    // This prevents null reference errors during initialization or cleanup
-    if (!gauge.svg?.current || !gauge.g?.current || !gauge.doughnut?.current) {
-        return;
-    }
-    
     const { dimensions } = gauge;
     let arc = gauge.props.arc as Arc;
     let labels = gauge.props.labels as Labels;
@@ -192,16 +148,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
     if (resize) {
         // Skip resize render if animation is currently in progress
         // This prevents the pointer/arc from being redrawn at wrong position
-        // FIX: Only mark pendingResize if container dimensions actually changed
+        // Mark that a resize is pending so we can render after animation completes
         if (gauge.animationInProgress?.current) {
-            // Only set pendingResize if we DON'T have cached bounds or if container size changed
-            // This prevents unnecessary re-renders after animation from ResizeObserver noise
-            const hasCachedBounds = gauge.measuredBounds?.current != null;
-            if (gauge.pendingResize && !hasCachedBounds) {
+            if (gauge.pendingResize) {
                 gauge.pendingResize.current = true;
             }
             if (CONSTANTS.debugLogs) {
-                console.debug('[renderChart] Skipping resize - animation in progress, pending:', !hasCachedBounds);
+                //console.debug('[renderChart] Skipping resize - animation in progress, marked pending');
             }
             return;
         }
@@ -223,15 +176,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             return;
         }
         
-        // Render pass tracking - use persisted refs from component
-        // These refs persist across renders to prevent the two-pass feedback loop
+        // Initialize render pass tracking
         if (!gauge.renderPass) {
             gauge.renderPass = { current: 1 };
         }
         if (!gauge.measuredBounds) {
             gauge.measuredBounds = { current: null };
         }
-        // Note: gauge.renderPass and gauge.measuredBounds should now be persisted refs from index.tsx
         
         const currentPass = gauge.renderPass.current;
         const hasPreviousBounds = gauge.measuredBounds?.current != null;
@@ -241,7 +192,6 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         }
         
         let layout: coordinateSystem.GaugeLayout;
-        let usedCachedBounds = false; // Track if we used cached bounds (skip pass 2 measurement)
         
         // On resize with existing bounds, skip pass 1 and go directly to optimized layout
         if (currentPass === 1 && hasPreviousBounds && gauge.measuredBounds!.current) {
@@ -258,7 +208,6 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             );
             // Skip to showing the result directly (no need for pass 2)
             gauge.renderPass!.current = 2;
-            usedCachedBounds = true; // Mark that we used cached bounds
             // Remove old content immediately since we're going straight to final render
             gauge.svg.current.selectAll("g.gauge-content-old").remove();
         } else if (currentPass === 1) {
@@ -438,25 +387,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         const pointerCountBeforeDraw = gauge.g.current?.selectAll('.pointer').size() ?? 0;
         //console.debug('[renderChart] Before drawPointer - pass:', currentPass, 'resize:', resize, 'pointerCount:', pointerCountBeforeDraw);
         
-        if (currentPass === 2 || usedCachedBounds) {
+        if (currentPass === 2) {
             // Check if multi-pointer mode is enabled
-            const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
-            const prevPointers = gauge.prevProps?.current?.pointers;
-            const wasMultiPointer = Array.isArray(prevPointers) && prevPointers.length > 0;
-            const modeSwitched = wasMultiPointer !== isMultiPointer;
-            
-            // CRITICAL: Clear old pointer type before drawing new type on mode switch
-            if (modeSwitched) {
-                if (isMultiPointer) {
-                    // Switching to multi - clear single pointer
-                    pointerHooks.clearPointerElement(gauge);
-                } else {
-                    // Switching to single - clear multi-pointers
-                    pointerHooks.clearMultiPointers(gauge);
-                }
-            }
-            
-            if (isMultiPointer) {
+            if (pointerHooks.isMultiPointerMode(gauge)) {
                 pointerHooks.drawMultiPointers(gauge, resize);
             } else if (!gauge.props?.pointer?.hide) {
                 pointerHooks.drawPointer(gauge, resize);
@@ -473,8 +406,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         labelsHooks.setupValueLabel(gauge);
         
         // NOW make gauge visible - content is drawn at correct starting position
-        // Also make visible when using cached bounds (which sets renderPass to 2)
-        if (currentPass === 2 || usedCachedBounds) {
+        if (currentPass === 2) {
             const animationDelay = gauge.props.pointer?.animationDelay || 0;
             const useFadeIn = gauge.props.fadeInAnimation === true;
             gauge.svg.current
@@ -501,15 +433,14 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         }
         
         // Set up pointer drag if onValueChange callback is provided
-        // Only set up on second pass when layout is stable (or when using cached bounds)
-        if (gauge.props.onValueChange && (currentPass === 2 || usedCachedBounds)) {
+        // Only set up on second pass when layout is stable
+        if (gauge.props.onValueChange && currentPass === 2) {
             pointerHooks.setupPointerDrag(gauge);
             pointerHooks.setupArcClick(gauge);
         }
         
         // After first pass, measure the actual bounds and trigger second pass
-        // CRITICAL FIX: Skip this if we already used cached bounds - no need for pass 2
-        if (currentPass === 1 && !usedCachedBounds) {
+        if (currentPass === 1) {
             // Measure bounds synchronously - the element exists even if hidden
             const gElement = gauge.g.current?.node();
             if (gElement) {
@@ -580,6 +511,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         }
     } else {
         // Non-resize updates (only data/props changed)
+        // Uses shallowEqual instead of JSON.stringify for better performance
         let arcsPropsChanged = !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc);
         let pointerPropsChanged = !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer);
         let valueChanged = gauge.prevProps.current.value !== gauge.props.value;
@@ -590,15 +522,10 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
         const prevPointers = gauge.prevProps.current.pointers;
         const currPointers = gauge.props.pointers;
-        const wasMultiPointer = Array.isArray(prevPointers) && prevPointers.length > 0;
-        
         let multiPointerValuesChanged = false;
         if (isMultiPointer && Array.isArray(prevPointers)) {
             multiPointerValuesChanged = currPointers?.some((p, i) => p.value !== prevPointers[i]?.value) ?? false;
         }
-        
-        // Detect mode switch - switching from single to multi or vice versa
-        const modeSwitched = wasMultiPointer !== isMultiPointer;
         
         let shouldRedrawArcs = arcsPropsChanged;
         if (shouldRedrawArcs) {
@@ -620,21 +547,14 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         
         // Handle pointer updates - either single or multi-pointer mode
         if (isMultiPointer) {
-            // FIX: If we just switched to multi-pointer mode, clean up old single pointer first
-            if (modeSwitched || !wasMultiPointer) {
-                pointerHooks.clearPointerElement(gauge);
-            }
-            // In multi-pointer mode, redraw if pointer values changed OR if we just switched modes
-            if (multiPointerValuesChanged || modeSwitched || !wasMultiPointer) {
+            // In multi-pointer mode, redraw if pointer values changed
+            // Note: single 'value' prop changes don't affect multi-pointer positions
+            if (multiPointerValuesChanged) {
                 pointerHooks.drawMultiPointers(gauge, false);
             }
         } else {
             // Single pointer mode
-            // FIX: If we just switched from multi to single, clean up multi-pointers first
-            if (modeSwitched && wasMultiPointer) {
-                pointerHooks.clearMultiPointers(gauge);
-            }
-            var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide) || modeSwitched;
+            var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
             if (shouldRedrawPointer) {
                 pointerHooks.drawPointer(gauge);
             }
