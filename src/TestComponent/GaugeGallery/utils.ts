@@ -56,7 +56,7 @@ export const GRAFANA_NEON_CONFIG: Partial<GaugeComponentProps> = {
     type: 'needle',
     elastic: false,
     animationDelay: 200,
-    animationDuration: 4000,
+    animationDuration: 1000,
     length: 0.87,
     width: 24,
     baseColor: '#ffffff',

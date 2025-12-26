@@ -66,6 +66,9 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const multiPointers = useRef<MultiPointerRef[]>([]);
   const multiPointerAnimationTriggered = useRef<boolean[]>([]);
   const hasBeenInitialized = useRef<boolean>(false); // Track if component has ever been initialized
+  const lastContainerSize = useRef<{ width: number; height: number } | null>(null); // Track container size to prevent resize loops
+  const measuredBoundsRef = useRef<{ width: number; height: number; x: number; y: number } | null>(null); // Persist measured bounds across renders
+  const renderPassRef = useRef<number>(1); // Persist render pass state
   
   // State to trigger re-render when custom content needs to be rendered
   const [customContentItems, setCustomContentItems] = useState<any[]>([]);
@@ -97,6 +100,9 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     pendingResize,
     multiPointers,
     multiPointerAnimationTriggered,
+    // Persisted refs for two-pass rendering stability
+    measuredBounds: measuredBoundsRef,
+    renderPass: renderPassRef,
   };
   
   // Keep gaugeRef updated with current gauge (including current props)
@@ -201,12 +207,32 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
         clearTimeout(resizeTimeout);
       }
       
+      const entry = entries[0];
+      if (!entry) return;
+      
+      const newWidth = entry.contentRect.width;
+      const newHeight = entry.contentRect.height;
+      
+      // CRITICAL FIX: Skip if dimensions haven't actually changed (within tolerance)
+      // This prevents the feedback loop: viewBox change → ResizeObserver → renderChart → viewBox change
+      const TOLERANCE = 0.5; // 0.5px tolerance to account for floating point variations
+      if (lastContainerSize.current) {
+        const widthDiff = Math.abs(newWidth - lastContainerSize.current.width);
+        const heightDiff = Math.abs(newHeight - lastContainerSize.current.height);
+        if (widthDiff < TOLERANCE && heightDiff < TOLERANCE) {
+          return; // Skip - dimensions haven't meaningfully changed
+        }
+      }
+      
+      // Update the last known size
+      lastContainerSize.current = { width: newWidth, height: newHeight };
+      
       // Log resize event for debugging
       if (CONSTANTS.debugLogs && entries[0]) {
-        const entry = entries[0];
+        const entry2 = entries[0];
         // console.log('[ResizeObserver] Element resized:', {
-        //   width: entry.contentRect.width,
-        //   height: entry.contentRect.height
+        //   width: entry2.contentRect.width,
+        //   height: entry2.contentRect.height
         // });
       }
       
@@ -214,8 +240,10 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
       resizeTimeout = setTimeout(() => {
         requestAnimationFrame(() => {
           // Use gaugeRef.current to always get the latest gauge with current props
-          if (gaugeRef.current) {
-            chartHooks.renderChart(gaugeRef.current, true);
+          // CRITICAL: Also check that essential elements exist before calling renderChart
+          const gauge = gaugeRef.current;
+          if (gauge && gauge.svg?.current && gauge.g?.current && gauge.doughnut?.current) {
+            chartHooks.renderChart(gauge, true);
           }
         });
       }, 16); // ~1 frame

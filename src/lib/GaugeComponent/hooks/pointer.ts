@@ -81,7 +81,6 @@ export const ensurePointerExists = (gauge: Gauge): boolean => {
 };
 
 export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
-    // DEBUG: Log entry with visual state
     const pointerElementExists = gauge.pointer.current?.element != null;
     const pointerInDOM = gauge.g.current?.select('.pointer').empty() === false;
     const pointerElement = gauge.g.current?.select('.pointer');
@@ -90,10 +89,9 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     const opacity = pointerElement?.style?.('opacity') ?? 'unknown';
     //console.debug('[drawPointer] Entry - resize:', resize, 'elementRef:', pointerElementExists, 'inDOM:', pointerInDOM, 'transform:', transform, 'visibility:', visibility, 'opacity:', opacity);
     
-    // CRITICAL: Check if pointer exists before drawing, recreate if vanished during resize
-    if (resize && !ensurePointerExists(gauge)) {
-        // Pointer vanished - force reinit
-        //console.debug('[drawPointer] Pointer vanished! Calling addPointerElement...');
+    // CRITICAL: Check if pointer exists before drawing, recreate if vanished
+    // FIX: Check regardless of resize flag - pointer can vanish during value changes too
+    if (!ensurePointerExists(gauge)) {
         addPointerElement(gauge);
     }
     
