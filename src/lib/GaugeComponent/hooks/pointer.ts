@@ -193,16 +193,17 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                 if (gauge.animationInProgress) {
                     gauge.animationInProgress.current = false;
                 }
-                // Check if a resize was pending and trigger it now
-                if (gauge.pendingResize?.current) {
-                    gauge.pendingResize.current = false;
-                    // Use requestAnimationFrame to avoid blocking
-                    requestAnimationFrame(() => {
-                        // Import dynamically to avoid circular dependency
-                        const chartHooks = require('./chart');
-                        chartHooks.renderChart(gauge, true);
-                    });
-                }
+                // DISABLED: Don't trigger resize after animation - ResizeObserver handles real resizes
+                // This prevents flicker when animation completes
+                // if (gauge.pendingResize?.current) {
+                //     gauge.pendingResize.current = false;
+                //     // Use requestAnimationFrame to avoid blocking
+                //     requestAnimationFrame(() => {
+                //         // Import dynamically to avoid circular dependency
+                //         const chartHooks = require('./chart');
+                //         chartHooks.renderChart(gauge, true);
+                //     });
+                // }
             });
     } else {
         // Mark initial animation as triggered even when animation is disabled
@@ -1039,13 +1040,15 @@ const animateMultiPointer = (
             
             // Check if all animations are done
             const allDone = gauge.multiPointers?.current.every(p => !p?.animationInProgress) ?? true;
-            if (allDone && gauge.pendingResize?.current) {
-                gauge.pendingResize.current = false;
-                requestAnimationFrame(() => {
-                    const chartHooks = require('./chart');
-                    chartHooks.renderChart(gauge, true);
-                });
-            }
+            // DISABLED: Don't trigger resize after multi-pointer animation completes
+            // This prevents flicker when all animations finish
+            // if (allDone && gauge.pendingResize?.current) {
+            //     gauge.pendingResize.current = false;
+            //     requestAnimationFrame(() => {
+            //         const chartHooks = require('./chart');
+            //         chartHooks.renderChart(gauge, true);
+            //     });
+            // }
         });
 };
 

@@ -65,13 +65,16 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         return;
     }
     
-    // Invalidate measured bounds when layout-affecting props change
-    const layoutPropsChanged = 
-        !shallowEqual(gauge.prevProps.current.arc, gauge.props.arc) ||
-        !shallowEqual(gauge.prevProps.current.pointer, gauge.props.pointer) ||
-        !shallowEqual(gauge.prevProps.current.labels, gauge.props.labels) ||
-        gauge.prevProps.current.type !== gauge.props.type ||
-        gauge.prevProps.current.marginInPercent !== gauge.props.marginInPercent;
+    // Invalidate measured bounds ONLY when truly layout-affecting props change
+    // CRITICAL: Only clear on first render OR when arc/type/marginInPercent change
+    // Labels and pointer changes don't affect the overall layout/viewBox
+    // Value changes definitely don't - they only move the pointer
+    const arcChanged = JSON.stringify(gauge.prevProps.current.arc) !== JSON.stringify(gauge.props.arc);
+    const typeChanged = gauge.prevProps.current.type !== gauge.props.type;
+    const marginChanged = JSON.stringify(gauge.prevProps.current.marginInPercent) !== JSON.stringify(gauge.props.marginInPercent);
+    
+    // Only these three actually affect layout calculations
+    const layoutPropsChanged = isFirstRender || arcChanged || typeChanged || marginChanged;
     
     if (layoutPropsChanged && gauge.measuredBounds) {
         gauge.measuredBounds.current = null;
