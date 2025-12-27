@@ -1,19 +1,9 @@
 import React from 'react';
 import './App.css';
-import MainPreviews from './TestComponent/MainPreviews';
-import InputTest from './TestComponent/InputTest';
-import GridLayoutComponent from './TestComponent/GridLayout';
-import 'react-grid-layout/css/styles.css'
-import 'react-resizable/css/styles.css';
+import GaugeGallery from './TestComponent/GaugeGallery';
 
-const App = () => {
-  return(
-    <>
-    {/* <GridLayoutComponent /> */}
-      <MainPreviews />
-      <InputTest />
-    </>
-  )
+const App: React.FC = () => {
+  return <GaugeGallery />;
 };
 
-export default App
+export default App;

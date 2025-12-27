@@ -13,7 +13,7 @@ export const ReactGaugeComponent: React.FC<ReactGaugeComponentProps> = ({
   max,
   hideLabel,
 }) => {
-  // console.log("rendering", min, max, value);
+  // //console.debug("rendering", min, max, value);
   return (
     <div>
       <p>ReactGauge</p>

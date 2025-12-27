@@ -1,128 +1,258 @@
-name: Update and Publish
+name: Release & Deploy
 
 on:
   push:
     tags:
       - 'v*.*.*'
 
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
 jobs:
-  build:
+  # Test across React versions before release
+  test:
+    name: Test (React ${{ matrix.react-version }})
     runs-on: ubuntu-latest
-    #needs: pre
+    strategy:
+      fail-fast: false
+      matrix:
+        react-version: ['18', '19']
+        include:
+          - react-version: '18'
+            react-pkg: 'react@18.3.1'
+            react-dom-pkg: 'react-dom@18.3.1'
+            react-types: '@types/react@18.3.1'
+          - react-version: '19'
+            react-pkg: 'react@19.0.0'
+            react-dom-pkg: 'react-dom@19.0.0'
+            react-types: '@types/react@19.0.0'
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-      - uses: c-hive/gha-yarn-cache@v2
+          bun-version: latest
+
       - name: Install dependencies
-        run: yarn install
-      - name: build
-        run: yarn run build
+        run: bun install
 
+      - name: Install React ${{ matrix.react-version }}
+        run: |
+          bun add -d ${{ matrix.react-pkg }} ${{ matrix.react-dom-pkg }} ${{ matrix.react-types }}
 
-  test:
+      - name: Run tests
+        run: bun run test
+        env:
+          CI: true
+
+  # Security scans
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
-    needs: build
     continue-on-error: true
     strategy:
       matrix:
-        scan: [
-          secret-scan, 
-          sast-scan, 
-          dependency-scan, 
-          dast-scan,
-          lint-scan
-        ]
+        scan: [secret-scan, sast-scan, dependency-scan]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-
-      - uses: c-hive/gha-yarn-cache@v2
-
-      - name: Install dependencies
-        run: yarn install
+        uses: actions/checkout@v4
 
       - name: Secret Scanner
         if: matrix.scan == 'secret-scan'
         uses: secret-scanner/action@0.0.2
-     
-      - name: nodejsscan scan
+
+      - name: SAST Scan (njsscan)
         if: matrix.scan == 'sast-scan'
-        id: njsscan
         uses: ajinabraham/njsscan-action@master
         with:
           args: '.'
-      
-      - name: Depcheck
+
+      - name: Dependency Check
         if: matrix.scan == 'dependency-scan'
         uses: dependency-check/Dependency-Check_Action@main
-        id: Depcheck
         with:
-          project: 'test'
+          project: 'react-gauge-component'
           path: '.'
           format: 'HTML'
-          out: 'reports' # this is the default, no need to specify unless you wish to override it
+          out: 'reports'
           args: >
             --failOnCVSS 7
             --enableRetired
-      - name: Upload Test results
+
+      - name: Upload Dependency Check Report
         if: matrix.scan == 'dependency-scan'
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
-          name: Depcheck report
+          name: dependency-check-report
           path: ${{github.workspace}}/reports
-      - name: Run DAST
-        if: matrix.scan == 'dast-scan'
-        run: |
-          yarn add global serve
-          yarn run build-page
-          yarn run serve -s build &
-          sleep 5
-          docker run --network host -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://localhost:3000
-      - name: Test lint
-        if: matrix.scan == 'lint-scan'
-        run: yarn run eslint
-  
-  publish:
+
+  # Build package and demo
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js (for npm)
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - uses: c-hive/gha-yarn-cache@v2
-
       - name: Install dependencies
-        run: yarn install
+        run: bun install
 
-      - name: Extract tag version number
+      - name: Extract version from tag
         id: get_version
-        uses: battila7/get-version-action@v2
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: package.json info
-        id: info
+      - name: Update package.json version
         uses: jaywcjlove/github-action-package@main
         with:
-          version: ${{steps.get_version.outputs.version-without-v}}
-      - name: build
-        run: yarn run build-package
+          version: ${{ steps.get_version.outputs.VERSION }}
+
+      - name: Build package
+        run: bun run build:package
+
+      - name: Build demo page
+        run: bun run build:demo
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-dist
+          path: dist/
+
+      - name: Upload demo artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-build
+          path: build/
+
+  # Publish to npm
+  publish-npm:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          
+      - name: Install dependencies
+        run: bun install
+
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Update package.json version
+        uses: jaywcjlove/github-action-package@main
+        with:
+          version: ${{ steps.get_version.outputs.VERSION }}
+
+      - name: Build package
+        run: bun run build:package
+
       - name: Publish to npm
-        run: npm publish --access public
+        run: |
+          # Check if version is a prerelease and add appropriate tag
+          if [[ "${{ steps.get_version.outputs.VERSION }}" == *-* ]]; then
+            # Prerelease version (contains hyphen)
+            PRERELEASE_TAG=$(echo "${{ steps.get_version.outputs.VERSION }}" | sed 's/.*-\([^-]*\)$/\1/')
+            npm publish --access public --tag "$PRERELEASE_TAG"
+          else
+            # Stable release
+            npm publish --access public
+          fi
+
+  # Deploy demo to GitHub Pages
+  deploy-demo:
+    name: Deploy Demo to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [build]
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build demo page
+        run: bun run build:demo
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Create GitHub Release
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [publish-npm, deploy-demo]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: package-dist
+          path: dist/
+
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: v${{ steps.get_version.outputs.VERSION }}
+          generate_release_notes: true
+          files: |
+            dist/**/*
         env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
