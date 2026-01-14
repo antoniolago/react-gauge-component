@@ -19,7 +19,7 @@
  * layout is stable and dimensions are correct.
  */
 
-import { calculateGaugeLayout, calculateLayoutFromMeasuredBounds, GaugeLayout } from './coordinateSystem';
+import { calculateGaugeLayout, calculateLayoutFromMeasuredBounds, isLayoutStable, GaugeLayout } from './coordinateSystem';
 import { GaugeType } from '../types/GaugeComponentProps';
 
 describe('Mobile Initial Render Tests', () => {
@@ -226,6 +226,77 @@ describe('Mobile Initial Render Tests', () => {
       expect(pass2Layout.outerRadius).toBeGreaterThan(0);
       expect(pass2Layout.viewBox.width).toBeGreaterThan(0);
       expect(pass2Layout.viewBox.height).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Infinite loop prevention', () => {
+    it('should detect stable layout when all properties are within tolerance', () => {
+      const layout1 = calculateGaugeLayout(300, 200, GaugeType.Grafana, 0.2);
+      const layout2 = calculateGaugeLayout(300, 200, GaugeType.Grafana, 0.2);
+      
+      // Same dimensions should be stable
+      expect(isLayoutStable(layout1, layout2, 0.005)).toBe(true);
+    });
+
+    it('should detect unstable layout when radius changes significantly', () => {
+      const layout1 = calculateGaugeLayout(300, 200, GaugeType.Grafana, 0.2);
+      const layout2 = calculateGaugeLayout(400, 300, GaugeType.Grafana, 0.2);
+      
+      // Different dimensions should be unstable
+      expect(isLayoutStable(layout1, layout2, 0.005)).toBe(false);
+    });
+
+    it('should detect stable layout with tiny variations', () => {
+      const layout1 = calculateGaugeLayout(300, 200, GaugeType.Grafana, 0.2);
+      const layout2 = calculateGaugeLayout(301, 200, GaugeType.Grafana, 0.2);
+      
+      // 1px change should be within tolerance
+      expect(isLayoutStable(layout1, layout2, 0.01)).toBe(true);
+    });
+
+    it('should prevent oscillation by checking all layout properties', () => {
+      const layout1 = calculateGaugeLayout(300, 200, GaugeType.Grafana, 0.2);
+      
+      // Create a slightly modified layout (simulating oscillation)
+      const layout2: GaugeLayout = {
+        ...layout1,
+        viewBox: {
+          ...layout1.viewBox,
+          width: layout1.viewBox.width * 1.001, // 0.1% change
+          height: layout1.viewBox.height * 1.001,
+          toString: layout1.viewBox.toString
+        }
+      };
+      
+      // Should be stable (within 0.5% tolerance)
+      expect(isLayoutStable(layout1, layout2, 0.005)).toBe(true);
+    });
+
+    it('should simulate container size tracking logic', () => {
+      // This simulates the ResizeObserver container size tracking
+      const shouldSkipResize = (
+        lastSize: { width: number; height: number } | null,
+        newWidth: number,
+        newHeight: number,
+        threshold: number = 1
+      ): boolean => {
+        if (!lastSize) return false;
+        const widthChange = Math.abs(newWidth - lastSize.width);
+        const heightChange = Math.abs(newHeight - lastSize.height);
+        return widthChange < threshold && heightChange < threshold;
+      };
+      
+      const lastSize = { width: 300, height: 200 };
+      
+      // Sub-pixel changes should be skipped
+      expect(shouldSkipResize(lastSize, 300.5, 200.3, 1)).toBe(true);
+      
+      // Significant changes should not be skipped
+      expect(shouldSkipResize(lastSize, 305, 200, 1)).toBe(false);
+      expect(shouldSkipResize(lastSize, 300, 205, 1)).toBe(false);
+      
+      // First render (no lastSize) should not be skipped
+      expect(shouldSkipResize(null, 300, 200, 1)).toBe(false);
     });
   });
 

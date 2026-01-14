@@ -69,6 +69,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const measuredBoundsRef = useRef<{ width: number; height: number; x: number; y: number } | null>(null); // Persist measured bounds across renders
   const renderPassRef = useRef<number>(1); // Persist render pass state
   const initialRenderDeferred = useRef<boolean>(false); // Track if we're deferring initial render to ResizeObserver
+  const lastContainerSize = useRef<{ width: number; height: number } | null>(null); // Track last container dimensions to prevent infinite recalculation
   
   // State to trigger re-render when custom content needs to be rendered
   const [customContentItems, setCustomContentItems] = useState<any[]>([]);
@@ -209,6 +210,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     if (!element) return;
 
     let resizeTimeout: ReturnType<typeof setTimeout>;
+    let fallbackTimeout: ReturnType<typeof setTimeout>;
     
     const handleResize = (entries: ResizeObserverEntry[]) => {
       // Cancel any pending resize to debounce rapid changes
@@ -216,12 +218,45 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
         clearTimeout(resizeTimeout);
       }
       
+      const entry = entries[0];
+      if (!entry) return;
+      
+      const newWidth = entry.contentRect.width;
+      const newHeight = entry.contentRect.height;
+      
+      // Skip if dimensions are invalid (but don't skip deferred initial render fallback)
+      if (newWidth <= 0 || newHeight <= 0) {
+        // If initial render is deferred and we got zero dimensions,
+        // the fallback timeout will handle it
+        return;
+      }
+      
+      // Clear fallback timeout since we got valid dimensions
+      if (fallbackTimeout) {
+        clearTimeout(fallbackTimeout);
+      }
+      
+      // INFINITE LOOP FIX: Skip if container dimensions haven't actually changed
+      // This prevents oscillation caused by internal viewBox recalculations
+      // triggering ResizeObserver which triggers more recalculations
+      const lastSize = lastContainerSize.current;
+      if (lastSize && !initialRenderDeferred.current) {
+        const widthChange = Math.abs(newWidth - lastSize.width);
+        const heightChange = Math.abs(newHeight - lastSize.height);
+        // Use 1px threshold to ignore sub-pixel changes
+        if (widthChange < 1 && heightChange < 1) {
+          return;
+        }
+      }
+      
+      // Update last known container size
+      lastContainerSize.current = { width: newWidth, height: newHeight };
+      
       // Log resize event for debugging
-      if (CONSTANTS.debugLogs && entries[0]) {
-        const entry = entries[0];
+      if (CONSTANTS.debugLogs) {
         // console.log('[ResizeObserver] Element resized:', {
-        //   width: entry.contentRect.width,
-        //   height: entry.contentRect.height
+        //   width: newWidth,
+        //   height: newHeight
         // });
       }
       
@@ -249,10 +284,25 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     // Observe the gauge container itself, not its parent
     // This ensures we get accurate dimensions when we resize
     observer.observe(element);
+    
+    // FALLBACK: If ResizeObserver doesn't provide valid dimensions within 100ms,
+    // render anyway using getBoundingClientRect as fallback
+    // This handles cases where container has height:100% but parent has no explicit height
+    if (initialRenderDeferred.current) {
+      fallbackTimeout = setTimeout(() => {
+        if (initialRenderDeferred.current && gaugeRef.current) {
+          initialRenderDeferred.current = false;
+          chartHooks.initChart(gaugeRef.current, true);
+        }
+      }, 100);
+    }
 
     return () => {
       if (resizeTimeout) {
         clearTimeout(resizeTimeout);
+      }
+      if (fallbackTimeout) {
+        clearTimeout(fallbackTimeout);
       }
       observer.disconnect();
     };

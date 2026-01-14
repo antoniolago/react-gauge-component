@@ -67,7 +67,7 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
   };
 
   return (
-    <div style={{ ...themeStyles.gaugeCard, maxHeight: cardHeight }}>
+    <div style={{ ...themeStyles.gaugeCard, height: cardHeight, maxHeight: cardHeight, overflow: 'hidden' }}>
       {/* Card action buttons */}
       <div style={{
         position: 'absolute',
@@ -106,7 +106,7 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
       <div style={themeStyles.cardTitle}>{preset.name}</div>
       <div style={themeStyles.cardDescription}>{preset.description}</div>
       
-      <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {renderGauge()}
       </div>
     </div>

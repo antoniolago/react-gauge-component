@@ -4,6 +4,8 @@ import { ReactElement } from 'react';
 export interface GaugePreset {
   name: string;
   description: string;
+  /** Category for grouping in mobile accordion view */
+  category?: string;
   /** Render function that returns GaugeComponent JSX - easy to copy/paste */
   component: (value: number) => ReactElement;
   /** Optional config override for editor - extracted from component if not provided */

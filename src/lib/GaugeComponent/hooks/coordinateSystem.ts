@@ -469,6 +469,8 @@ export const updateDimensionsFromLayout = (
 /**
  * Validates that a gauge won't cause infinite resizing
  * Returns true if the layout is stable
+ * 
+ * Compares radius, viewBox dimensions, and center position to detect oscillation
  */
 export const isLayoutStable = (
   previousLayout: GaugeLayout | null,
@@ -477,12 +479,48 @@ export const isLayoutStable = (
 ): boolean => {
   if (!previousLayout) return true;
   
+  // Check radius stability
   const radiusDiff = Math.abs(
     currentLayout.outerRadius - previousLayout.outerRadius
   );
-  const radiusChange = radiusDiff / previousLayout.outerRadius;
+  const radiusChange = previousLayout.outerRadius > 0 
+    ? radiusDiff / previousLayout.outerRadius 
+    : radiusDiff;
   
-  return radiusChange < tolerance;
+  // Check viewBox stability
+  const viewBoxWidthDiff = Math.abs(
+    currentLayout.viewBox.width - previousLayout.viewBox.width
+  );
+  const viewBoxHeightDiff = Math.abs(
+    currentLayout.viewBox.height - previousLayout.viewBox.height
+  );
+  const viewBoxWidthChange = previousLayout.viewBox.width > 0
+    ? viewBoxWidthDiff / previousLayout.viewBox.width
+    : viewBoxWidthDiff;
+  const viewBoxHeightChange = previousLayout.viewBox.height > 0
+    ? viewBoxHeightDiff / previousLayout.viewBox.height
+    : viewBoxHeightDiff;
+  
+  // Check center position stability
+  const centerXDiff = Math.abs(
+    currentLayout.gaugeCenter.x - previousLayout.gaugeCenter.x
+  );
+  const centerYDiff = Math.abs(
+    currentLayout.gaugeCenter.y - previousLayout.gaugeCenter.y
+  );
+  const centerXChange = previousLayout.gaugeCenter.x > 0
+    ? centerXDiff / previousLayout.gaugeCenter.x
+    : centerXDiff;
+  const centerYChange = previousLayout.gaugeCenter.y > 0
+    ? centerYDiff / previousLayout.gaugeCenter.y
+    : centerYDiff;
+  
+  // All properties must be within tolerance for layout to be stable
+  return radiusChange < tolerance && 
+         viewBoxWidthChange < tolerance && 
+         viewBoxHeightChange < tolerance &&
+         centerXChange < tolerance &&
+         centerYChange < tolerance;
 };
 
 /**
