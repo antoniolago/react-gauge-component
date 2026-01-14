@@ -331,8 +331,10 @@ const formatJsxValue = (val: any, indent: string = ''): string => {
   }
   if (typeof val === 'object') {
     const entries = Object.entries(val).filter(([_, v]) => v !== undefined);
-    if (entries.length === 0) return '{}';
-    const formatted = entries.map(([k, v]) => `${k}: ${formatJsxValue(v, indent + '  ')}`);
+    // Filter out internal properties that start with __
+    const filteredEntries = entries.filter(([k]) => !k.startsWith('__'));
+    if (filteredEntries.length === 0) return '{}';
+    const formatted = filteredEntries.map(([k, v]) => `${k}: ${formatJsxValue(v, indent + '  ')}`);
     // Keep objects compact if they're simple
     if (formatted.join(', ').length < 50) {
       return `{ ${formatted.join(', ')} }`;
