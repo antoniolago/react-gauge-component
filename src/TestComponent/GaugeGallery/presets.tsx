@@ -767,24 +767,34 @@ export const GAUGE_PRESETS: GaugePreset[] = [
     description: "Bouncy needle animation",
     component: (value) => (
       <GaugeComponent
-        value={value}
-        type="radial"
-        arc={{
+      value={50}
+      type="radial"
+      arc={{
           colorArray: ["#5BE12C", "#EA4228"],
-          subArcs: [{ limit: 10 }, { limit: 30 }, {}, {}, {}],
+          subArcs: [
+            { limit: 10 },
+            { limit: 30 },
+            {},
+            {},
+            {}
+          ],
           padding: 0.02,
-          width: 0.3,
+          width: 0.3
         }}
-        pointer={{
+      pointer={{
           type: "needle",
           color: "#e0e0e0",
           elastic: true,
           animationDelay: 0,
-          maxFps: 30,
+          maxFps: 30
         }}
-        labels={{
+      labels={{
           valueLabel: {
-            style: { fontSize: "26px", fill: "#e0e0e0", fontWeight: "bold" },
+            style: {
+              fontSize: "36px",
+              fill: "#e0e0e0",
+              fontWeight: "bold"
+            }
           },
           tickLabels: {
             type: "inner",
@@ -793,14 +803,13 @@ export const GAUGE_PRESETS: GaugePreset[] = [
               { value: 40 },
               { value: 60 },
               { value: 80 },
-              { value: 100 },
+              { value: 100 }
             ],
-            defaultTickValueConfig: {
-              style: { fontSize: "9px", fill: "#bbb" },
-            },
-          },
+            defaultTickValueConfig: { style: { fontSize: "11px", fill: "#bbb" } },
+            defaultTickLineConfig: { distanceFromArc: 3, distanceFromText: 12 }
+          }
         }}
-      />
+    />
     ),
   },
   {
