@@ -1,7 +1,7 @@
 # React Gauge Component API Reference
 
 > **Auto-generated from TypeScript types**  
-> Last updated: 2025-12-23
+> Last updated: 2026-01-14
 
 This document is automatically generated from the TypeScript type definitions.
 To regenerate, run: `yarn docs`
@@ -250,6 +250,7 @@ Enum values: Needle, Blob, Arrow
 |----------|------|----------|-------------|
 | `hideMinMax` | `boolean` | No | Hide first and last ticks and it's values |
 | `type` | `"inner" \| "outer"` | No | Wheter the ticks are inside or outside the arcs |
+| `autoSpaceTickLabels` | `boolean` | No | When true, automatically detects closely-spaced ticks and separates them along the arc to prevent overlap. Useful when you have ticks like 15 and 16 that would otherwise render on top of each other. / |
 | `ticks` | `Array&lt;Tick&gt;` | No | List of desired ticks |
 | `defaultTickValueConfig` | `TickValueConfig` | No | Default tick value label configs, this will apply to all ticks but the individually configured |
 | `defaultTickLineConfig` | `TickLineConfig` | No | Default tick line label configs, this will apply to all ticks but the individually configured |
@@ -273,6 +274,9 @@ Enum values: Needle, Blob, Arrow
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | `formatTextValue` | `(value: any) =&gt; string` | No | This function allows to customize the rendered tickValue label |
+| `renderContent` | `(value: number, arcColor: string) =&gt; React.ReactNode` | No | Render a custom React element instead of text for the tick value label. Receives the current tick value and arc color as parameters. / |
+| `contentWidth` | `number` | No | Width of the foreignObject container (only used when renderContent is provided). |
+| `contentHeight` | `number` | No | Height of the foreignObject container (only used when renderContent is provided). |
 | `maxDecimalDigits` | `number` | No | This enables configuration for the number of decimal digits of the central value label |
 | `style` | `React.CSSProperties` | No | The tick value label will inherit this |
 | `hide` | `boolean` | No | If true will hide the tick value label |
