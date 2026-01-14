@@ -68,6 +68,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const hasBeenInitialized = useRef<boolean>(false); // Track if component has ever been initialized
   const measuredBoundsRef = useRef<{ width: number; height: number; x: number; y: number } | null>(null); // Persist measured bounds across renders
   const renderPassRef = useRef<number>(1); // Persist render pass state
+  const initialRenderDeferred = useRef<boolean>(false); // Track if we're deferring initial render to ResizeObserver
   
   // State to trigger re-render when custom content needs to be rendered
   const [customContentItems, setCustomContentItems] = useState<any[]>([]);
@@ -166,6 +167,15 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     if (isFirstRender) {
       container.current = select(svgRef.current);
       hasBeenInitialized.current = true;
+      
+      // MOBILE FIX: Defer initial render to ResizeObserver callback
+      // On mobile devices, getBoundingClientRect() can return incorrect dimensions
+      // during the initial render because the browser hasn't finished layout.
+      // By deferring to ResizeObserver, we ensure dimensions are accurate.
+      // ResizeObserver fires immediately when observing an element with stable dimensions.
+      initialRenderDeferred.current = true;
+      gauge.prevProps.current = mergedProps.current;
+      return; // Skip initial chart render - let ResizeObserver handle it
     }
     
     if (shouldInitChart()) {
@@ -220,7 +230,15 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
         requestAnimationFrame(() => {
           // Use gaugeRef.current to always get the latest gauge with current props
           if (gaugeRef.current) {
-            chartHooks.renderChart(gaugeRef.current, true);
+            // MOBILE FIX: Handle deferred initial render
+            // If this is the first resize after mount, perform the initial chart render
+            // This ensures we render with accurate dimensions from ResizeObserver
+            if (initialRenderDeferred.current) {
+              initialRenderDeferred.current = false;
+              chartHooks.initChart(gaugeRef.current, true);
+            } else {
+              chartHooks.renderChart(gaugeRef.current, true);
+            }
           }
         });
       }, 16); // ~1 frame
