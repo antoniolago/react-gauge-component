@@ -66,6 +66,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const pendingConfigChange = useRef<boolean>(false); // Track if config changed during animation
   const multiPointers = useRef<MultiPointerRef[]>([]);
   const multiPointerAnimationTriggered = useRef<boolean[]>([]);
+  const isDragging = useRef<boolean>(false); // Track if user is dragging pointer
   const hasBeenInitialized = useRef<boolean>(false); // Track if component has ever been initialized
   const measuredBoundsRef = useRef<{ width: number; height: number; x: number; y: number } | null>(null); // Persist measured bounds across renders
   const renderPassRef = useRef<number>(1); // Persist render pass state
@@ -103,6 +104,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     pendingConfigChange,
     multiPointers,
     multiPointerAnimationTriggered,
+    isDragging,
     // Persisted refs for two-pass rendering stability
     measuredBounds: measuredBoundsRef,
     renderPass: renderPassRef,
@@ -166,15 +168,6 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
                p.width !== c?.width || p.hide !== c?.hide;
       });
     
-    // DEBUG: Log which condition triggered
-    if (arcsPropsChanged) console.log('[shouldInitChart] arcsPropsChanged');
-    if (pointerStructureChanged) console.log('[shouldInitChart] pointerStructureChanged');
-    if (pointersStructureChanged) console.log('[shouldInitChart] pointersStructureChanged');
-    if (typeChanged) console.log('[shouldInitChart] typeChanged');
-    if (minValueChanged) console.log('[shouldInitChart] minValueChanged');
-    if (maxValueChanged) console.log('[shouldInitChart] maxValueChanged');
-    if (anglesChanged) console.log('[shouldInitChart] anglesChanged');
-    
     return arcsPropsChanged || pointerStructureChanged || pointersStructureChanged || 
            typeChanged || minValueChanged || maxValueChanged || anglesChanged;
   };
@@ -221,14 +214,11 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     // Check if structural changes require full reinit
     const needsReinit = shouldInitChart();
     const valueOnlyChange = onlyValueChanged();
-    console.log('[GaugeComponent] Update check:', { needsReinit, valueOnlyChange, prevValue: prevProps.current.value, newValue: mergedProps.current.value });
     
     if (needsReinit) {
-      console.log('[GaugeComponent] Full reinit triggered');
       chartHooks.initChart(gauge, isFirstRender);
     } else if (valueOnlyChange) {
       // Value-only change: just animate pointer/arc without full reinit
-      console.log('[GaugeComponent] Value-only change - animating');
       chartHooks.renderChart(gauge, false);
     }
     

@@ -60,4 +60,6 @@ export interface Gauge {
     multiPointers?: React.MutableRefObject<MultiPointerRef[]>;
     /** Tracks initial animation triggered state per pointer in multi-pointer mode */
     multiPointerAnimationTriggered?: React.MutableRefObject<boolean[]>;
+    /** Tracks if user is currently dragging the pointer (skip animation during drag) */
+    isDragging?: React.MutableRefObject<boolean>;
 }

@@ -100,8 +100,6 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     gauge.pointer.current.context = setupContext(gauge, isFirstAnimation);
     const { prevPercent, currentPercent, prevProgress } = gauge.pointer.current.context;
     
-    console.log('[drawPointer]', { resize, isFirstAnimation, prevPercent, currentPercent, prevValue: gauge.prevProps?.current.value, newValue: gauge.props.value });
-    
     // When resize=true (config change, not value change), draw directly at currentPercent
     const useCurrentPercent = resize && !isFirstAnimation;
     
@@ -114,11 +112,12 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     const shouldInitPointer = isFirstAnimation || (resize && pointer.animate !== false);
     
     if (shouldInitPointer && (!isGrafana || showPointerForGrafana)) {
-        console.log('[drawPointer] Calling initPointer');
         initPointer(gauge, useCurrentPercent);
     }
     
-    let shouldAnimate = (!resize || isFirstAnimation) && pointer.animate;
+    // Skip animation if user is currently dragging the pointer
+    const isDragging = gauge.isDragging?.current === true;
+    let shouldAnimate = (!resize || isFirstAnimation) && pointer.animate && !isDragging;
     if (shouldAnimate) {
         // Mark that initial animation has been triggered to prevent ResizeObserver from restarting
         if (gauge.initialAnimationTriggered) {
@@ -152,8 +151,6 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
         const animationStartPercent = (lastRenderedProgress !== undefined && lastRenderedProgress > 0) 
             ? lastRenderedProgress 
             : prevPercent;
-        
-        console.log('[drawPointer] Animation start:', { animationStartPercent, prevPercent, currentPercent, lastRenderedProgress });
         
         // FPS limiting - calculate minimum time between frames
         const maxFps = pointer.maxFps ?? 60;
@@ -658,6 +655,11 @@ export const setupPointerDrag = (gauge: Gauge) => {
         pointerElement.interrupt();
         if (arcElement) arcElement.interrupt();
         
+        // Mark as dragging to skip animation during drag
+        if (gauge.isDragging) {
+            gauge.isDragging.current = true;
+        }
+        
         // Record start position
         hasMoved = false;
         startX = event.sourceEvent.clientX;
@@ -679,13 +681,42 @@ export const setupPointerDrag = (gauge: Gauge) => {
         // Only update value if we've actually moved
         if (hasMoved) {
             const value = getValueFromPosition(gauge, clientX, clientY);
+            
+            // Update pointer position directly during drag (no animation)
+            const minValue = gauge.props.minValue as number;
+            const maxValue = gauge.props.maxValue as number;
+            const percent = (value - minValue) / (maxValue - minValue);
+            updatePointer(percent, gauge);
+            
+            // Update Grafana arc if applicable
+            if (gauge.props.type === GaugeType.Grafana) {
+                arcHooks.updateGrafanaArc(gauge, percent);
+            }
+            
+            // Update value label
+            labelsHooks.updateValueLabelText(gauge, value);
+            
+            // Track the current progress for smooth transition after drag
+            if (gauge.pointer.current?.context) {
+                gauge.pointer.current.context.prevProgress = percent;
+            }
+            
+            // Notify parent of value change
             onValueChange(value);
+        }
+    };
+    
+    const handleDragEnd = () => {
+        // Mark drag as complete
+        if (gauge.isDragging) {
+            gauge.isDragging.current = false;
         }
     };
     
     const dragBehavior = drag()
         .on("start", handleDragStart)
-        .on("drag", handleDrag);
+        .on("drag", handleDrag)
+        .on("end", handleDragEnd);
     
     // Apply drag to pointer
     pointerElement.call(dragBehavior);
@@ -741,10 +772,10 @@ export const setupArcClick = (gauge: Gauge) => {
 
 /**
  * Check if gauge is in multi-pointer mode
- * Note: Empty pointers array (length === 0) is considered multi-pointer mode with 0 pointers
+ * Returns true only if pointers array exists AND has at least one pointer
  */
 export const isMultiPointerMode = (gauge: Gauge): boolean => {
-    return Array.isArray(gauge.props.pointers);
+    return Array.isArray(gauge.props.pointers) && gauge.props.pointers.length > 0;
 };
 
 /**
