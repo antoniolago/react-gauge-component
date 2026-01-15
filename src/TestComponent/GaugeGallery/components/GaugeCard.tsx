@@ -7,8 +7,11 @@ import { Pencil, Copy, Check } from 'lucide-react';
 
 // Detect mobile/touch device
 const isMobileDevice = () => {
+  //test if window size lower than 762
   if (typeof window === 'undefined') return false;
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  return window.innerWidth < 762;
+  // if (typeof window === 'undefined') return false;
+  // return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 };
 
 interface GaugeCardProps {
@@ -102,9 +105,11 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
           {copied ? <Check size={12} /> : <Copy size={12} />}
         </button>
       </div>
-      
-      <div style={themeStyles.cardTitle}>{preset.name}</div>
-      <div style={themeStyles.cardDescription}>{preset.description}</div>
+      {!isMobile &&
+      <>
+        <div style={themeStyles.cardTitle}>{preset.name}</div>
+        <div style={themeStyles.cardDescription}>{preset.description}</div>
+      </>}
       
       <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {renderGauge()}
