@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/react-gauge-component/pr-89/static/css/main.7a2de412.css",
-    "main.js": "/react-gauge-component/pr-89/static/js/main.5d92d5f2.js",
+    "main.js": "/react-gauge-component/pr-89/static/js/main.d42e1f9f.js",
     "index.html": "/react-gauge-component/pr-89/index.html",
     "main.7a2de412.css.map": "/react-gauge-component/pr-89/static/css/main.7a2de412.css.map",
-    "main.5d92d5f2.js.map": "/react-gauge-component/pr-89/static/js/main.5d92d5f2.js.map"
+    "main.d42e1f9f.js.map": "/react-gauge-component/pr-89/static/js/main.d42e1f9f.js.map"
   },
   "entrypoints": [
     "static/css/main.7a2de412.css",
-    "static/js/main.5d92d5f2.js"
+    "static/js/main.d42e1f9f.js"
   ]
 }
