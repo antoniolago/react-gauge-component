@@ -63,6 +63,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   const initialAnimationTriggered = useRef<boolean>(false);
   const animationInProgress = useRef<boolean>(false);
   const pendingResize = useRef<boolean>(false);
+  const pendingConfigChange = useRef<boolean>(false); // Track if config changed during animation
   const multiPointers = useRef<MultiPointerRef[]>([]);
   const multiPointerAnimationTriggered = useRef<boolean[]>([]);
   const hasBeenInitialized = useRef<boolean>(false); // Track if component has ever been initialized
@@ -99,6 +100,7 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     initialAnimationTriggered,
     animationInProgress,
     pendingResize,
+    pendingConfigChange,
     multiPointers,
     multiPointerAnimationTriggered,
     // Persisted refs for two-pass rendering stability
@@ -127,25 +129,62 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   };
 
   // Determine if chart should be re-initialized based on prop changes
-  // IMPORTANT: Use JSON.stringify for deep comparison of objects to detect ACTUAL changes
-  // shallowEqual gives false positives when parent creates new object references each render
+  // IMPORTANT: Only trigger reinit for STRUCTURAL changes
+  // Value changes should NOT trigger reinit - they just animate the pointer
   const shouldInitChart = () => {
-    // Use JSON.stringify for deep comparison of complex objects
-    const arcsPropsChanged = JSON.stringify(prevProps.current.arc) !== JSON.stringify(mergedProps.current.arc);
-    const pointerPropsChanged = JSON.stringify(prevProps.current.pointer) !== JSON.stringify(mergedProps.current.pointer);
-    const pointersArrayChanged = JSON.stringify(prevProps.current.pointers) !== JSON.stringify(mergedProps.current.pointers);
-    const labelsPropsChanged = JSON.stringify(prevProps.current.labels) !== JSON.stringify(mergedProps.current.labels);
+    const prev = prevProps.current;
+    const curr = mergedProps.current;
     
-    // Primitive value comparisons
-    const typeChanged = prevProps.current.type !== mergedProps.current.type;
-    const valueChanged = prevProps.current.value !== mergedProps.current.value;
-    const minValueChanged = prevProps.current.minValue !== mergedProps.current.minValue;
-    const maxValueChanged = prevProps.current.maxValue !== mergedProps.current.maxValue;
-    const interactionChanged = (prevProps.current.onValueChange !== undefined) !== (mergedProps.current.onValueChange !== undefined);
-    const anglesChanged = prevProps.current.startAngle !== mergedProps.current.startAngle || 
-                          prevProps.current.endAngle !== mergedProps.current.endAngle;
+    // Structural changes that require full reinit
+    const arcsPropsChanged = JSON.stringify(prev.arc) !== JSON.stringify(curr.arc);
+    const typeChanged = prev.type !== curr.type;
+    const minValueChanged = prev.minValue !== curr.minValue;
+    const maxValueChanged = prev.maxValue !== curr.maxValue;
+    const anglesChanged = prev.startAngle !== curr.startAngle || prev.endAngle !== curr.endAngle;
     
-    return arcsPropsChanged || pointerPropsChanged || pointersArrayChanged || labelsPropsChanged || typeChanged || valueChanged || minValueChanged || maxValueChanged || interactionChanged || anglesChanged;
+    // For pointer, only check structural properties (not animation settings)
+    const prevPointer = prev.pointer || {};
+    const currPointer = curr.pointer || {};
+    const pointerStructureChanged = 
+      prevPointer.type !== currPointer.type ||
+      prevPointer.color !== currPointer.color ||
+      prevPointer.baseColor !== currPointer.baseColor ||
+      prevPointer.length !== currPointer.length ||
+      prevPointer.width !== currPointer.width ||
+      prevPointer.hide !== currPointer.hide ||
+      prevPointer.strokeWidth !== currPointer.strokeWidth ||
+      prevPointer.strokeColor !== currPointer.strokeColor;
+    
+    // For pointers array, only check structure changes (not value changes)
+    const prevPointers = prev.pointers;
+    const currPointers = curr.pointers;
+    const pointersStructureChanged = 
+      (prevPointers?.length ?? 0) !== (currPointers?.length ?? 0) ||
+      prevPointers?.some((p: any, i: number) => {
+        const c = currPointers?.[i];
+        return p.type !== c?.type || p.color !== c?.color || p.length !== c?.length || 
+               p.width !== c?.width || p.hide !== c?.hide;
+      });
+    
+    // DEBUG: Log which condition triggered
+    if (arcsPropsChanged) console.log('[shouldInitChart] arcsPropsChanged');
+    if (pointerStructureChanged) console.log('[shouldInitChart] pointerStructureChanged');
+    if (pointersStructureChanged) console.log('[shouldInitChart] pointersStructureChanged');
+    if (typeChanged) console.log('[shouldInitChart] typeChanged');
+    if (minValueChanged) console.log('[shouldInitChart] minValueChanged');
+    if (maxValueChanged) console.log('[shouldInitChart] maxValueChanged');
+    if (anglesChanged) console.log('[shouldInitChart] anglesChanged');
+    
+    return arcsPropsChanged || pointerStructureChanged || pointersStructureChanged || 
+           typeChanged || minValueChanged || maxValueChanged || anglesChanged;
+  };
+  
+  // Check if only value changed (for animation without reinit)
+  const onlyValueChanged = () => {
+    const prev = prevProps.current;
+    const curr = mergedProps.current;
+    return prev.value !== curr.value || 
+           prev.pointers?.some((p: any, i: number) => p.value !== curr.pointers?.[i]?.value);
   };
 
   const isHeightProvidedByUser = () => mergedProps.current.style?.height !== undefined;
@@ -179,27 +218,48 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
       return; // Skip initial chart render - let ResizeObserver handle it
     }
     
-    if (shouldInitChart()) {
+    // Check if structural changes require full reinit
+    const needsReinit = shouldInitChart();
+    const valueOnlyChange = onlyValueChanged();
+    console.log('[GaugeComponent] Update check:', { needsReinit, valueOnlyChange, prevValue: prevProps.current.value, newValue: mergedProps.current.value });
+    
+    if (needsReinit) {
+      console.log('[GaugeComponent] Full reinit triggered');
       chartHooks.initChart(gauge, isFirstRender);
+    } else if (valueOnlyChange) {
+      // Value-only change: just animate pointer/arc without full reinit
+      console.log('[GaugeComponent] Value-only change - animating');
+      chartHooks.renderChart(gauge, false);
     }
     
     gauge.prevProps.current = mergedProps.current;
     
     // Check if custom content needs to be rendered via React portal
+    // Only update state if custom content actually changed to avoid unnecessary re-renders
     const customContentConfig = customContent.current as any;
     if (Array.isArray(customContentConfig?.items) && customContentConfig.items.length > 0) {
-      setCustomContentItems(customContentConfig.items);
+      setCustomContentItems(prev => {
+        if (JSON.stringify(prev) !== JSON.stringify(customContentConfig.items)) {
+          return customContentConfig.items;
+        }
+        return prev;
+      });
     } else if (customContentConfig?.domNode && customContentConfig?.renderContent) {
       // Backward compatible single-item config
-      setCustomContentItems([
-        {
-          domNode: customContentConfig.domNode,
-          renderContent: customContentConfig.renderContent,
-          value: customContentConfig.value,
-          arcColor: customContentConfig.arcColor,
-        },
-      ]);
-    } else {
+      const newItems = [{
+        domNode: customContentConfig.domNode,
+        renderContent: customContentConfig.renderContent,
+        value: customContentConfig.value,
+        arcColor: customContentConfig.arcColor,
+      }];
+      setCustomContentItems(prev => {
+        if (prev.length !== 1 || JSON.stringify(prev) !== JSON.stringify(newItems)) {
+          return newItems;
+        }
+        return prev;
+      });
+    } else if (customContentItems.length > 0) {
+      // Only clear if there were items before
       setCustomContentItems([]);
     }
   }, [props]);

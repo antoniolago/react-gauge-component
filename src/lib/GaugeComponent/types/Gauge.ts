@@ -54,6 +54,8 @@ export interface Gauge {
     animationInProgress?: React.MutableRefObject<boolean>;
     /** Tracks if a resize was skipped during animation (triggers render after animation) */
     pendingResize?: React.MutableRefObject<boolean>;
+    /** Tracks if config changed during animation (triggers reinit after animation) */
+    pendingConfigChange?: React.MutableRefObject<boolean>;
     /** Array of pointer refs for multi-pointer mode */
     multiPointers?: React.MutableRefObject<MultiPointerRef[]>;
     /** Tracks initial animation triggered state per pointer in multi-pointer mode */

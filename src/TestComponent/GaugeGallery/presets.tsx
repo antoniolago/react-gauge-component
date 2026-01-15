@@ -78,6 +78,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
       };
       return (
         <GaugeComponent
+          value={value}
           arc={{
             nbSubArcs: 150,
             colorArray: ["#5BE12C", "#F5CD19", "#EA4228"],
@@ -137,7 +138,6 @@ export const GAUGE_PRESETS: GaugePreset[] = [
               },
             },
           }}
-          value={value}
           maxValue={3000}
         />
       );
@@ -200,7 +200,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
     description: "Custom angle radial with neon colors",
     component: (value) => (
       <GaugeComponent
-        value={2500}
+        value={value}
         type="radial"
         minValue={-300}
         maxValue={3000}
@@ -767,7 +767,7 @@ export const GAUGE_PRESETS: GaugePreset[] = [
     description: "Bouncy needle animation",
     component: (value) => (
       <GaugeComponent
-      value={50}
+      value={value}
       type="radial"
       arc={{
           colorArray: ["#5BE12C", "#EA4228"],

@@ -55,15 +55,26 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         return;
     }
     
-    // CRITICAL: Skip full re-init if animation is in progress
-    // This prevents creating duplicate gauge-content groups during animations
-    // EXCEPTION: Mode transitions and interaction changes must always complete
-    const interactionChanged = (gauge.prevProps.current.onValueChange !== undefined) !== (gauge.props.onValueChange !== undefined);
-    if (gauge.animationInProgress?.current && !isFirstRender && !modeTransition && !interactionChanged) {
-        if (gauge.pendingResize) {
-            gauge.pendingResize.current = true;
+    // CRITICAL: If animation is in progress and we need to reinit, interrupt it first
+    // This ensures config changes are applied immediately instead of being queued
+    if (gauge.animationInProgress?.current && !isFirstRender) {
+        // Interrupt all running animations
+        if (gauge.pointer.current?.element) {
+            gauge.pointer.current.element.interrupt();
         }
-        return;
+        if (gauge.doughnut.current) {
+            gauge.doughnut.current.interrupt();
+        }
+        if (gauge.multiPointers?.current) {
+            gauge.multiPointers.current.forEach(mp => {
+                if (mp?.element) mp.element.interrupt();
+            });
+        }
+        // Clear animation flags
+        gauge.animationInProgress.current = false;
+        if (gauge.pendingConfigChange) {
+            gauge.pendingConfigChange.current = false;
+        }
     }
     
     // Invalidate measured bounds ONLY when truly layout-affecting props change
@@ -84,9 +95,6 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     // For subsequent renders (not first), reuse the existing SVG and create new groups
     if (!existingSvg.empty() && !isFirstRender) {
         gauge.svg.current = existingSvg;
-        // DEBUG: Log pointer state before removal
-        const pointerCountBefore = gauge.svg.current.selectAll('.pointer').size();
-        //console.debug('[initChart] Before removal - pointer count:', pointerCountBefore);
         
         // CRITICAL FIX: Remove old content IMMEDIATELY to prevent duplicate gauges
         gauge.svg.current.selectAll("g.gauge-content").remove();
@@ -95,7 +103,8 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
         gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
         
-        // Reset animation flags when chart reinits to allow animation to play again
+        // Reset animation flags when pointer elements are being recreated
+        // This is necessary because pointer refs are cleared below, so animation needs to replay
         if (gauge.initialAnimationTriggered) {
             gauge.initialAnimationTriggered.current = false;
         }
@@ -130,10 +139,11 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         .startAngle(angles.startAngle)
         .endAngle(angles.endAngle)
         .sort(null);
-    //Set up pointer element only for single-pointer mode
+    //Set up pointer element only for single-pointer mode with pointers to render
     //In multi-pointer mode, elements are created by drawMultiPointers in renderChart
     const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
-    if (!isMultiPointer) {
+    const hasPointers = pointerHooks.hasPointersToRender(gauge);
+    if (!isMultiPointer && hasPointers) {
         pointerHooks.addPointerElement(gauge);
     }
     renderChart(gauge, true);
@@ -409,11 +419,24 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         //console.debug('[renderChart] Before drawPointer - pass:', currentPass, 'resize:', resize, 'pointerCount:', pointerCountBeforeDraw);
         
         if (currentPass === 2) {
-            // Check if multi-pointer mode is enabled
-            if (pointerHooks.isMultiPointerMode(gauge)) {
+            // Check if we have pointers to render
+            const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
+            const hasPointers = pointerHooks.hasPointersToRender(gauge);
+            
+            if (isMultiPointer && hasPointers) {
+                // Multi-pointer mode with pointers
                 pointerHooks.drawMultiPointers(gauge, resize);
-            } else if (!gauge.props?.pointer?.hide) {
+            } else if (!isMultiPointer && hasPointers) {
+                // Single pointer mode
                 pointerHooks.drawPointer(gauge, resize);
+            }
+            
+            // For Grafana, always update arc fill (even with 0 pointers)
+            if (gauge.props.type === GaugeType.Grafana) {
+                const minValue = gauge.props.minValue as number;
+                const maxValue = gauge.props.maxValue as number;
+                const currentPercent = utilHooks.calculatePercentage(minValue, maxValue, gauge.props.value as number);
+                arcHooks.updateGrafanaArc(gauge, currentPercent);
             }
             
             const pointerCountAfterDraw = gauge.g.current?.selectAll('.pointer').size() ?? 0;
@@ -567,15 +590,18 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         }
         
         // Handle pointer updates - either single or multi-pointer mode
-        if (isMultiPointer) {
+        const hasPointers = pointerHooks.hasPointersToRender(gauge);
+        const isGrafana = gauge.props.type === GaugeType.Grafana;
+        
+        if (isMultiPointer && hasPointers) {
             // In multi-pointer mode, redraw if pointer values changed
-            // Note: single 'value' prop changes don't affect multi-pointer positions
             if (multiPointerValuesChanged) {
                 pointerHooks.drawMultiPointers(gauge, false);
             }
-        } else {
-            // Single pointer mode
-            var shouldRedrawPointer = pointerPropsChanged || (valueChanged && !gauge.props?.pointer?.hide);
+        } else if (!isMultiPointer && (hasPointers || isGrafana)) {
+            // Single pointer mode OR Grafana without pointer (arc-only animation)
+            // drawPointer handles both pointer animation AND Grafana arc animation
+            var shouldRedrawPointer = pointerPropsChanged || valueChanged;
             if (shouldRedrawPointer) {
                 pointerHooks.drawPointer(gauge);
             }

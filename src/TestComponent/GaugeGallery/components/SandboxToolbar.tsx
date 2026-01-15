@@ -251,16 +251,14 @@ const PointerAccordion: React.FC<{
               />
             )}
           </div>
-          {/* Remove button - only show if not the only pointer */}
-          {!isOnlyPointer && (
-            <button
-              onClick={onRemove}
-              style={{ ...styles.toolBtn, padding: '4px 8px', marginTop: '4px', color: '#ff6b6b', borderColor: 'rgba(255, 107, 107, 0.3)' }}
-              type="button"
-            >
-              <Trash2 size={12} /> Remove
-            </button>
-          )}
+          {/* Remove button - always show, allows removing all pointers */}
+          <button
+            onClick={onRemove}
+            style={{ ...styles.toolBtn, padding: '4px 8px', marginTop: '4px', color: '#ff6b6b', borderColor: 'rgba(255, 107, 107, 0.3)' }}
+            type="button"
+          >
+            <Trash2 size={12} /> Remove
+          </button>
         </div>
       )}
     </div>
@@ -618,37 +616,16 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
               {/* Pointers List Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>
-                  {cfg?.pointer?.hide ? 'Hidden' : `${(cfg?.pointers?.length || 1)} pointer${(cfg?.pointers?.length || 1) > 1 ? 's' : ''}`}
+                  {`${(cfg?.pointers?.length || 1)} pointer${(cfg?.pointers?.length || 1) > 1 ? 's' : ''}`}
                 </span>
-                <div style={{ display: 'flex', gap: '4px' }}>
                 <button
                   onClick={() => {
-                    // Toggle pointer visibility
-                    const isCurrentlyHidden = cfg?.pointer?.hide === true;
-                    if (isCurrentlyHidden) {
-                      // Show pointer - remove hide flag
-                      const { hide, ...restPointer } = cfg?.pointer || {};
-                      onConfigChange({ ...config, pointer: restPointer });
-                    } else {
-                      // Hide pointer
-                      onConfigChange({ ...config, pointer: { ...cfg?.pointer, hide: true }, pointers: undefined });
-                    }
-                  }}
-                  style={{ ...styles.toolBtn, padding: '4px 8px', fontSize: '0.7rem', ...(cfg?.pointer?.hide ? styles.toolBtnActive : {}) }}
-                  type="button"
-                  title={cfg?.pointer?.hide ? "Show pointer" : "Hide pointer"}
-                >
-                  {cfg?.pointer?.hide ? <Eye size={12} /> : <EyeOff size={12} />} {cfg?.pointer?.hide ? 'Show' : 'None'}
-                </button>
-                <button
-                  onClick={() => {
-                    const isFirstMultiPointer = !cfg?.pointers || cfg.pointers.length === 0;
+                    const hasNoPointers = !cfg?.pointers || cfg.pointers.length === 0;
                     const min = cfg?.minValue ?? 0;
                     const max = cfg?.maxValue ?? 100;
                     
-                    // When creating first multi-pointer setup, use current value for first pointer
-                    // and add offset for the new pointer so they don't overlap
-                    const currentPointers = cfg?.pointers || [{ 
+                    // Create default pointer config
+                    const defaultPointer = { 
                       value: value, 
                       type: cfg?.pointer?.type || 'needle',
                       color: cfg?.pointer?.color,
@@ -657,15 +634,23 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                       width: cfg?.pointer?.width ?? 15,
                       strokeWidth: cfg?.pointer?.strokeWidth ?? 0,
                       strokeColor: cfg?.pointer?.strokeColor,
-                    }];
+                    };
                     
-                    // Copy last pointer's config but with new color and different value
+                    // If no pointers exist, just add one pointer
+                    if (hasNoPointers) {
+                      onConfigChange({ ...config, pointers: [defaultPointer], pointer: undefined });
+                      if (onForceRemount) {
+                        setTimeout(() => onForceRemount(), 0);
+                      }
+                      return;
+                    }
+                    
+                    // Otherwise add a new pointer based on last one
+                    const currentPointers = cfg.pointers;
                     const lastPointer = currentPointers[currentPointers.length - 1];
-                    // Calculate new value with offset to avoid overlap
                     const range = max - min;
-                    const offset = range * 0.2; // 20% offset from last pointer
-                    let newValue = lastPointer.value + offset;
-                    // Wrap around if exceeds max
+                    const offset = range * 0.2;
+                    let newValue = (lastPointer?.value ?? value) + offset;
                     if (newValue > max) {
                       newValue = min + (newValue - max);
                     }
@@ -674,13 +659,9 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                       ...lastPointer,
                       value: newValue, 
                       color: ['#5BE12C', '#F5CD19', '#EA4228', '#60a5fa', '#a855f7'][currentPointers.length % 5],
-                      label: undefined, // Clear label so it auto-generates
+                      label: undefined,
                     }];
                     onConfigChange({ ...config, pointers: newPointers, pointer: undefined });
-                    // Force remount when switching to multi-pointer mode for the first time
-                    if (isFirstMultiPointer && onForceRemount) {
-                      setTimeout(() => onForceRemount(), 0);
-                    }
                   }}
                   style={{ ...styles.toolBtn, padding: '4px 8px', fontSize: '0.7rem' }}
                   type="button"
@@ -688,7 +669,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 >
                   <Plus size={12} /> Add Pointer
                 </button>
-                </div>
               </div>
               
               {/* Value Display Mode (when multiple pointers) */}
@@ -717,7 +697,8 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
               )}
               
               {/* Pointer Accordions - use pointers array if exists, otherwise create from single pointer */}
-              {(cfg?.pointers || [{ 
+              {/* When pointers is empty array (0 pointers), don't show any accordions */}
+              {(Array.isArray(cfg?.pointers) ? cfg.pointers : [{ 
                 value: value, 
                 type: cfg?.pointer?.type || 'needle',
                 color: cfg?.pointer?.color,
@@ -728,7 +709,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 strokeColor: cfg?.pointer?.strokeColor,
                 arrowOffset: cfg?.pointer?.arrowOffset,
                 blobOffset: cfg?.pointer?.blobOffset,
-                // Don't inherit hide - pointers in array should always be visible
               }]).map((pointer: PointerWithValue, index: number) => (
                 <PointerAccordion 
                   key={index}
@@ -760,8 +740,12 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   }}
                   onRemove={() => {
                     if (cfg?.pointers && cfg.pointers.length > 1) {
+                      // Remove pointer from array
                       const pointers = cfg.pointers.filter((_: any, i: number) => i !== index);
                       onConfigChange({ ...config, pointers });
+                    } else {
+                      // Last pointer - set to empty array (0 pointers)
+                      onConfigChange({ ...config, pointers: [] });
                     }
                   }}
                 />
@@ -886,14 +870,6 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                   <Play size={14} /><span>Instant</span>
                 </button>
               </div>
-              {interactionEnabled && (
-                <label style={{ ...styles.inlineLabel, fontSize: '0.75rem' }} title="Hide grab handle circle at pointer tip">
-                  <input type="checkbox" checked={cfg?.pointer?.hideGrabHandle || false} 
-                    onChange={(e) => onConfigChange({ ...config, pointer: { ...cfg?.pointer, hideGrabHandle: e.target.checked } })} 
-                    style={styles.inlineCheckbox} />
-                  Hide grab circle
-                </label>
-              )}
                 </div>
               </div>
             </div>

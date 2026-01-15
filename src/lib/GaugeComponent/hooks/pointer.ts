@@ -54,6 +54,12 @@ export const resetDiagnostics = (): void => {
  */
 export const ensurePointerExists = (gauge: Gauge): boolean => {
     const isMultiPointer = isMultiPointerMode(gauge);
+    const shouldHavePointers = hasPointersToRender(gauge);
+    
+    // If no pointers should be rendered, always return true (nothing to check)
+    if (!shouldHavePointers) {
+        return true;
+    }
     
     if (isMultiPointer) {
         const expectedCount = gauge.props.pointers?.length ?? 0;
@@ -69,7 +75,7 @@ export const ensurePointerExists = (gauge: Gauge): boolean => {
         const pointerExists = gauge.pointer.current?.element && 
                               !gauge.g.current?.select('.pointer').empty();
         
-        if (!pointerExists && !gauge.props.pointer?.hide) {
+        if (!pointerExists) {
             diagnostics.pointerVanishCount++;
             diagnostics.lastVanishTimestamp = Date.now();
             console.warn(`[GaugeComponent] Single pointer vanished during resize! Recreating...`);
@@ -81,16 +87,7 @@ export const ensurePointerExists = (gauge: Gauge): boolean => {
 };
 
 export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
-    const pointerElementExists = gauge.pointer.current?.element != null;
-    const pointerInDOM = gauge.g.current?.select('.pointer').empty() === false;
-    const pointerElement = gauge.g.current?.select('.pointer');
-    const transform = pointerElement?.attr?.('transform') ?? 'none';
-    const visibility = pointerElement?.style?.('visibility') ?? 'unknown';
-    const opacity = pointerElement?.style?.('opacity') ?? 'unknown';
-    //console.debug('[drawPointer] Entry - resize:', resize, 'elementRef:', pointerElementExists, 'inDOM:', pointerInDOM, 'transform:', transform, 'visibility:', visibility, 'opacity:', opacity);
-    
     // CRITICAL: Check if pointer exists before drawing, recreate if vanished
-    // FIX: Check regardless of resize flag - pointer can vanish during value changes too
     if (!ensurePointerExists(gauge)) {
         addPointerElement(gauge);
     }
@@ -103,31 +100,22 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     gauge.pointer.current.context = setupContext(gauge, isFirstAnimation);
     const { prevPercent, currentPercent, prevProgress } = gauge.pointer.current.context;
     
+    console.log('[drawPointer]', { resize, isFirstAnimation, prevPercent, currentPercent, prevValue: gauge.prevProps?.current.value, newValue: gauge.props.value });
+    
     // When resize=true (config change, not value change), draw directly at currentPercent
-    // to avoid the pointer jumping from prevPercent to currentPercent
-    // EXCEPT on first animation - always start at 0 to avoid flash
     const useCurrentPercent = resize && !isFirstAnimation;
     
     // Initialize pointer for all types except Grafana (which uses arc fill by default)
-    // For Grafana, only show pointer if user explicitly configured pointer props
     const isGrafana = gauge.props.type == GaugeType.Grafana;
-    // Check if user explicitly provided pointer config (not just defaults)
     const userExplicitlyConfiguredPointer = gauge.originalProps?.pointer !== undefined;
     const showPointerForGrafana = isGrafana && userExplicitlyConfiguredPointer && !pointer.hide;
     
     // Only init pointer on first animation OR on resize when animation is enabled
-    // When animation is disabled and not first render, skip init and just update position
     const shouldInitPointer = isFirstAnimation || (resize && pointer.animate !== false);
     
-    // DEBUG: Log initPointer decision
-    const pointerChildCount = gauge.pointer.current?.element?.selectAll('*').size() ?? 0;
-    //console.debug('[drawPointer] shouldInitPointer:', shouldInitPointer, 'isFirstAnimation:', isFirstAnimation, 'resize:', resize, 'isGrafana:', isGrafana, 'showPointerForGrafana:', showPointerForGrafana, 'pointerChildCount:', pointerChildCount);
-    
     if (shouldInitPointer && (!isGrafana || showPointerForGrafana)) {
-        //console.debug('[drawPointer] Calling initPointer...');
+        console.log('[drawPointer] Calling initPointer');
         initPointer(gauge, useCurrentPercent);
-        const afterInitCount = gauge.pointer.current?.element?.selectAll('*').size() ?? 0;
-        //console.debug('[drawPointer] After initPointer - childCount:', afterInitCount);
     }
     
     let shouldAnimate = (!resize || isFirstAnimation) && pointer.animate;
@@ -145,7 +133,27 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
         // For other types or Grafana with pointer, animate the pointer element
         const animationTarget = (isGrafana && !showPointerForGrafana)
             ? gauge.doughnut.current 
-            : gauge.pointer.current.element;
+            : gauge.pointer.current?.element;
+        
+        // Safety check - target might be null during rapid config changes
+        if (!animationTarget) {
+            if (gauge.animationInProgress) {
+                gauge.animationInProgress.current = false;
+            }
+            return;
+        }
+        
+        // CRITICAL: Interrupt any existing animation before starting new one
+        animationTarget.interrupt();
+        
+        // Use the last rendered progress as starting point for smooth mid-animation transitions
+        // prevProgress is updated on every animation frame, so it reflects current visual position
+        const lastRenderedProgress = gauge.pointer.current?.context?.prevProgress;
+        const animationStartPercent = (lastRenderedProgress !== undefined && lastRenderedProgress > 0) 
+            ? lastRenderedProgress 
+            : prevPercent;
+        
+        console.log('[drawPointer] Animation start:', { animationStartPercent, prevPercent, currentPercent, lastRenderedProgress });
         
         // FPS limiting - calculate minimum time between frames
         const maxFps = pointer.maxFps ?? 60;
@@ -158,7 +166,7 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
             .ease(pointer.elastic ? easeElastic : easeExpOut)
             .duration(pointer.animationDuration)
             .tween("progress", () => {
-                const currentInterpolatedPercent = interpolateNumber(prevPercent, currentPercent);
+                const currentInterpolatedPercent = interpolateNumber(animationStartPercent, currentPercent);
                 return function (percentOfPercent: number) {
                     // FPS limiting - skip frame if not enough time has passed
                     const now = performance.now();
@@ -194,17 +202,16 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                 if (gauge.animationInProgress) {
                     gauge.animationInProgress.current = false;
                 }
-                // DISABLED: Don't trigger resize after animation - ResizeObserver handles real resizes
-                // This prevents flicker when animation completes
-                // if (gauge.pendingResize?.current) {
-                //     gauge.pendingResize.current = false;
-                //     // Use requestAnimationFrame to avoid blocking
-                //     requestAnimationFrame(() => {
-                //         // Import dynamically to avoid circular dependency
-                //         const chartHooks = require('./chart');
-                //         chartHooks.renderChart(gauge, true);
-                //     });
-                // }
+                // Apply pending config changes that were queued during animation
+                if (gauge.pendingConfigChange?.current) {
+                    gauge.pendingConfigChange.current = false;
+                    // Use requestAnimationFrame to avoid blocking and ensure clean state
+                    requestAnimationFrame(() => {
+                        // Import dynamically to avoid circular dependency
+                        const chartHooks = require('./chart');
+                        chartHooks.initChart(gauge, false);
+                    });
+                }
             });
     } else {
         // Mark initial animation as triggered even when animation is disabled
@@ -253,6 +260,9 @@ export const setupContext = (gauge: Gauge, isFirstAnimation: boolean = false): P
     return pointerContext;
 }
 const initPointer = (gauge: Gauge, useCurrentPercent: boolean = false) => {
+    // Safety check - element might be null during rapid config changes
+    if (!gauge.pointer.current?.element || !gauge.pointer.current?.context) return;
+    
     let value = gauge.props.value as number;
     let pointer = gauge.props.pointer as PointerProps;
     const { shouldDrawPath, centerPoint, pointerRadius, pathStr, currentPercent, prevPercent, pathLength } = gauge.pointer.current.context;
@@ -343,15 +353,18 @@ const initPointer = (gauge: Gauge, useCurrentPercent: boolean = false) => {
     setPointerPosition(pointerRadius, startPercent, gauge);
 }
 const updatePointer = (percentage: number, gauge: Gauge) => {
+    // Safety check - element might be null during rapid config changes
+    if (!gauge.pointer.current?.element || !gauge.pointer.current?.context) return;
+    
     let pointer = gauge.props.pointer as PointerProps;
     const { pointerRadius, shouldDrawPath, prevColor } = gauge.pointer.current.context;
     setPointerPosition(pointerRadius, percentage, gauge);
-    if(shouldDrawPath) {
+    if(shouldDrawPath && gauge.pointer.current.path) {
         gauge.pointer.current.path.attr("d", calculatePointerPath(gauge, percentage));
         
         // Update grab handle position if it exists (grab handle is on g.current, not pointer element)
-        const grabHandle = gauge.g.current.select(".pointer-grab-handle");
-        if (!grabHandle.empty()) {
+        const grabHandle = gauge.g.current?.select(".pointer-grab-handle");
+        if (grabHandle && !grabHandle.empty()) {
             const tipPosition = calculatePointerTipPosition(gauge, percentage);
             grabHandle.attr("cx", tipPosition.x).attr("cy", tipPosition.y);
         }
@@ -366,7 +379,7 @@ const updatePointer = (percentage: number, gauge: Gauge) => {
         let currentColor = pointer.color || arcHooks.getColorByPercentage(percentage, gauge);
         gauge.pointer.current.path.attr("fill", currentColor);
     }
-    if(pointer.type == PointerType.Blob) {
+    if(pointer.type == PointerType.Blob && gauge.pointer.current.element) {
         // Use getColorByPercentage which handles both gradient and non-gradient modes
         let arcColor = arcHooks.getColorByPercentage(percentage, gauge);
         // Use custom strokeColor if provided, otherwise match arc color
@@ -521,7 +534,10 @@ const getPointerRadius = (gauge: Gauge) => {
     return pointerWidth * (gauge.dimensions.current.width / 500);
 }
 
-export const translatePointer = (x: number, y: number, gauge: Gauge) => gauge.pointer.current.element.attr("transform", "translate(" + x + ", " + y + ")");
+export const translatePointer = (x: number, y: number, gauge: Gauge) => {
+    if (!gauge.pointer.current?.element) return;
+    gauge.pointer.current.element.attr("transform", "translate(" + x + ", " + y + ")");
+};
 export const addPointerElement = (gauge: Gauge) => gauge.pointer.current.element = gauge.g.current.append("g").attr("class", "pointer");
 export const clearPointerElement = (gauge: Gauge) => {
     // Safety check - element might not exist in multi-pointer mode
@@ -725,9 +741,20 @@ export const setupArcClick = (gauge: Gauge) => {
 
 /**
  * Check if gauge is in multi-pointer mode
+ * Note: Empty pointers array (length === 0) is considered multi-pointer mode with 0 pointers
  */
 export const isMultiPointerMode = (gauge: Gauge): boolean => {
-    return Array.isArray(gauge.props.pointers) && gauge.props.pointers.length > 0;
+    return Array.isArray(gauge.props.pointers);
+};
+
+/**
+ * Check if gauge has any pointers to draw
+ */
+export const hasPointersToRender = (gauge: Gauge): boolean => {
+    if (Array.isArray(gauge.props.pointers)) {
+        return gauge.props.pointers.length > 0;
+    }
+    return !gauge.props.pointer?.hide;
 };
 
 /**
@@ -1044,15 +1071,14 @@ const animateMultiPointer = (
             
             // Check if all animations are done
             const allDone = gauge.multiPointers?.current.every(p => !p?.animationInProgress) ?? true;
-            // DISABLED: Don't trigger resize after multi-pointer animation completes
-            // This prevents flicker when all animations finish
-            // if (allDone && gauge.pendingResize?.current) {
-            //     gauge.pendingResize.current = false;
-            //     requestAnimationFrame(() => {
-            //         const chartHooks = require('./chart');
-            //         chartHooks.renderChart(gauge, true);
-            //     });
-            // }
+            // Apply pending config changes when all multi-pointer animations complete
+            if (allDone && gauge.pendingConfigChange?.current) {
+                gauge.pendingConfigChange.current = false;
+                requestAnimationFrame(() => {
+                    const chartHooks = require('./chart');
+                    chartHooks.initChart(gauge, false);
+                });
+            }
         });
 };
 
