@@ -618,8 +618,28 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
               {/* Pointers List Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>
-                  {(cfg?.pointers?.length || 1)} pointer{(cfg?.pointers?.length || 1) > 1 ? 's' : ''}
+                  {cfg?.pointer?.hide ? 'Hidden' : `${(cfg?.pointers?.length || 1)} pointer${(cfg?.pointers?.length || 1) > 1 ? 's' : ''}`}
                 </span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                <button
+                  onClick={() => {
+                    // Toggle pointer visibility
+                    const isCurrentlyHidden = cfg?.pointer?.hide === true;
+                    if (isCurrentlyHidden) {
+                      // Show pointer - remove hide flag
+                      const { hide, ...restPointer } = cfg?.pointer || {};
+                      onConfigChange({ ...config, pointer: restPointer });
+                    } else {
+                      // Hide pointer
+                      onConfigChange({ ...config, pointer: { ...cfg?.pointer, hide: true }, pointers: undefined });
+                    }
+                  }}
+                  style={{ ...styles.toolBtn, padding: '4px 8px', fontSize: '0.7rem', ...(cfg?.pointer?.hide ? styles.toolBtnActive : {}) }}
+                  type="button"
+                  title={cfg?.pointer?.hide ? "Show pointer" : "Hide pointer"}
+                >
+                  {cfg?.pointer?.hide ? <Eye size={12} /> : <EyeOff size={12} />} {cfg?.pointer?.hide ? 'Show' : 'None'}
+                </button>
                 <button
                   onClick={() => {
                     const isFirstMultiPointer = !cfg?.pointers || cfg.pointers.length === 0;
@@ -668,6 +688,7 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                 >
                   <Plus size={12} /> Add Pointer
                 </button>
+                </div>
               </div>
               
               {/* Value Display Mode (when multiple pointers) */}

@@ -413,30 +413,47 @@ const MainPreviews = () => {
                         <Col xs={12} lg={3}>
                             <h6 className="mb-1">Radial elastic</h6>
                             <GaugeComponent
-                                id="gauge-component-radial4"
-                                value={currentValue}
-                                type="radial"
-                                labels={{
-                                    tickLabels: {
-                                        type: "inner",
-                                        ticks: [
-                                            { value: 20 },
-                                            { value: 40 },
-                                            { value: 60 },
-                                            { value: 80 },
-                                            { value: 100 }
-                                        ]
+                            value={50}
+                            type="radial"
+                            arc={{
+                                colorArray: ["#5BE12C", "#EA4228"],
+                                subArcs: [
+                                    { limit: 10 },
+                                    { limit: 30 },
+                                    {},
+                                    {},
+                                    {}
+                                ],
+                                padding: 0.02,
+                                width: 0.3
+                                }}
+                            pointer={{
+                                type: "needle",
+                                color: "#e0e0e0",
+                                elastic: true,
+                                animationDelay: 0,
+                                maxFps: 30
+                                }}
+                            labels={{
+                                valueLabel: {
+                                    style: {
+                                    fontSize: "26px",
+                                    fill: "#e0e0e0",
+                                    fontWeight: "bold"
                                     }
-                                }}
-                                arc={{
-                                    colorArray: ['#5BE12C', '#EA4228'],
-                                    subArcs: [{ limit: 10 }, { limit: 30 }, {}, {}, {}],
-                                    padding: 0.02,
-                                    width: 0.3
-                                }}
-                                pointer={{
-                                    elastic: true,
-                                    animationDelay: 0
+                                },
+                                tickLabels: {
+                                    type: "inner",
+                                    ticks: [
+                                    { value: 20 },
+                                    { value: 40 },
+                                    { value: 60 },
+                                    { value: 80 },
+                                    { value: 100 }
+                                    ],
+                                    defaultTickValueConfig: { style: { fontSize: "11px", fill: "#bbb" } },
+                                    defaultTickLineConfig: { distanceFromArc: 3, distanceFromText: 12 }
+                                }
                                 }}
                             />
                         </Col>

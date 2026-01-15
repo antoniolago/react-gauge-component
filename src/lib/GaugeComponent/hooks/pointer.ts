@@ -95,12 +95,13 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
         addPointerElement(gauge);
     }
     
-    gauge.pointer.current.context = setupContext(gauge);
-    const { prevPercent, currentPercent, prevProgress } = gauge.pointer.current.context;
     let pointer = gauge.props.pointer as PointerProps;
     
     // Use initialAnimationTriggered flag to handle ResizeObserver firing after prevProps is set
     const isFirstAnimation = !gauge.initialAnimationTriggered?.current;
+    
+    gauge.pointer.current.context = setupContext(gauge, isFirstAnimation);
+    const { prevPercent, currentPercent, prevProgress } = gauge.pointer.current.context;
     
     // When resize=true (config change, not value change), draw directly at currentPercent
     // to avoid the pointer jumping from prevPercent to currentPercent
@@ -221,7 +222,7 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
         }
     }
 };
-export const setupContext = (gauge: Gauge): PointerContext => {
+export const setupContext = (gauge: Gauge, isFirstAnimation: boolean = false): PointerContext => {
     const { value } = gauge.props;
     let pointer = gauge.props.pointer as PointerProps;
     let pointerLength = pointer.length as number;
@@ -233,7 +234,10 @@ export const setupContext = (gauge: Gauge): PointerContext => {
     let typesWithPath = [PointerType.Needle, PointerType.Arrow];
     
     // Handle prevValue properly - use nullish coalescing to allow 0 values
-    const prevValue = gauge.prevProps?.current.value ?? minValue;
+    // CRITICAL: On first animation, always use minValue so pointer animates from start
+    // This fixes the issue where prevProps.current.value is already set to current value
+    // before the ResizeObserver fires, causing no animation on first load
+    const prevValue = isFirstAnimation ? minValue : (gauge.prevProps?.current.value ?? minValue);
     
     let pointerContext: PointerContext = {
         centerPoint: [0, -pointerRadius / 2],

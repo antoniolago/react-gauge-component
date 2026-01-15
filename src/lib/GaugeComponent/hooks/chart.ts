@@ -57,8 +57,9 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
     
     // CRITICAL: Skip full re-init if animation is in progress
     // This prevents creating duplicate gauge-content groups during animations
-    // EXCEPTION: Mode transitions must always complete to prevent duplicate pointers
-    if (gauge.animationInProgress?.current && !isFirstRender && !modeTransition) {
+    // EXCEPTION: Mode transitions and interaction changes must always complete
+    const interactionChanged = (gauge.prevProps.current.onValueChange !== undefined) !== (gauge.props.onValueChange !== undefined);
+    if (gauge.animationInProgress?.current && !isFirstRender && !modeTransition && !interactionChanged) {
         if (gauge.pendingResize) {
             gauge.pendingResize.current = true;
         }
@@ -93,6 +94,23 @@ export const initChart = (gauge: Gauge, isFirstRender: boolean) => {
         // Create fresh groups
         gauge.g.current = gauge.svg.current.append("g").attr("class", "gauge-content");
         gauge.doughnut.current = gauge.g.current.append("g").attr("class", "doughnut");
+        
+        // Reset animation flags when chart reinits to allow animation to play again
+        if (gauge.initialAnimationTriggered) {
+            gauge.initialAnimationTriggered.current = false;
+        }
+        if (gauge.multiPointerAnimationTriggered) {
+            gauge.multiPointerAnimationTriggered.current = [];
+        }
+        // Reset pointer ref to prevent stale references
+        if (gauge.pointer?.current) {
+            gauge.pointer.current.element = null;
+            gauge.pointer.current.path = null;
+        }
+        // Reset multi-pointer refs
+        if (gauge.multiPointers) {
+            gauge.multiPointers.current = [];
+        }
         
         //console.debug('[initChart] After removal - will call addPointerElement');
     } else {
