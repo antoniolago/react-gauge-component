@@ -381,30 +381,31 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         clearChart(gauge, currentPass);
         arcHooks.setArcData(gauge);
         
-        // For Grafana type with animation, start the arc at prevPercent (or 0) 
-        // so it animates from that position instead of flashing at final value
-        // Use initialAnimationTriggered flag to handle ResizeObserver firing after prevProps is set
+        // For Grafana type with animation, determine initial arc position
+        // On true first render: start at 0 and animate to value
+        // On config change reinit: start at CURRENT value (no animation needed)
         let initialArcPercent: number | undefined = undefined;
         const isGrafana = gauge.props.type === GaugeType.Grafana;
         const shouldAnimate = gauge.props.pointer?.animate !== false;
         const isFirstAnimation = !gauge.initialAnimationTriggered?.current;
-        
-        // Always use 0 for first animation to prevent flash
-        // For multi-pointer mode, use first pointer's value for Grafana arc
         const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
+        
         if (isGrafana && shouldAnimate) {
-            // Force 0% on first animation - this is the key fix
-            if (isFirstAnimation) {
+            const minValue = gauge.props.minValue as number;
+            const maxValue = gauge.props.maxValue as number;
+            
+            // Check if this is truly the first render (no previous value exists)
+            // vs a config change reinit (previous value exists)
+            const hasPreviousValue = gauge.prevProps?.current?.value !== undefined;
+            
+            if (isFirstAnimation && !hasPreviousValue) {
+                // True first render - animate from 0
                 initialArcPercent = 0;
             } else {
-                const minValue = gauge.props.minValue as number;
-                const maxValue = gauge.props.maxValue as number;
-                // Use first pointer's value in multi-pointer mode, otherwise use main value
-                const prevPointerValue = gauge.prevProps?.current?.pointers?.[0]?.value;
-                const prevValue = isMultiPointer && prevPointerValue !== undefined 
-                    ? prevPointerValue 
-                    : (gauge.prevProps?.current.value ?? minValue);
-                initialArcPercent = utilHooks.calculatePercentage(minValue, maxValue, prevValue);
+                // Config change or resize - use CURRENT value (not previous)
+                // This prevents the arc from resetting to 0 on prop changes
+                const currentValue = gauge.props.value as number;
+                initialArcPercent = utilHooks.calculatePercentage(minValue, maxValue, currentValue);
             }
         }
         

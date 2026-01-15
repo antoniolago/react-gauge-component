@@ -117,7 +117,12 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     
     // Skip animation if user is currently dragging the pointer
     const isDragging = gauge.isDragging?.current === true;
-    let shouldAnimate = (!resize || isFirstAnimation) && pointer.animate && !isDragging;
+    
+    // For Grafana without pointer, skip animation after first animation for instant updates
+    // This allows slider changes to update the arc in real-time
+    const skipAnimationForGrafana = isGrafana && !showPointerForGrafana && !isFirstAnimation;
+    
+    let shouldAnimate = (!resize || isFirstAnimation) && pointer.animate && !isDragging && !skipAnimationForGrafana;
     if (shouldAnimate) {
         // Mark that initial animation has been triggered to prevent ResizeObserver from restarting
         if (gauge.initialAnimationTriggered) {
