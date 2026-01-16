@@ -235,6 +235,16 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                   {...config}
                   value={value}
                   onValueChange={interactionEnabled ? setValue : undefined}
+                  onPointerChange={interactionEnabled ? (index, newValue) => {
+                    // Handle multi-pointer drag
+                    if (config.pointers && config.pointers.length > 0) {
+                      const newPointers = [...config.pointers];
+                      newPointers[index] = { ...newPointers[index], value: newValue };
+                      setConfig({ ...config, pointers: newPointers });
+                    }
+                    // Also update main value for primary pointer
+                    if (index === 0) setValue(newValue);
+                  } : undefined}
                 />
               </div>
               

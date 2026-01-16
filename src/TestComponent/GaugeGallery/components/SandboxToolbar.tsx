@@ -636,9 +636,21 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                       strokeColor: cfg?.pointer?.strokeColor,
                     };
                     
-                    // If no pointers exist, just add one pointer
+                    // If no pointers exist, add TWO pointers (existing + new one)
+                    // This ensures "Add Pointer" always adds a pointer, not just converts mode
                     if (hasNoPointers) {
-                      onConfigChange({ ...config, pointers: [defaultPointer], pointer: undefined });
+                      const range = max - min;
+                      const offset = range * 0.2;
+                      let newValue = value + offset;
+                      if (newValue > max) {
+                        newValue = min + (newValue - max);
+                      }
+                      const secondPointer = {
+                        ...defaultPointer,
+                        value: newValue,
+                        color: '#F5CD19', // Second color from palette
+                      };
+                      onConfigChange({ ...config, pointers: [defaultPointer, secondPointer], pointer: undefined });
                       if (onForceRemount) {
                         setTimeout(() => onForceRemount(), 0);
                       }

@@ -101,8 +101,12 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
   const randomPointer = pointerTypes[Math.floor(Math.random() * pointerTypes.length)];
   const randomTheme = COLOR_THEMES[Math.floor(Math.random() * COLOR_THEMES.length)];
   const randomRange = RANDOM_RANGES[Math.floor(Math.random() * RANDOM_RANGES.length)];
-  const useGradient = Math.random() > 0.97; // 3% chance of gradient
-  const hidePointer = Math.random() > 0.85;
+  const useGradient = Math.random() > 0.93; // 7% chance of gradient
+  const hidePointer = Math.random() > 0.92; // 8% chance to hide pointer
+  const useMultiPointer = Math.random() > 0.85; // 15% chance of multi-pointer
+  const useGlow = Math.random() > 0.7; // 30% chance of glow effect
+  const useArcStroke = Math.random() > 0.75; // 25% chance of arc stroke
+  const useCustomAngles = Math.random() > 0.85; // 15% chance of custom angles
   
   // Arc width: variety from very thin to thick
   const arcWidthRand = Math.random();
@@ -276,31 +280,94 @@ export const generateRandomConfig = (): Partial<GaugeComponentProps> => {
   
   const arcConfig = getArcConfig();
   
+  // Generate glow effect configuration
+  const glowConfig = useGlow ? {
+    effects: {
+      glow: true,
+      glowBlur: 1 + Math.floor(Math.random() * 4), // 1-4
+      glowSpread: 1 + Math.floor(Math.random() * 5), // 1-5
+    }
+  } : {};
+  
+  // Generate arc stroke configuration
+  const strokeConfig = useArcStroke ? {
+    subArcsStrokeWidth: 1 + Math.floor(Math.random() * 3), // 1-3
+    subArcsStrokeColor: Math.random() > 0.5 ? '#000000' : 'rgba(255,255,255,0.3)',
+  } : {};
+  
+  // Generate custom angles (for non-standard gauge shapes)
+  const anglesConfig = useCustomAngles ? (() => {
+    const angleStyles = [
+      { startAngle: -90, endAngle: 90 }, // Top half
+      { startAngle: 0, endAngle: 180 }, // Right half
+      { startAngle: -120, endAngle: 120 }, // Wide arc
+      { startAngle: -60, endAngle: 60 }, // Narrow arc
+      { startAngle: -135, endAngle: 135 }, // Very wide arc
+      { startAngle: -45, endAngle: 225 }, // Three quarters
+    ];
+    return angleStyles[Math.floor(Math.random() * angleStyles.length)];
+  })() : {};
+  
+  // Generate multi-pointer configuration
+  const generateMultiPointers = () => {
+    const { minValue, maxValue } = randomRange;
+    const range = maxValue - minValue;
+    const numPointers = 2 + Math.floor(Math.random() * 2); // 2-3 pointers
+    const pointerColors = ['#5BE12C', '#F5CD19', '#EA4228', '#60a5fa', '#a855f7'];
+    
+    return Array.from({ length: numPointers }, (_, i) => ({
+      value: minValue + (range * (0.2 + i * 0.3)) + (Math.random() * range * 0.2),
+      type: pointerTypes[Math.floor(Math.random() * pointerTypes.length)],
+      color: pointerColors[i % pointerColors.length],
+      length: 0.5 + Math.random() * 0.3,
+      width: 10 + Math.floor(Math.random() * 15),
+    }));
+  };
+  
+  // Animation duration variation
+  const animationDuration = 500 + Math.floor(Math.random() * 2500); // 500-3000ms
+  
+  // Build pointer/pointers config
+  const pointerConfig = hidePointer 
+    ? { pointer: { hide: true } }
+    : useMultiPointer 
+      ? { pointers: generateMultiPointers() }
+      : {
+          pointer: {
+            type: randomPointer,
+            elastic: Math.random() > 0.5,
+            animationDelay: Math.random() > 0.5 ? 0 : 150,
+            animationDuration,
+            length: pointerLength,
+            width: pointerWidth,
+            color: Math.random() > 0.6 ? undefined : (Math.random() > 0.5 ? '#fff' : randomTheme.colors[randomTheme.colors.length - 1]),
+            baseColor: pointerBaseColor,
+            strokeWidth: Math.random() > 0.7 ? Math.floor(Math.random() * 3) : 0,
+            strokeColor: Math.random() > 0.5 ? '#000' : 'rgba(255,255,255,0.5)',
+            maxFps: 30 + Math.floor(Math.random() * 31), // 30-60 fps
+          }
+        };
+  
   return {
     type: randomType,
     minValue: randomRange.minValue,
     maxValue: randomRange.maxValue,
+    ...anglesConfig,
     arc: {
       width: arcWidth,
       cornerRadius,
       ...arcConfig,
+      ...glowConfig,
+      ...strokeConfig,
     },
-    pointer: hidePointer ? { hide: true } : {
-      type: randomPointer,
-      elastic: Math.random() > 0.5,
-      animationDelay: Math.random() > 0.5 ? 0 : 150,
-      length: pointerLength,
-      width: pointerWidth,
-      color: Math.random() > 0.6 ? undefined : (Math.random() > 0.5 ? '#fff' : randomTheme.colors[randomTheme.colors.length - 1]),
-      baseColor: pointerBaseColor,
-      maxFps: 30,
-    },
+    ...pointerConfig,
     labels: {
       valueLabel: {
         formatTextValue: randomRange.format,
         matchColorWithArc: Math.random() > 0.4,
-        style: { fontSize: `${fontSize}px`, fontWeight: 'bold' },
+        style: { fontSize: `${fontSize}px`, fontWeight: Math.random() > 0.3 ? 'bold' : 'normal' },
         hide: Math.random() > 0.9, // 10% chance to hide value label
+        animateValue: Math.random() > 0.5, // 50% chance of animated value
       },
       tickLabels: ticksConfig,
     },

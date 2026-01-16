@@ -430,7 +430,12 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
             const hasPointers = pointerHooks.hasPointersToRender(gauge);
             
-            if (isMultiPointer && hasPointers) {
+            // CRITICAL: Explicitly clear old pointers when no pointers should be rendered
+            // This handles the case where user removes all pointers (pointers: [])
+            if (!hasPointers) {
+                pointerHooks.clearPointerElement(gauge);
+                pointerHooks.clearMultiPointers(gauge);
+            } else if (isMultiPointer && hasPointers) {
                 // Multi-pointer mode with pointers
                 pointerHooks.drawMultiPointers(gauge, resize);
             } else if (!isMultiPointer && hasPointers) {
