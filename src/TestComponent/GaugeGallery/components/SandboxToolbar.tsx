@@ -729,12 +729,14 @@ export const SandboxToolbar: React.FC<SandboxToolbarProps> = ({
                       // Sync first pointer value to main value for compatibility
                       if (index === 0) onValueChange(updated.value);
                     } else {
-                      // Convert single pointer to pointers array
-                      // DON'T call onValueChange here - let the mode transition complete first
-                      // The value will be synced through the pointers array
+                      // Single pointer mode - update value and pointer props directly
+                      // DON'T convert to pointers array - that causes mode transition and reinit
+                      onValueChange(updated.value);
+                      // Update pointer config (type, color, length, width, etc.) without converting to array
+                      const { value: _, ...pointerProps } = updated;
                       onConfigChange({ 
                         ...config, 
-                        pointers: [updated]
+                        pointer: { ...cfg?.pointer, ...pointerProps }
                       });
                     }
                   }}

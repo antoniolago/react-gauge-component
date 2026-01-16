@@ -118,11 +118,7 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     // Skip animation if user is currently dragging the pointer
     const isDragging = gauge.isDragging?.current === true;
     
-    // For Grafana without pointer, skip animation after first animation for instant updates
-    // This allows slider changes to update the arc in real-time
-    const skipAnimationForGrafana = isGrafana && !showPointerForGrafana && !isFirstAnimation;
-    
-    let shouldAnimate = (!resize || isFirstAnimation) && pointer.animate && !isDragging && !skipAnimationForGrafana;
+    let shouldAnimate = (!resize || isFirstAnimation) && pointer.animate && !isDragging;
     if (shouldAnimate) {
         // Mark that initial animation has been triggered to prevent ResizeObserver from restarting
         if (gauge.initialAnimationTriggered) {
@@ -152,21 +148,26 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
         
         // Use the last rendered progress as starting point for smooth mid-animation transitions
         // prevProgress is updated on every animation frame, so it reflects current visual position
+        // Use prevProgress if it exists (even if 0), otherwise fall back to prevPercent
         const lastRenderedProgress = gauge.pointer.current?.context?.prevProgress;
-        const animationStartPercent = (lastRenderedProgress !== undefined && lastRenderedProgress > 0) 
-            ? lastRenderedProgress 
-            : prevPercent;
+        const hasLastRenderedProgress = lastRenderedProgress !== undefined && !isFirstAnimation;
+        const animationStartPercent = hasLastRenderedProgress ? lastRenderedProgress : prevPercent;
         
         // FPS limiting - calculate minimum time between frames
         const maxFps = pointer.maxFps ?? 60;
         const minFrameTime = maxFps > 0 ? 1000 / maxFps : 0;
         let lastFrameTime = 0;
         
+        // For first animation: use configured delay and duration for nice intro
+        // For subsequent animations: no delay, use configured duration (user controls responsiveness)
+        const effectiveDelay = isFirstAnimation ? pointer.animationDelay : 0;
+        const effectiveDuration = pointer.animationDuration;
+        
         animationTarget
             .transition()
-            .delay(pointer.animationDelay)
+            .delay(effectiveDelay)
             .ease(pointer.elastic ? easeElastic : easeExpOut)
-            .duration(pointer.animationDuration)
+            .duration(effectiveDuration)
             .tween("progress", () => {
                 const currentInterpolatedPercent = interpolateNumber(animationStartPercent, currentPercent);
                 return function (percentOfPercent: number) {
@@ -242,6 +243,11 @@ export const setupContext = (gauge: Gauge, isFirstAnimation: boolean = false): P
     let length = pointer.type == PointerType.Needle ? pointerLength : 0.2;
     let typesWithPath = [PointerType.Needle, PointerType.Arrow];
     
+    // CRITICAL: Preserve the last rendered progress from previous context
+    // This is updated every animation frame and represents actual visual position
+    // Without this, animation always starts from 0 instead of current position
+    const existingPrevProgress = gauge.pointer.current?.context?.prevProgress;
+    
     // Handle prevValue properly - use nullish coalescing to allow 0 values
     // CRITICAL: On first animation, always use minValue so pointer animates from start
     // This fixes the issue where prevProps.current.value is already set to current value
@@ -254,7 +260,8 @@ export const setupContext = (gauge: Gauge, isFirstAnimation: boolean = false): P
         pathLength: gauge.dimensions.current.outerRadius * length,
         currentPercent: utils.calculatePercentage(minValue, maxValue, value as number),
         prevPercent: utils.calculatePercentage(minValue, maxValue, prevValue),
-        prevProgress: 0,
+        // Preserve existing prevProgress if available, otherwise use 0 for first animation
+        prevProgress: isFirstAnimation ? 0 : (existingPrevProgress ?? 0),
         pathStr: "",
         shouldDrawPath: typesWithPath.includes(pointer.type as PointerType),
         prevColor: ""
@@ -264,6 +271,11 @@ export const setupContext = (gauge: Gauge, isFirstAnimation: boolean = false): P
 const initPointer = (gauge: Gauge, useCurrentPercent: boolean = false) => {
     // Safety check - element might be null during rapid config changes
     if (!gauge.pointer.current?.element || !gauge.pointer.current?.context) return;
+    
+    // CRITICAL: Clear existing pointer children before creating new ones
+    // This ensures Arrow/Blob/Needle are properly recreated when props change
+    gauge.pointer.current.element.selectAll("*").remove();
+    gauge.pointer.current.path = null;
     
     let value = gauge.props.value as number;
     let pointer = gauge.props.pointer as PointerProps;

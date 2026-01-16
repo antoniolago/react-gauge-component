@@ -563,13 +563,31 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let ticksChanged = !shallowEqual(gauge.prevProps.current.labels?.tickLabels, labels.tickLabels);
         let valueLabelChanged = !shallowEqual(gauge.prevProps.current.labels?.valueLabel, labels.valueLabel);
         
-        // Check for multi-pointer value changes
+        // Check for multi-pointer changes (value OR props like type, color, etc.)
         const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
         const prevPointers = gauge.prevProps.current.pointers;
         const currPointers = gauge.props.pointers;
         let multiPointerValuesChanged = false;
-        if (isMultiPointer && Array.isArray(prevPointers)) {
-            multiPointerValuesChanged = currPointers?.some((p, i) => p.value !== prevPointers[i]?.value) ?? false;
+        let multiPointerPropsChanged = false;
+        if (isMultiPointer) {
+            if (Array.isArray(prevPointers) && Array.isArray(currPointers)) {
+                // Check if any pointer value changed
+                multiPointerValuesChanged = currPointers.some((p, i) => p.value !== prevPointers[i]?.value);
+                // Check if any pointer props (type, color, etc.) changed
+                multiPointerPropsChanged = currPointers.some((p, i) => {
+                    const prev = prevPointers[i];
+                    if (!prev) return true;
+                    return p.type !== prev.type || p.color !== prev.color || 
+                           p.length !== prev.length || p.width !== prev.width ||
+                           p.baseColor !== prev.baseColor || p.strokeWidth !== prev.strokeWidth ||
+                           p.strokeColor !== prev.strokeColor || p.arrowOffset !== prev.arrowOffset ||
+                           p.blobOffset !== prev.blobOffset;
+                });
+            } else if (Array.isArray(currPointers) && !Array.isArray(prevPointers)) {
+                // Transitioning from single to multi-pointer mode
+                multiPointerValuesChanged = true;
+                multiPointerPropsChanged = true;
+            }
         }
         
         let shouldRedrawArcs = arcsPropsChanged;
@@ -595,16 +613,18 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         const isGrafana = gauge.props.type === GaugeType.Grafana;
         
         if (isMultiPointer && hasPointers) {
-            // In multi-pointer mode, redraw if pointer values changed
-            if (multiPointerValuesChanged) {
-                pointerHooks.drawMultiPointers(gauge, false);
+            // In multi-pointer mode, redraw if pointer values OR props changed
+            if (multiPointerValuesChanged || multiPointerPropsChanged) {
+                pointerHooks.drawMultiPointers(gauge, multiPointerPropsChanged);
             }
         } else if (!isMultiPointer && (hasPointers || isGrafana)) {
             // Single pointer mode OR Grafana without pointer (arc-only animation)
             // drawPointer handles both pointer animation AND Grafana arc animation
             var shouldRedrawPointer = pointerPropsChanged || valueChanged;
             if (shouldRedrawPointer) {
-                pointerHooks.drawPointer(gauge);
+                // Pass resize=true when pointer props changed to force pointer recreation
+                // This ensures type/color/width changes take effect without reinit
+                pointerHooks.drawPointer(gauge, pointerPropsChanged);
             }
         }
         

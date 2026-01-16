@@ -139,37 +139,65 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     
     // Structural changes that require full reinit
     const arcsPropsChanged = JSON.stringify(prev.arc) !== JSON.stringify(curr.arc);
+    
+    // For labels, exclude functions and internal properties from comparison
+    // __renderIndex is added internally and should not trigger reinit
+    const getLabelsStructure = (l: any) => {
+      if (!l) return null;
+      // Clean ticks array - remove internal __renderIndex property
+      const cleanTicks = (ticks: any[]) => {
+        if (!ticks) return undefined;
+        return ticks.map((t: any) => {
+          const { __renderIndex, ...rest } = t;
+          return rest;
+        });
+      };
+      return {
+        valueLabel: l.valueLabel ? {
+          hide: l.valueLabel.hide,
+          matchColorWithArc: l.valueLabel.matchColorWithArc,
+          maxDecimalDigits: l.valueLabel.maxDecimalDigits,
+          style: l.valueLabel.style,
+          animateValue: l.valueLabel.animateValue,
+        } : undefined,
+        tickLabels: l.tickLabels ? {
+          hideMinMax: l.tickLabels.hideMinMax,
+          type: l.tickLabels.type,
+          ticks: cleanTicks(l.tickLabels.ticks),
+          defaultTickValueConfig: l.tickLabels.defaultTickValueConfig ? {
+            hide: l.tickLabels.defaultTickValueConfig.hide,
+            maxDecimalDigits: l.tickLabels.defaultTickValueConfig.maxDecimalDigits,
+            style: l.tickLabels.defaultTickValueConfig.style,
+          } : undefined,
+          defaultTickLineConfig: l.tickLabels.defaultTickLineConfig,
+        } : undefined,
+      };
+    };
+    const labelsPropsChanged = JSON.stringify(getLabelsStructure(prev.labels)) !== JSON.stringify(getLabelsStructure(curr.labels));
     const typeChanged = prev.type !== curr.type;
     const minValueChanged = prev.minValue !== curr.minValue;
     const maxValueChanged = prev.maxValue !== curr.maxValue;
     const anglesChanged = prev.startAngle !== curr.startAngle || prev.endAngle !== curr.endAngle;
     
-    // For pointer, only check structural properties (not animation settings)
+    // For single pointer, only check if hide changed (show/hide requires reinit)
+    // Other prop changes (type, color, length, width, etc.) are handled by renderChart
     const prevPointer = prev.pointer || {};
     const currPointer = curr.pointer || {};
-    const pointerStructureChanged = 
-      prevPointer.type !== currPointer.type ||
-      prevPointer.color !== currPointer.color ||
-      prevPointer.baseColor !== currPointer.baseColor ||
-      prevPointer.length !== currPointer.length ||
-      prevPointer.width !== currPointer.width ||
-      prevPointer.hide !== currPointer.hide ||
-      prevPointer.strokeWidth !== currPointer.strokeWidth ||
-      prevPointer.strokeColor !== currPointer.strokeColor;
+    const pointerHideChanged = prevPointer.hide !== currPointer.hide;
     
-    // For pointers array, only check structure changes (not value changes)
+    // For pointers array, only check COUNT changes (structure/prop changes handled by renderChart)
+    // This prevents full reinit when just changing pointer type/color/etc.
     const prevPointers = prev.pointers;
     const currPointers = curr.pointers;
-    const pointersStructureChanged = 
-      (prevPointers?.length ?? 0) !== (currPointers?.length ?? 0) ||
-      prevPointers?.some((p: any, i: number) => {
-        const c = currPointers?.[i];
-        return p.type !== c?.type || p.color !== c?.color || p.length !== c?.length || 
-               p.width !== c?.width || p.hide !== c?.hide;
-      });
+    const pointersCountChanged = (prevPointers?.length ?? 0) !== (currPointers?.length ?? 0);
     
-    return arcsPropsChanged || pointerStructureChanged || pointersStructureChanged || 
-           typeChanged || minValueChanged || maxValueChanged || anglesChanged;
+    // Mode transition (single <-> multi pointer) requires reinit
+    const wasMultiPointer = Array.isArray(prevPointers) && prevPointers.length > 0;
+    const isMultiPointer = Array.isArray(currPointers) && currPointers.length > 0;
+    const modeTransition = wasMultiPointer !== isMultiPointer;
+    
+    return arcsPropsChanged || labelsPropsChanged || pointerHideChanged || pointersCountChanged || 
+           modeTransition || typeChanged || minValueChanged || maxValueChanged || anglesChanged;
   };
   
   // Check if only value changed (for animation without reinit)
@@ -217,8 +245,8 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     
     if (needsReinit) {
       chartHooks.initChart(gauge, isFirstRender);
-    } else if (valueOnlyChange) {
-      // Value-only change: just animate pointer/arc without full reinit
+    } else {
+      // Any non-structural change (value, animation settings, etc.) - just re-render
       chartHooks.renderChart(gauge, false);
     }
     
