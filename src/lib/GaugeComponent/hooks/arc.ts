@@ -686,6 +686,8 @@ export const redrawArcs = (gauge: Gauge) => {
   setupArcs(gauge);
 }
 export const clearArcs = (gauge: Gauge) => {
+  // Safety check - doughnut might not be initialized on mobile during deferred render
+  if (!gauge.doughnut.current?.selectAll) return;
   gauge.doughnut.current.selectAll(".subArc").remove();
 }
 

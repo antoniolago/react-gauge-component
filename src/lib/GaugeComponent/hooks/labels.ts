@@ -698,6 +698,8 @@ export const updateValueLabelText = (gauge: Gauge, currentValue: number) => {
   }
 };
 export const clearTicks = (gauge: Gauge) => {
+  // Safety check - g might not be initialized on mobile during deferred render
+  if (!gauge.g.current?.selectAll) return;
   gauge.g.current.selectAll(`.${CONSTANTS.tickLineClassname}`).remove();
   gauge.g.current.selectAll(`.${CONSTANTS.tickValueClassname}`).remove();
 }

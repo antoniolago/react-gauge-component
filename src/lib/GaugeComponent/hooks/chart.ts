@@ -172,6 +172,12 @@ export const calculateAngles = (gauge: Gauge) => {
 }
 //Renders the chart, should be called every time the window is resized
 export const renderChart = (gauge: Gauge, resize: boolean = false) => {
+    // Safety check - bail out if D3 elements aren't initialized yet
+    // This can happen on mobile where initial render is deferred to ResizeObserver
+    if (!gauge.doughnut.current?.selectAll || !gauge.g.current?.selectAll) {
+        return;
+    }
+    
     const { dimensions } = gauge;
     let arc = gauge.props.arc as Arc;
     let labels = gauge.props.labels as Labels;

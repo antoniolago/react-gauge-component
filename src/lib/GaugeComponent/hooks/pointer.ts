@@ -1088,6 +1088,8 @@ const animateMultiPointer = (
     index: number
 ) => {
     const { prevPercent, currentPercent, prevProgress } = pointerRef.context;
+    const isGrafana = gauge.props.type === GaugeType.Grafana;
+    const isPrimaryPointer = index === 0;
     
     const maxFps = pointer.maxFps ?? 60;
     const minFrameTime = maxFps > 0 ? 1000 / maxFps : 0;
@@ -1111,6 +1113,11 @@ const animateMultiPointer = (
                 if (Math.abs(progress - pointerRef.context.prevProgress) >= threshold || percentOfPercent >= 1) {
                     updateMultiPointer(pointerRef, pointer, progress, gauge, index);
                     pointerRef.context.prevProgress = progress;
+                    
+                    // For Grafana, animate arc fill using primary pointer's progress
+                    if (isGrafana && isPrimaryPointer) {
+                        arcHooks.updateGrafanaArc(gauge, progress);
+                    }
                 }
             };
         })
