@@ -119,7 +119,7 @@ function generatePropsMarkdown(props, allTypes, indent = 0, visited = new Set())
     md += `${prefix}- \`${prop.name}\` (\`${prop.type}\`) - ${desc}\n`;
     
     // Check if this type has nested properties we should expand
-    const typeMatch = prop.type.match(/^(Arc|Labels|PointerProps|TickLabels|ValueLabel|SubArc|Tooltip|TickValueConfig|TickLineConfig|ArcEffects|PointerEffects|LabelEffects|TickEffects)$/);
+    const typeMatch = prop.type.match(/^(Arc|Labels|PointerProps|TickLabels|ValueLabel|SubArc|Tooltip|TickValueConfig|TickLineConfig|ArcEffects|PointerEffects|LabelEffects|TickEffects|OuterArcConfig|DropShadowConfig)$/);
     if (typeMatch && allTypes[typeMatch[1]] && !visited.has(typeMatch[1])) {
       visited.add(typeMatch[1]);
       md += generatePropsMarkdown(allTypes[typeMatch[1]], allTypes, indent + 1, visited);

@@ -1,5 +1,32 @@
 import { GaugeType, defaultGaugeProps } from './GaugeComponentProps';
 import { Tooltip } from './Tooltip';
+
+/** Configuration for the outer decorative arc (Grafana style) */
+export interface OuterArcConfig {
+    /** Corner radius for outer arc (max effective value ~2 due to thin arc) */
+    cornerRadius?: number,
+    /** Padding between outer arc segments */
+    padding?: number,
+    /** Width of the outer arc in pixels (default: 5) */
+    width?: number,
+    /** Visual effects for the outer arc (inherits from arc.effects if not set) */
+    effects?: ArcEffects
+}
+
+/** Drop shadow effect configuration */
+export interface DropShadowConfig {
+    /** Shadow offset X (default: 0) */
+    dx?: number,
+    /** Shadow offset Y (default: 2) */
+    dy?: number,
+    /** Shadow blur (default: 3) */
+    blur?: number,
+    /** Shadow color (default: rgba(0,0,0,0.3)) */
+    color?: string,
+    /** Shadow opacity (default: 0.3) */
+    opacity?: number
+}
+
 export interface Arc {
     /** The corner radius of the arc. */
     cornerRadius?: number,
@@ -15,21 +42,12 @@ export interface Arc {
     gradient?: boolean,
     /** The colors of the arcs, this overrides "subArcs" colors. */
     colorArray?: Array<string>,
-    /** Color of the grafana's empty subArc  */
+    /** Color of the grafana's empty subArc */
     emptyColor?: string,
-    /** list of sub arcs segments of the whole arc. */
+    /** List of sub arcs segments of the whole arc. */
     subArcs?: Array<SubArc>,
     /** Settings for Grafana's outer decorative arc (only applies to grafana type) */
-    outerArc?: {
-        /** Corner radius for outer arc (max effective value ~2 due to thin arc) */
-        cornerRadius?: number,
-        /** Padding between outer arc segments */
-        padding?: number,
-        /** Width of the outer arc in pixels (default: 5) */
-        width?: number,
-        /** Visual effects for the outer arc (inherits from arc.effects if not set) */
-        effects?: ArcEffects
-    },
+    outerArc?: OuterArcConfig,
     /** Stroke/border width for all subArcs */
     subArcsStrokeWidth?: number,
     /** Stroke/border color for all subArcs */
@@ -50,18 +68,7 @@ export interface ArcEffects {
     /** Custom SVG filter ID to apply */
     filterUrl?: string,
     /** Drop shadow effect */
-    dropShadow?: {
-        /** Shadow offset X (default: 0) */
-        dx?: number,
-        /** Shadow offset Y (default: 2) */
-        dy?: number,
-        /** Shadow blur (default: 3) */
-        blur?: number,
-        /** Shadow color (default: rgba(0,0,0,0.3)) */
-        color?: string,
-        /** Shadow opacity (default: 0.3) */
-        opacity?: number
-    },
+    dropShadow?: DropShadowConfig,
     /** Inner shadow/inset effect for 3D look */
     innerShadow?: boolean
 }

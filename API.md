@@ -30,24 +30,24 @@
   - `gradient` (`boolean`) - Enables gradient mode, drawing a single arc with smooth color transitions.
   - `colorArray` (`Array<string>`) - The colors of the arcs, this overrides "subArcs" colors.
   - `emptyColor` (`string`) - Color of the grafana's empty subArc
-  - `subArcs` (`Array<SubArc>`) - list of sub arcs segments of the whole arc.
-  - `outerArc` (`{`) - Settings for Grafana's outer decorative arc (only applies to grafana type)
-  - `cornerRadius` (`number`) - Corner radius for outer arc (max effective value ~2 due to thin arc)
-  - `padding` (`number`) - Padding between outer arc segments
-  - `width` (`number`) - Width of the outer arc in pixels (default: 5)
-  - `effects` (`ArcEffects`) - Visual effects for the outer arc (inherits from arc.effects if not set)
-    - `glow` (`boolean`) - Enable glow effect on arcs
-    - `glowColor` (`string`) - Glow color (defaults to arc color if not set)
-    - `glowBlur` (`number`) - Glow intensity/blur radius (default: 10)
-    - `glowSpread` (`number`) - Glow spread (default: 3)
-    - `filterUrl` (`string`) - Custom SVG filter ID to apply
-    - `dropShadow` (`{`) - Drop shadow effect
-    - `dx` (`number`) - Shadow offset X (default: 0)
-    - `dy` (`number`) - Shadow offset Y (default: 2)
-    - `blur` (`number`) - Shadow blur (default: 3)
-    - `color` (`string`) - Shadow color (default: rgba(0,0,0,0.3))
-    - `opacity` (`number`) - Shadow opacity (default: 0.3)
-    - `innerShadow` (`boolean`) - Inner shadow/inset effect for 3D look
+  - `subArcs` (`Array<SubArc>`) - List of sub arcs segments of the whole arc.
+  - `outerArc` (`OuterArcConfig`) - Settings for Grafana's outer decorative arc (only applies to grafana type)
+    - `cornerRadius` (`number`) - Corner radius for outer arc (max effective value ~2 due to thin arc)
+    - `padding` (`number`) - Padding between outer arc segments
+    - `width` (`number`) - Width of the outer arc in pixels (default: 5)
+    - `effects` (`ArcEffects`) - Visual effects for the outer arc (inherits from arc.effects if not set)
+      - `glow` (`boolean`) - Enable glow effect on arcs
+      - `glowColor` (`string`) - Glow color (defaults to arc color if not set)
+      - `glowBlur` (`number`) - Glow intensity/blur radius (default: 10)
+      - `glowSpread` (`number`) - Glow spread (default: 3)
+      - `filterUrl` (`string`) - Custom SVG filter ID to apply
+      - `dropShadow` (`DropShadowConfig`) - Drop shadow effect
+        - `dx` (`number`) - Shadow offset X (default: 0)
+        - `dy` (`number`) - Shadow offset Y (default: 2)
+        - `blur` (`number`) - Shadow blur (default: 3)
+        - `color` (`string`) - Shadow color (default: rgba(0,0,0,0.3))
+        - `opacity` (`number`) - Shadow opacity (default: 0.3)
+      - `innerShadow` (`boolean`) - Inner shadow/inset effect for 3D look
   - `subArcsStrokeWidth` (`number`) - Stroke/border width for all subArcs
   - `subArcsStrokeColor` (`string`) - Stroke/border color for all subArcs
   - `effects` (`ArcEffects`) - CSS/SVG effects for the arc
@@ -56,12 +56,12 @@
     - `glowBlur` (`number`) - Glow intensity/blur radius (default: 10)
     - `glowSpread` (`number`) - Glow spread (default: 3)
     - `filterUrl` (`string`) - Custom SVG filter ID to apply
-    - `dropShadow` (`{`) - Drop shadow effect
-    - `dx` (`number`) - Shadow offset X (default: 0)
-    - `dy` (`number`) - Shadow offset Y (default: 2)
-    - `blur` (`number`) - Shadow blur (default: 3)
-    - `color` (`string`) - Shadow color (default: rgba(0,0,0,0.3))
-    - `opacity` (`number`) - Shadow opacity (default: 0.3)
+    - `dropShadow` (`DropShadowConfig`) - Drop shadow effect
+      - `dx` (`number`) - Shadow offset X (default: 0)
+      - `dy` (`number`) - Shadow offset Y (default: 2)
+      - `blur` (`number`) - Shadow blur (default: 3)
+      - `color` (`string`) - Shadow color (default: rgba(0,0,0,0.3))
+      - `opacity` (`number`) - Shadow opacity (default: 0.3)
     - `innerShadow` (`boolean`) - Inner shadow/inset effect for 3D look
 
 - **`labels`** (`Labels`) - This configures the labels of the Gauge.
@@ -197,12 +197,12 @@ Extended pointer configuration with embedded value (for multi-pointer mode):
 - `glowBlur` (`number`) - Glow intensity/blur radius (default: 10)
 - `glowSpread` (`number`) - Glow spread (default: 3)
 - `filterUrl` (`string`) - Custom SVG filter ID to apply
-- `dropShadow` (`{`) - Drop shadow effect
-- `dx` (`number`) - Shadow offset X (default: 0)
-- `dy` (`number`) - Shadow offset Y (default: 2)
-- `blur` (`number`) - Shadow blur (default: 3)
-- `color` (`string`) - Shadow color (default: rgba(0,0,0,0.3))
-- `opacity` (`number`) - Shadow opacity (default: 0.3)
+- `dropShadow` (`DropShadowConfig`) - Drop shadow effect
+  - `dx` (`number`) - Shadow offset X (default: 0)
+  - `dy` (`number`) - Shadow offset Y (default: 2)
+  - `blur` (`number`) - Shadow blur (default: 3)
+  - `color` (`string`) - Shadow color (default: rgba(0,0,0,0.3))
+  - `opacity` (`number`) - Shadow opacity (default: 0.3)
 - `innerShadow` (`boolean`) - Inner shadow/inset effect for 3D look
 
 ### PointerEffects
