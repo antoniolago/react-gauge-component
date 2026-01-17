@@ -36,5 +36,6 @@ API reference is auto-generated from the TypeScript types:
 - **[`API.md`](https://github.com/antoniolago/react-gauge-component/blob/main/API.md)**
  
 
-## Forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/react-gauge-chart) [0b24a45](https://github.com/Martin36/react-gauge-chart/pull/131).
+## 
+Forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/react-gauge-chart) [0b24a45](https://github.com/Martin36/react-gauge-chart/pull/131).
 
