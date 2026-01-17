@@ -2,13 +2,13 @@ import React from 'react';
 
 /** Visual effects for ticks */
 export interface TickEffects {
-    /** Enable glow effect on tick lines */
+    /** Enable glow effect on tick lines. */
     glow?: boolean,
-    /** Glow color (defaults to tick line color) */
+    /** Glow color (defaults to tick line color). */
     glowColor?: string,
-    /** Glow blur radius (default: 4) */
+    /** Glow blur radius. Unit: pixels (default: 4). */
     glowBlur?: number,
-    /** Glow spread (default: 2) */
+    /** Glow spread. Unit: pixels (default: 2). */
     glowSpread?: number
 }
 
@@ -52,9 +52,9 @@ export interface TickValueConfig {
      * Receives the current tick value and arc color as parameters.
      */
     renderContent?: (value: number, arcColor: string) => React.ReactNode;
-    /** Width of the foreignObject container (only used when renderContent is provided). */
+    /** Width of the foreignObject container. Unit: pixels (only used when renderContent is provided). */
     contentWidth?: number;
-    /** Height of the foreignObject container (only used when renderContent is provided). */
+    /** Height of the foreignObject container. Unit: pixels (only used when renderContent is provided). */
     contentHeight?: number;
     /** Maximum number of decimal digits to display. */
     maxDecimalDigits?: number;
@@ -64,13 +64,13 @@ export interface TickValueConfig {
     hide?: boolean;
 }
 export interface TickLineConfig {
-    /** The width of the tick's line */
+    /** The width of the tick's line. Unit: pixels (default: 1). */
     width?: number;
-    /** The length of the tick's line */
+    /** The length of the tick's line. Unit: pixels (default: 7). */
     length?: number;
-    /** The distance of the tick's line from the arc */
+    /** The distance of the tick's line from the arc. Unit: pixels (default: 3). */
     distanceFromArc?: number;
-    /** The distance between the tick's line and the text label */
+    /** The distance between the tick's line and the text label. Unit: pixels (default: 2). */
     distanceFromText?: number;
     /** The color of the tick's line */
     color?: string;

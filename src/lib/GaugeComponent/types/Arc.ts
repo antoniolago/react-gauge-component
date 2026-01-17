@@ -3,11 +3,11 @@ import { Tooltip } from './Tooltip';
 
 /** Configuration for the outer decorative arc (Grafana style) */
 export interface OuterArcConfig {
-    /** Corner radius for outer arc (max effective value ~2 due to thin arc) */
+    /** Corner radius for outer arc (max effective value ~2 due to thin arc). Unit: SVG units. */
     cornerRadius?: number,
-    /** Padding between outer arc segments */
+    /** Padding between outer arc segments. Unit: radians. */
     padding?: number,
-    /** Width of the outer arc in pixels (default: 5) */
+    /** Width of the outer arc. Unit: pixels (default: 5). */
     width?: number,
     /** Visual effects for the outer arc (inherits from arc.effects if not set) */
     effects?: ArcEffects
@@ -15,26 +15,26 @@ export interface OuterArcConfig {
 
 /** Drop shadow effect configuration */
 export interface DropShadowConfig {
-    /** Shadow offset X (default: 0) */
+    /** Shadow offset X. Unit: pixels (default: 0). */
     dx?: number,
-    /** Shadow offset Y (default: 2) */
+    /** Shadow offset Y. Unit: pixels (default: 2). */
     dy?: number,
-    /** Shadow blur (default: 3) */
+    /** Shadow blur. Unit: pixels (default: 3). */
     blur?: number,
-    /** Shadow color (default: rgba(0,0,0,0.3)) */
+    /** Shadow color (default: rgba(0,0,0,0.3)). */
     color?: string,
-    /** Shadow opacity (default: 0.3) */
+    /** Shadow opacity. Unit: ratio 0-1 (default: 0.3). */
     opacity?: number
 }
 
 export interface Arc {
-    /** The corner radius of the arc. */
+    /** The corner radius of the arc. Unit: SVG units. */
     cornerRadius?: number,
-    /** The padding between subArcs, in rad. */
+    /** The padding between subArcs. Unit: radians (default: 0.01). */
     padding?: number,
-    /** Remove padding from start and end of the arc (first and last subArcs) */
+    /** Remove padding from start and end of the arc (first and last subArcs). */
     padEndpoints?: boolean,
-    /** The width of the arc given in percent of the radius. */
+    /** The width of the arc. Unit: ratio of radius (0-1, e.g., 0.25 = 25% of radius). */
     width?: number,
     /** The number of subArcs, this overrides "subArcs" limits. */
     nbSubArcs?: number,
@@ -48,7 +48,7 @@ export interface Arc {
     subArcs?: Array<SubArc>,
     /** Settings for Grafana's outer decorative arc (only applies to grafana type) */
     outerArc?: OuterArcConfig,
-    /** Stroke/border width for all subArcs */
+    /** Stroke/border width for all subArcs. Unit: pixels. */
     subArcsStrokeWidth?: number,
     /** Stroke/border color for all subArcs */
     subArcsStrokeColor?: string,
@@ -61,9 +61,9 @@ export interface ArcEffects {
     glow?: boolean,
     /** Glow color (defaults to arc color if not set) */
     glowColor?: string,
-    /** Glow intensity/blur radius (default: 10) */
+    /** Glow intensity/blur radius. Unit: pixels (default: 10). */
     glowBlur?: number,
-    /** Glow spread (default: 3) */
+    /** Glow spread. Unit: pixels (default: 3). */
     glowSpread?: number,
     /** Custom SVG filter ID to apply */
     filterUrl?: string,
@@ -80,11 +80,11 @@ export interface SubArcEffects extends ArcEffects {
 }
 
 export interface SubArc {
-    /** The limit of the subArc, in accord to the gauge value. */
+    /** The limit of the subArc, in accord to the gauge value. Unit: gauge value units. */
     limit?: number,
-    /** The color of the subArc */
+    /** The color of the subArc. */
     color?: string | number,
-    /** The length of the subArc, in percent */
+    /** The length of the subArc. Unit: ratio (0-1, e.g., 0.5 = 50% of arc). */
     length?: number,
     // needleColorWhenWithinLimit?: string, //The color of the needle when it is within the subArc
     /** Whether or not to show the tick */

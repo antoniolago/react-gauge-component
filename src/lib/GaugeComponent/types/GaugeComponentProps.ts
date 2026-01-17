@@ -20,7 +20,7 @@ export interface GaugeComponentProps {
     className?: string,
     /** Gauge element will inherit this. */
     style?: React.CSSProperties,
-    /** Configures the canvas margin relative to the gauge. Can be a single number or per-side object. */
+    /** Configures the canvas margin relative to the gauge. Can be a single number or per-side object. Unit: ratio (0-1, e.g., 0.07 = 7%). */
     marginInPercent?: GaugeInnerMarginInPercent | number,
     /** Current pointer value. */
     value?: number,
@@ -50,9 +50,9 @@ export interface GaugeComponentProps {
     pointers?: PointerWithValue[],
     /** This configures the type of the Gauge. */
     type?: "semicircle" | "radial" | "grafana",
-    /** Custom start angle in degrees. -90 = top left, 0 = top, 90 = top right, -180/180 = bottom */
+    /** Custom start angle. Unit: degrees. -90 = top left, 0 = top, 90 = top right, -180/180 = bottom */
     startAngle?: number,
-    /** Custom end angle in degrees. -90 = top left, 0 = top, 90 = top right, -180/180 = bottom */
+    /** Custom end angle. Unit: degrees. -90 = top left, 0 = top, 90 = top right, -180/180 = bottom */
     endAngle?: number,
     /** Callback fired when value changes via pointer drag (single pointer mode). Enables input mode. */
     onValueChange?: (value: number) => void,

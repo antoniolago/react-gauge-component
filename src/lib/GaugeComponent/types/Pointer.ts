@@ -4,16 +4,21 @@ export interface PointerEffects {
     glow?: boolean,
     /** Glow color (defaults to pointer color) */
     glowColor?: string,
-    /** Glow blur radius (default: 8) */
+    /** Glow blur radius. Unit: pixels (default: 8). */
     glowBlur?: number,
-    /** Glow spread (default: 2) */
+    /** Glow spread. Unit: pixels (default: 2). */
     glowSpread?: number,
-    /** Drop shadow */
+    /** Drop shadow effect. */
     dropShadow?: {
+        /** Shadow offset X. Unit: pixels. */
         dx?: number,
+        /** Shadow offset Y. Unit: pixels. */
         dy?: number,
+        /** Shadow blur. Unit: pixels. */
         blur?: number,
+        /** Shadow color. */
         color?: string,
+        /** Shadow opacity. Unit: ratio 0-1. */
         opacity?: number
     }
 }
@@ -27,25 +32,25 @@ export interface PointerProps {
     hide?: boolean,
     /** Pointer color of the central circle */
     baseColor?: string,
-    /** Pointer length */
+    /** Pointer length. Unit: ratio of radius (0-1, e.g., 0.70 = 70% of radius). */
     length?: number,
-    /** This is a factor to multiply by the width of the gauge */
+    /** Pointer width multiplier. Unit: factor (multiplied by gauge width, default: 20). */
     width?: number,
     /** This enables pointer animation for transiction between values when enabled */
     animate?: boolean,
     /** This gives animation an elastic transiction between values */
     elastic?: boolean,
-    /** Animation duration in ms */
+    /** Animation duration. Unit: milliseconds (default: 3000). */
     animationDuration?: number,
-    /** Animation delay in ms */
+    /** Animation delay. Unit: milliseconds (default: 100). */
     animationDelay?: number,
-    /** Stroke width of the pointer border */
+    /** Stroke width of the pointer border. Unit: pixels. */
     strokeWidth?: number,
     /** Stroke/border color of the pointer. Defaults to a contrasting color */
     strokeColor?: string,
-    /** Arrow offset - controls radial position of arrow pointer (0-1, default 0.72). Lower = closer to center, higher = closer to arc edge */
+    /** Arrow offset - controls radial position of arrow pointer. Unit: ratio (0-1, default: 0.72). Lower = closer to center, higher = closer to arc edge. */
     arrowOffset?: number,
-    /** Blob offset - controls radial position of blob pointer (0-1, default 0.5 = centered on arc). Lower = inner edge, higher = outer edge */
+    /** Blob offset - controls radial position of blob pointer. Unit: ratio (0-1, default: 0.5 = centered on arc). Lower = inner edge, higher = outer edge. */
     blobOffset?: number,
     /** Hide the grab handle circle shown at pointer tip when drag mode is enabled */
     hideGrabHandle?: boolean,
@@ -54,13 +59,13 @@ export interface PointerProps {
     
     // Performance tuning options
     /** 
-     * Maximum frames per second for animation updates (default: 60). 
+     * Maximum frames per second for animation updates. Unit: fps (default: 60). 
      * Lower values reduce GPU/CPU load on mobile devices.
      * Recommended: 60 (smooth), 30 (balanced), 15 (low-power)
      */
     maxFps?: number,
     /** 
-     * Minimum progress change threshold before updating DOM (default: 0.001).
+     * Minimum progress change threshold before updating DOM. Unit: ratio (default: 0.001).
      * Higher values skip more frames, reducing render load.
      * Range: 0.0001 (smooth) to 0.01 (choppy but fast)
      */

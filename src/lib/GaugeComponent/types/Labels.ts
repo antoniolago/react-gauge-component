@@ -6,9 +6,9 @@ export interface LabelEffects {
     glow?: boolean,
     /** Glow color (defaults to label color) */
     glowColor?: string,
-    /** Glow blur radius (default: 6) */
+    /** Glow blur radius. Unit: pixels (default: 6). */
     glowBlur?: number,
-    /** Glow spread (default: 2) */
+    /** Glow spread. Unit: pixels (default: 2). */
     glowSpread?: number,
     /** Text shadow for enhanced readability */
     textShadow?: string
@@ -46,18 +46,18 @@ export interface ValueLabel {
     style?: React.CSSProperties;
     /** This hides the central value label if true */
     hide?: boolean;
-    /** Horizontal offset for the value label position. Positive moves right. */
+    /** Horizontal offset for the value label position. Unit: pixels. Positive moves right. */
     offsetX?: number;
-    /** Vertical offset for the value label position. Positive moves down. */
+    /** Vertical offset for the value label position. Unit: pixels. Positive moves down. */
     offsetY?: number;
     /** 
      * Width of the foreignObject container for custom React content.
-     * Only used when renderContent is provided. Defaults to 100.
+     * Unit: pixels. Only used when renderContent is provided. Defaults to 100.
      */
     contentWidth?: number;
     /** 
      * Height of the foreignObject container for custom React content.
-     * Only used when renderContent is provided. Defaults to 50.
+     * Unit: pixels. Only used when renderContent is provided. Defaults to 50.
      */
     contentHeight?: number;
     /** Visual effects for the value label */
