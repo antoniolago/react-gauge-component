@@ -1,4 +1,7 @@
-# react-gauge-component
+# react-gauge-component 
+[![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/antoniolago/react-gauge-component)
+[![Forgejo](https://img.shields.io/badge/forgejo-%23FB923C.svg?style=for-the-badge&logo=forgejo&logoColor=white)](https://git.lag0.com.br/antoniolago/react-gauge-component)
+
 React Gauge Chart Component for data visualization.
 
 <img width="1840" height="608" alt="image" src="https://github.com/user-attachments/assets/fe12d0f7-805c-4914-9c80-c6a41432726b" />
