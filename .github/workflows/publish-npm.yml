@@ -237,11 +237,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download package artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: package-dist
-          path: dist/
+      # - name: Download package artifact
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: package-dist
+      #     path: dist/
 
       - name: Extract version from tag
         id: get_version
@@ -252,7 +252,7 @@ jobs:
         with:
           name: v${{ steps.get_version.outputs.VERSION }}
           generate_release_notes: true
-          files: |
-            dist/**/*
+          # files: |
+          #   dist/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
