@@ -1,4 +1,4 @@
-import { random } from "lodash";
+import { random } from "lodash-es";
 import { Arc, defaultArc } from "./Arc";
 import { Labels, defaultLabels } from './Labels';
 import { PointerProps, PointerWithValue, defaultPointer } from "./Pointer";
