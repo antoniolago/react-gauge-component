@@ -1,8 +1,8 @@
 # Changelog
 
-## v1.2.64 -> v2.0.0-rc
+## v1.2.64 -> v2.0.20
 
-> Note: This version is a full overhaul of the Gauge component and will surely require a lot of patches along the way, so upgrade with care.
+> Note: This version is a full overhaul of the Gauge component, upgrade with care.
 
 
 ### New Features
