@@ -287,6 +287,18 @@ Extended pointer configuration with embedded value (for multi-pointer mode):
 />
 \`\`\`
 
+
+### Colors for the chart
+
+The 'colorArray' prop can be specified as an array of hex color values, such as '["#FF0000", "#00FF00", "#0000FF"]' where
+each arc would get a color in the array (colors are assigned from left to right). 
+
+If the **length of the array matches** the **number of levels** in the arc, each segment gets its exact color.
+
+If the number of colors does not match the number of levels, the colors will be **interpolated through ALL colors** in the array sequentially. For example, with colors '["#FF0000", "#FFFF00", "#00FF00"]' and 9 segments, the gauge will smoothly transition from red → yellow → green. The interpolation is done using [d3.interpolateHsl](https://github.com/d3/d3-interpolate#interpolateHsl).
+
+
+
 ---
 
 *This documentation is auto-generated from TypeScript source comments. To regenerate: \`yarn docs\`*
