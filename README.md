@@ -5,8 +5,7 @@ React Gauge Chart Component for data visualization.
 
 A gallery of preset gauges and a sandbox editor is provided so you can create and edit your gauges in the [DEMO](https://antoniolago.github.io/react-gauge-component) page
 
-
-# Install
+# Usage
 Install it by running `npm install react-gauge-component --save` or `yarn add react-gauge-component`. Then to use it:
 
 ```jsx
@@ -38,7 +37,7 @@ To regenerate it locally, run:
 - `yarn docs`
  
 
-### Interactive Gauge (Input Mode)
+### Input Gauge
 Use the `onValueChange` callback to enable interactive mode where users can drag the pointer or click on the arc to set values thus making the gauge an input to systems.
 
 <details>
