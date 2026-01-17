@@ -11,5 +11,6 @@
     "sourceMap": false,
     "noEmit": false
   },
-  "include": ["src/lib/**/*"]
+  "include": ["src/lib/**/*"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
 }

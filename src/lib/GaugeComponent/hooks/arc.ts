@@ -10,8 +10,41 @@ import * as arcHooks from './arc';
 import CONSTANTS from '../constants';
 import { Tooltip, defaultTooltipStyle } from '../types/Tooltip';
 import { GaugeType } from '../types/GaugeComponentProps';
-import { throttle } from 'lodash';
+import { throttle } from 'lodash-es';
 import { Arc, SubArc } from '../types/Arc';
+
+/**
+ * Get effective angles for a gauge, with fallback to type defaults if not yet calculated.
+ * This ensures ticks are positioned correctly even on first render before dimensions are set.
+ */
+export const getEffectiveAngles = (gauge: Gauge): { startAngle: number; endAngle: number } => {
+  const { startAngle, endAngle } = gauge.dimensions.current.angles;
+  
+  // If angles are set (non-zero or explicitly custom), use them
+  if (startAngle !== 0 || endAngle !== 0) {
+    return { startAngle, endAngle };
+  }
+  
+  // Check for custom angles in props
+  if (gauge.props.startAngle !== undefined && gauge.props.endAngle !== undefined) {
+    return {
+      startAngle: (gauge.props.startAngle * Math.PI) / 180,
+      endAngle: (gauge.props.endAngle * Math.PI) / 180
+    };
+  }
+  
+  // Fallback to type defaults
+  switch (gauge.props.type) {
+    case GaugeType.Semicircle:
+      return { startAngle: -Math.PI / 2 + 0.02, endAngle: Math.PI / 2 - 0.02 };
+    case GaugeType.Radial:
+      return { startAngle: -Math.PI / 1.37, endAngle: Math.PI / 1.37 };
+    case GaugeType.Grafana:
+    default:
+      return { startAngle: -Math.PI / 1.6, endAngle: Math.PI / 1.6 };
+  }
+};
+
 
 const onArcMouseMove = (event: any, d: any, gauge: Gauge) => {
   //event.target.style.stroke = "#ffffff5e";
@@ -45,7 +78,15 @@ export const hideTooltip = (gauge: Gauge) => {
   gauge.tooltip.current.html(" ").style("display", "none");
 }
 const onArcMouseOut = (event: any, d: any, gauge: Gauge) => {
-  event.target.style.stroke = "none";
+  // Restore configured stroke instead of removing it
+  const strokeWidth = gauge.props?.arc?.subArcsStrokeWidth || 0;
+  if (strokeWidth > 0) {
+    const strokeColor = gauge.props?.arc?.subArcsStrokeColor || '#ffffff';
+    event.target.style.stroke = strokeColor;
+    event.target.style.strokeWidth = strokeWidth;
+  } else {
+    event.target.style.stroke = "none";
+  }
 }
 const onArcMouseClick = (event: any, d: any) => {
   if (d.data.onMouseClick != undefined) d.data.onMouseClick(event);
@@ -75,13 +116,11 @@ export const setArcData = (gauge: Gauge) => {
         limit = utils.getCurrentGaugeValueByPercentage(subArcLength + lastSubArcLimitPercentageAcc, gauge);
       } else if (subArc.limit == undefined) {
         subArcRange = lastSubArcLimit;
-        let remainingPercentageEquallyDivided: number | undefined = undefined;
         let remainingSubArcs = arc?.subArcs?.slice(i);
-        let remainingPercentage = (1 - utils.calculatePercentage(minValue, maxValue, lastSubArcLimit)) * 100;
-        if (!remainingPercentageEquallyDivided) {
-          remainingPercentageEquallyDivided = (remainingPercentage / Math.max(remainingSubArcs?.length || 1, 1)) / 100;
-        }
-        limit = lastSubArcLimit + (remainingPercentageEquallyDivided * 100);
+        let remainingPercentage = 1 - utils.calculatePercentage(minValue, maxValue, lastSubArcLimit);
+        let remainingPercentageEquallyDivided = remainingPercentage / Math.max(remainingSubArcs?.length || 1, 1);
+        // Convert from percentage space to value space correctly
+        limit = utils.getCurrentGaugeValueByPercentage(lastSubArcLimitPercentageAcc + remainingPercentageEquallyDivided, gauge);
         subArcLength = remainingPercentageEquallyDivided;
       } else {
         subArcRange = limit - lastSubArcLimit;
@@ -110,11 +149,13 @@ export const setArcData = (gauge: Gauge) => {
       onMouseClick: subArcs[i].onClick
     }));
   } else {
-    const arcValue = maxValue / nbArcsToDisplay;
+    // Calculate arc value based on the RANGE, not maxValue
+    const range = maxValue - minValue;
+    const arcValue = range / nbArcsToDisplay;
 
     gauge.arcData.current = Array.from({ length: nbArcsToDisplay }, (_, i) => ({
       value: arcValue,
-      limit: (i + 1) * arcValue,
+      limit: minValue + (i + 1) * arcValue,  // Start from minValue
       color: colorArray[i],
       tooltip: undefined,
     }));
@@ -122,6 +163,12 @@ export const setArcData = (gauge: Gauge) => {
 };
 
 const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undefined) => {
+  // Check if multi-pointer mode with subarcs between pointers
+  const pointers = gauge.props.pointers;
+  if (pointers && pointers.length > 1) {
+    return getGrafanaMultiPointerArcData(gauge);
+  }
+  
   let currentPercentage = percent != undefined ? percent : utils.calculatePercentage(gauge.props.minValue as number,
     gauge.props.maxValue as number,
     gauge.props.value as number);
@@ -137,23 +184,106 @@ const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undef
   //This is the grey arc that will be displayed when the gauge is not full
   let secondSubArc = {
     value: 1 - currentPercentage,
-    color: gauge.props.arc?.emptyColor,
+    color: gauge.props.arc?.emptyColor || '#3a3a3a',
   }
   return [firstSubArc, secondSubArc];
 }
+
+/**
+ * Generate arc data for multi-pointer Grafana mode.
+ * Creates subarcs between each pointer, colored with the next pointer's color.
+ * 
+ * Example with 3 pointers at values 20, 50, 80:
+ * - Arc 1 (0-20): color of pointer 1
+ * - Arc 2 (20-50): color of pointer 2
+ * - Arc 3 (50-80): color of pointer 3
+ * - Arc 4 (80-100): empty color
+ */
+const getGrafanaMultiPointerArcData = (gauge: Gauge) => {
+  const pointers = gauge.props.pointers!;
+  const minValue = gauge.props.minValue as number;
+  const maxValue = gauge.props.maxValue as number;
+  const emptyColor = gauge.props.arc?.emptyColor || '#3a3a3a';
+  
+  // Sort pointers by value
+  const sortedPointers = [...pointers].sort((a, b) => a.value - b.value);
+  
+  // Build arc segments
+  const arcData: Array<{ value: number; color: string }> = [];
+  let prevPercent = 0;
+  
+  for (let i = 0; i < sortedPointers.length; i++) {
+    const pointer = sortedPointers[i];
+    const currentPercent = utils.calculatePercentage(minValue, maxValue, pointer.value);
+    
+    // Arc from previous position to this pointer
+    const segmentSize = currentPercent - prevPercent;
+    if (segmentSize > 0) {
+      // Use this pointer's color for the segment leading up to it
+      const arcColor = getArcDataByPercentage(currentPercent, gauge)?.color;
+      const color = pointer.color || (typeof arcColor === 'string' ? arcColor : '#888');
+      arcData.push({
+        value: segmentSize,
+        color: color
+      });
+    }
+    
+    prevPercent = currentPercent;
+  }
+  
+  // Add remaining empty arc (from last pointer to 100%)
+  const remainingPercent = 1 - prevPercent;
+  if (remainingPercent > 0) {
+    arcData.push({
+      value: remainingPercent,
+      color: emptyColor
+    });
+  }
+  
+  return arcData;
+}
 const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
   const { outerRadius } = gauge.dimensions.current;
-  //Grafana's outer arc will be populates as the standard arc data would
+  const { padding, cornerRadius, outerArc: outerArcConfig } = gauge.props.arc as Arc;
+  //Grafana's outer arc will be populated as the standard arc data would
   if (gauge.props.type == GaugeType.Grafana && resize) {
     gauge.doughnut.current.selectAll(".outerSubArc").remove();
+    // Use outerArc config if provided, otherwise fall back to main arc settings
+    // Get outer arc width (default 5px)
+    const outerArcWidth = outerArcConfig?.width ?? 5;
+    // Scale corner radius for the thin outer arc (max 2px since arc is only 5px thick)
+    const maxCornerRadius = Math.min(outerArcWidth / 2, 2);
+    const outerCornerRadius = outerArcConfig?.cornerRadius !== undefined 
+      ? Math.min(outerArcConfig.cornerRadius, maxCornerRadius) 
+      : (cornerRadius ? Math.min(cornerRadius, maxCornerRadius) : 0);
+    // Outer arc has its own padding - does NOT inherit from main arc
+    const outerPadding = outerArcConfig?.padding ?? 0;
+    const padEndpoints = gauge.props.arc?.padEndpoints;
+    // Gap between main arc and outer arc is 2px
+    const gap = 2;
     let outerArc = arc()
-      .outerRadius(outerRadius + 7)
-      .innerRadius(outerRadius + 2)
-      .cornerRadius(0)
-      .padAngle(0);
+      .outerRadius(outerRadius + gap + outerArcWidth)
+      .innerRadius(outerRadius + gap)
+      .cornerRadius(outerCornerRadius)
+      .padAngle(padEndpoints === false ? 0 : outerPadding);
+    
+    // Generate pie data
+    let outerPieData = gauge.pieChart.current(gauge.arcData.current);
+    
+    // Apply manual padding when padEndpoints is false
+    if (padEndpoints === false && outerPadding > 0 && outerPieData.length > 1) {
+      const halfPad = outerPadding / 2;
+      outerPieData = outerPieData.map((d: any, i: number) => {
+        const adjusted = { ...d };
+        if (i < outerPieData.length - 1) adjusted.endAngle -= halfPad;
+        if (i > 0) adjusted.startAngle += halfPad;
+        return adjusted;
+      });
+    }
+    
     var arcPaths = gauge.doughnut.current
       .selectAll("anyString")
-      .data(gauge.pieChart.current(gauge.arcData.current))
+      .data(outerPieData)
       .enter()
       .append("g")
       .attr("class", "outerSubArc");
@@ -172,8 +302,8 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
 export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) => {
   const { padding, cornerRadius } = gauge.props.arc as Arc;
   const { innerRadius, outerRadius } = gauge.dimensions.current;
-  // chartHooks.clearChart(gauge);
-  let data = {}
+
+  let data: any = {}
   //When gradient enabled, it'll have only 1 arc
   if (gauge.props?.arc?.gradient) {
     data = [{ value: 1 }];
@@ -183,16 +313,41 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
   if (gauge.props.type == GaugeType.Grafana) {
     data = getGrafanaMainArcData(gauge, percent);
   }
-  let arcPadding = gauge.props.type == GaugeType.Grafana ? 0 : padding;
-  let arcCornerRadius = gauge.props.type == GaugeType.Grafana ? 0 : cornerRadius;
+  let arcPadding = padding || 0;
+  let arcCornerRadius = cornerRadius || 0;
+  const padEndpoints = gauge.props.arc?.padEndpoints;
+  
+  // When padEndpoints is false, we handle padding manually via adjusted angles
+  // so we don't use padAngle on the arc generator
   let arcObj = arc()
     .outerRadius(outerRadius)
     .innerRadius(innerRadius)
     .cornerRadius(arcCornerRadius as number)
-    .padAngle(arcPadding);
+    .padAngle(padEndpoints === false ? 0 : arcPadding);
+    
+  // Generate pie data and adjust for endpoint padding
+  let pieData = gauge.pieChart.current(data as any);
+  
+  // Apply manual padding to pie data when padEndpoints is false
+  if (padEndpoints === false && arcPadding > 0 && pieData.length > 1) {
+    const halfPad = arcPadding / 2;
+    pieData = pieData.map((d: any, i: number) => {
+      const adjusted = { ...d };
+      // Add padding to end of each arc (except the last one)
+      if (i < pieData.length - 1) {
+        adjusted.endAngle -= halfPad;
+      }
+      // Add padding to start of each arc (except the first one)
+      if (i > 0) {
+        adjusted.startAngle += halfPad;
+      }
+      return adjusted;
+    });
+  }
+  
   var arcPaths = gauge.doughnut.current
     .selectAll("anyString")
-    .data(gauge.pieChart.current(data))
+    .data(pieData)
     .enter()
     .append("g")
     .attr("class", "subArc");
@@ -208,11 +363,13 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
     .on("click", (event: any, d: any) => onArcMouseClick(event, d))
 
 }
-export const setupArcs = (gauge: Gauge, resize: boolean = false) => {
+export const setupArcs = (gauge: Gauge, resize: boolean = false, initialPercent: number | undefined = undefined) => {
   //Setup the arc
   setupTooltip(gauge);
   drawGrafanaOuterArc(gauge, resize);
-  drawArc(gauge);
+  // For Grafana type with animation, pass initialPercent (usually 0 or prevPercent) 
+  // so the arc starts at the correct position before animating
+  drawArc(gauge, initialPercent);
 };
 
 export const setupTooltip = (gauge: Gauge) => {
@@ -234,6 +391,130 @@ export const applyColors = (subArcsPath: any, gauge: Gauge) => {
   } else {
     subArcsPath.style("fill", (d: any) => d.data.color);
   }
+  
+  // Apply stroke/border to subArcs if configured
+  const strokeWidth = gauge.props?.arc?.subArcsStrokeWidth || 0;
+  if (strokeWidth > 0) {
+    const strokeColor = gauge.props?.arc?.subArcsStrokeColor || '#ffffff';
+    subArcsPath
+      .attr("stroke", strokeColor)
+      .attr("stroke-width", strokeWidth);
+  }
+  
+  // Apply visual effects if configured
+  applyArcEffects(subArcsPath, gauge);
+}
+
+/**
+ * Create and apply SVG filter effects to arcs
+ */
+export const applyArcEffects = (subArcsPath: any, gauge: Gauge) => {
+  const effects = gauge.props?.arc?.effects;
+  if (!effects) return;
+  
+  const filterId = `arc-effects-${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Check if we need to create any filters
+  const needsFilter = effects.glow || effects.dropShadow || effects.innerShadow || effects.filterUrl;
+  if (!needsFilter) return;
+  
+  // Use custom filter URL if provided
+  if (effects.filterUrl) {
+    subArcsPath.attr("filter", effects.filterUrl);
+    return;
+  }
+  
+  // Create defs if it doesn't exist
+  let defs = gauge.doughnut.current.select("defs");
+  if (defs.empty()) {
+    defs = gauge.doughnut.current.append("defs");
+  }
+  
+  // Create filter element
+  const filter = defs.append("filter")
+    .attr("id", filterId)
+    .attr("x", "-50%")
+    .attr("y", "-50%")
+    .attr("width", "200%")
+    .attr("height", "200%");
+  
+  let lastResult = "SourceGraphic";
+  
+  // Add glow effect
+  if (effects.glow) {
+    const glowBlur = effects.glowBlur ?? 10;
+    const glowSpread = effects.glowSpread ?? 3;
+    
+    // Create glow using Gaussian blur
+    filter.append("feGaussianBlur")
+      .attr("in", "SourceGraphic")
+      .attr("stdDeviation", glowBlur)
+      .attr("result", "blur");
+    
+    // Brighten the blur for more intensity
+    filter.append("feComponentTransfer")
+      .attr("in", "blur")
+      .attr("result", "glow")
+      .selectAll("feFuncA")
+      .data([null])
+      .enter()
+      .append("feFuncA")
+      .attr("type", "linear")
+      .attr("slope", glowSpread);
+    
+    // Merge glow behind original
+    const merge = filter.append("feMerge");
+    merge.append("feMergeNode").attr("in", "glow");
+    merge.append("feMergeNode").attr("in", "SourceGraphic");
+    lastResult = "glow";
+  }
+  
+  // Add drop shadow effect
+  if (effects.dropShadow) {
+    const ds = effects.dropShadow;
+    const dx = ds.dx ?? 0;
+    const dy = ds.dy ?? 2;
+    const blur = ds.blur ?? 3;
+    const opacity = ds.opacity ?? 0.3;
+    const color = ds.color ?? `rgba(0,0,0,${opacity})`;
+    
+    filter.append("feDropShadow")
+      .attr("dx", dx)
+      .attr("dy", dy)
+      .attr("stdDeviation", blur)
+      .attr("flood-color", color)
+      .attr("flood-opacity", opacity);
+  }
+  
+  // Add inner shadow for 3D effect
+  if (effects.innerShadow) {
+    // Create inner shadow using morphology and blur
+    filter.append("feMorphology")
+      .attr("in", "SourceAlpha")
+      .attr("operator", "erode")
+      .attr("radius", "1")
+      .attr("result", "eroded");
+    
+    filter.append("feGaussianBlur")
+      .attr("in", "eroded")
+      .attr("stdDeviation", "2")
+      .attr("result", "innerBlur");
+    
+    filter.append("feComposite")
+      .attr("in", "innerBlur")
+      .attr("in2", "SourceAlpha")
+      .attr("operator", "arithmetic")
+      .attr("k2", "-1")
+      .attr("k3", "1")
+      .attr("result", "innerShadow");
+    
+    const merge = filter.append("feMerge");
+    merge.append("feMergeNode").attr("in", "SourceGraphic");
+    merge.append("feMergeNode").attr("in", "innerShadow");
+  }
+  
+  // Apply the filter to the arcs
+  subArcsPath.attr("filter", `url(#${filterId})`);
 }
 
 export const getArcDataByValue = (value: number, gauge: Gauge): SubArc =>
@@ -241,6 +522,56 @@ export const getArcDataByValue = (value: number, gauge: Gauge): SubArc =>
 
 export const getArcDataByPercentage = (percentage: number, gauge: Gauge): SubArc =>
   getArcDataByValue(utils.getCurrentGaugeValueByPercentage(percentage, gauge), gauge) as SubArc;
+
+/**
+ * Get the interpolated color for a given percentage when using gradient mode.
+ * This is needed because gradient mode doesn't store colors in arcData.current.
+ * Falls back to getArcDataByPercentage for non-gradient mode.
+ */
+export const getColorByPercentage = (percentage: number, gauge: Gauge): string => {
+  // For non-gradient mode, use the existing arc data lookup
+  if (!gauge.props?.arc?.gradient) {
+    const arcData = getArcDataByPercentage(percentage, gauge);
+    return arcData?.color as string || '#fff';
+  }
+  
+  // For gradient mode, interpolate color from subArcs
+  const subArcs = gauge.props.arc?.subArcs;
+  if (!subArcs || subArcs.length === 0) {
+    return '#fff';
+  }
+  
+  const minValue = gauge.props.minValue as number;
+  const maxValue = gauge.props.maxValue as number;
+  const value = utils.getCurrentGaugeValueByPercentage(percentage, gauge);
+  
+  // Find which subArc segment the value falls into
+  let prevLimit = minValue;
+  for (let i = 0; i < subArcs.length; i++) {
+    const subArc = subArcs[i];
+    const limit = subArc.limit ?? maxValue;
+    
+    if (value <= limit) {
+      // Value is in this segment
+      if (i === 0) {
+        return subArc.color as string || '#fff';
+      }
+      
+      // Interpolate between previous and current color
+      const prevColor = subArcs[i - 1]?.color as string || '#fff';
+      const currentColor = subArc.color as string || '#fff';
+      const segmentPercentage = (value - prevLimit) / (limit - prevLimit);
+      
+      // Use d3 color interpolation
+      const colorInterpolator = interpolateHsl(prevColor, currentColor);
+      return colorInterpolator(segmentPercentage);
+    }
+    prevLimit = limit;
+  }
+  
+  // Value exceeds all limits, return last color
+  return subArcs[subArcs.length - 1]?.color as string || '#fff';
+}
 
 export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
 
@@ -271,12 +602,21 @@ export const getColors = (nbArcsToDisplay: number, gauge: Gauge) => {
   //Otherwise make an interpolation
   let arcsEqualsColorsLength = nbArcsToDisplay === colorsValue?.length;
   if (arcsEqualsColorsLength) return colorsValue;
-  var colorScale = scaleLinear()
-    .domain([1, nbArcsToDisplay])
+  
+  // Create multi-stop color scale that interpolates through ALL colors
+  const numColors = colorsValue.length;
+  // Create domain points for each color (evenly distributed from 1 to nbArcsToDisplay)
+  const domainPoints = colorsValue.map((_, i) => 
+    1 + (i * (nbArcsToDisplay - 1)) / (numColors - 1)
+  );
+  
+  var colorScale = scaleLinear<string>()
+    .domain(domainPoints)
     //@ts-ignore
-    .range([colorsValue[0], colorsValue[colorsValue.length - 1]]) //Use the first and the last color as range
+    .range(colorsValue) // Use ALL colors in the range
     //@ts-ignore
     .interpolate(interpolateHsl);
+    
   var colorArray = [];
   for (var i = 1; i <= nbArcsToDisplay; i++) {
     colorArray.push(colorScale(i));
@@ -295,51 +635,49 @@ export const createGradientElement = (div: any, uniqueId: string) => {
   return lg
 }
 
-export const getCoordByValue = (value: number, gauge: Gauge, position = "inner", centerToArcLengthSubtract = 0, radiusFactor = 1) => {
+export const getCoordByValue = (value: number, gauge: Gauge, position = "inner", centerToArcLengthSubtract = 0) => {
+  const { outerRadius, innerRadius } = gauge.dimensions.current;
+  const isGrafana = gauge.props.type === GaugeType.Grafana;
+  
+  // Grafana has an outer decorative arc - get width from config (default 5px) + 2px gap
+  const outerArcWidth = gauge.props.arc?.outerArc?.width ?? 5;
+  const grafanaOuterArcEdge = outerRadius + 2 + outerArcWidth;
+  
   let positionCenterToArcLength: { [key: string]: () => number } = {
-    "outer": () => gauge.dimensions.current.outerRadius - centerToArcLengthSubtract + 2,
-    "inner": () => gauge.dimensions.current.innerRadius * radiusFactor - centerToArcLengthSubtract + 9,
+    "outer": () => {
+      // For outer ticks: start at the outer edge of the arc
+      // Grafana: outer decorative arc edge (outerRadius + 7)
+      // Others: main arc outer edge (outerRadius)
+      const arcEdge = isGrafana ? grafanaOuterArcEdge : outerRadius;
+      return arcEdge - centerToArcLengthSubtract;
+    },
+    "inner": () => {
+      // For inner ticks: start at the inner edge of the arc
+      // centerToArcLengthSubtract is positive to push inward (toward center)
+      return innerRadius - centerToArcLengthSubtract;
+    },
     "between": () => {
-      let lengthBetweenOuterAndInner = (gauge.dimensions.current.outerRadius - gauge.dimensions.current.innerRadius);
-      let middlePosition = gauge.dimensions.current.innerRadius + lengthBetweenOuterAndInner - 5;
+      let lengthBetweenOuterAndInner = (outerRadius - innerRadius);
+      let middlePosition = innerRadius + lengthBetweenOuterAndInner / 2;
       return middlePosition;
     }
   };
   let centerToArcLength = positionCenterToArcLength[position]();
-  // This normalizes the labels when distanceFromArc = 0 to be just touching the arcs 
-  if (gauge.props.type === GaugeType.Grafana) {
-    centerToArcLength += 5;
-  } else if (gauge.props.type === GaugeType.Semicircle) {
-    centerToArcLength += -2;
-  }
+  
   let percent = utils.calculatePercentage(gauge.props.minValue as number, gauge.props.maxValue as number, value);
-  let gaugeTypesAngles: Record<GaugeType, { startAngle: number; endAngle: number; }> = {
-    [GaugeType.Grafana]: {
-      startAngle: utils.degToRad(-23),
-      endAngle: utils.degToRad(203)
-    },
-    [GaugeType.Semicircle]: {
-      startAngle: utils.degToRad(0.9),
-      endAngle: utils.degToRad(179.1)
-    },
-    [GaugeType.Radial]: {
-      startAngle: utils.degToRad(-39),
-      endAngle: utils.degToRad(219)
-    },
-  };
+  
+  // Use actual angles from gauge dimensions (supports custom angles)
+  // D3 angles: 0 = top (12 o'clock), positive = clockwise
+  // Math angles for tick positioning: 0 = right (3 o'clock), 90 = down
+  // Conversion: mathAngle = d3Angle + π/2
+  const { startAngle: d3Start, endAngle: d3End } = getEffectiveAngles(gauge);
+  const d3Angle = d3Start + percent * (d3End - d3Start);
+  const angle = d3Angle + Math.PI / 2;
 
-  let { startAngle, endAngle } = gaugeTypesAngles[gauge.props.type as GaugeType];
-  const angle = startAngle + (percent) * (endAngle - startAngle);
-
-  let coordsRadius = 1 * (gauge.dimensions.current.width / 500);
-  let coord = [0, -coordsRadius / 2];
-  let coordMinusCenter = [
-    coord[0] - centerToArcLength * Math.cos(angle),
-    coord[1] - centerToArcLength * Math.sin(angle),
-  ];
-  let centerCoords = [gauge.dimensions.current.outerRadius, gauge.dimensions.current.outerRadius];
-  let x = (centerCoords[0] + coordMinusCenter[0]);
-  let y = (centerCoords[1] + coordMinusCenter[1]);
+  // Calculate position relative to center (0, 0)
+  // Since g is now centered at gaugeCenter, coordinates are relative to origin
+  let x = -centerToArcLength * Math.cos(angle);
+  let y = -centerToArcLength * Math.sin(angle);
   return { x, y }
 }
 export const redrawArcs = (gauge: Gauge) => {
@@ -348,13 +686,90 @@ export const redrawArcs = (gauge: Gauge) => {
   setupArcs(gauge);
 }
 export const clearArcs = (gauge: Gauge) => {
+  // Safety check - doughnut might not be initialized on mobile during deferred render
+  if (!gauge.doughnut.current?.selectAll) return;
   gauge.doughnut.current.selectAll(".subArc").remove();
+}
+
+/**
+ * Efficiently update Grafana arc for animation frames.
+ * Instead of clearing and recreating DOM elements on every frame,
+ * this updates the existing arc paths' data, which is MUCH faster.
+ */
+export const updateGrafanaArc = (gauge: Gauge, percent: number) => {
+  const { innerRadius, outerRadius } = gauge.dimensions.current;
+  const { padding, cornerRadius } = gauge.props.arc as Arc;
+  const padEndpoints = gauge.props.arc?.padEndpoints;
+  const arcPadding = padding || 0;
+  
+  // Get the new arc data
+  const data = getGrafanaMainArcData(gauge, percent);
+  
+  // Create the arc generator with config values for corner and padding
+  const arcObj = arc()
+    .outerRadius(outerRadius)
+    .innerRadius(innerRadius)
+    .cornerRadius(cornerRadius || 0)
+    .padAngle(padEndpoints === false ? 0 : arcPadding);
+  
+  // Get existing arc groups
+  const existingArcGroups = gauge.doughnut.current.selectAll(".subArc");
+  
+  // For multi-pointer mode, the number of segments can change - redraw if mismatch
+  const existingCount = existingArcGroups.size();
+  if (existingArcGroups.empty() || existingCount !== data.length) {
+    // Clear and redraw arcs when segment count changes
+    gauge.doughnut.current.selectAll(".subArc").remove();
+    drawArc(gauge, percent);
+    return;
+  }
+  
+  // Generate pie data
+  let pieData = gauge.pieChart.current(data);
+  
+  // Apply manual padding when padEndpoints is false
+  if (padEndpoints === false && arcPadding > 0 && pieData.length > 1) {
+    const halfPad = arcPadding / 2;
+    pieData = pieData.map((d: any, i: number) => {
+      const adjusted = { ...d };
+      if (i < pieData.length - 1) adjusted.endAngle -= halfPad;
+      if (i > 0) adjusted.startAngle += halfPad;
+      return adjusted;
+    });
+  }
+  
+  // Update each arc group's path with the corresponding pie data
+  existingArcGroups.each(function(this: any, _d: any, i: number) {
+    if (i < pieData.length) {
+      const pathEl = select(this).select("path")
+        .datum(pieData[i])
+        .attr("d", arcObj as any)
+        .style("fill", pieData[i].data.color);
+      
+      // Apply stroke if configured
+      const strokeWidth = gauge.props?.arc?.subArcsStrokeWidth || 0;
+      if (strokeWidth > 0) {
+        const strokeColor = gauge.props?.arc?.subArcsStrokeColor || '#ffffff';
+        pathEl.attr("stroke", strokeColor).attr("stroke-width", strokeWidth);
+      }
+    }
+  });
 }
 export const clearOuterArcs = (gauge: Gauge) => {
   gauge.doughnut.current.selectAll(".outerSubArc").remove();
 }
 
 export const validateArcs = (gauge: Gauge) => {
+  // Debug: log when validation is triggered
+  // if (typeof window !== 'undefined' && (window as any).__GAUGE_DEBUG__) {
+  //   console.log('[GaugeComponent] validateArcs called:', {
+  //     minValue: gauge.props.minValue,
+  //     maxValue: gauge.props.maxValue,
+  //     gradient: gauge.props.arc?.gradient,
+  //     subArcsCount: gauge.props.arc?.subArcs?.length,
+  //     subArcLimits: gauge.props.arc?.subArcs?.map(s => s.limit)
+  //   });
+  // }
   verifySubArcsLimits(gauge);
 }
 /**
@@ -384,23 +799,64 @@ const verifySubArcsLimits = (gauge: Gauge) => {
   let arc = gauge.props.arc as Arc;
   let subArcs = arc.subArcs as SubArc[];
   let prevLimit: number | undefined = undefined;
+  
+  // Skip validation if using gradient mode (limits don't apply)
+  if (gauge.props.arc?.gradient) return;
+  
+  // Helper to create debug info string
+  const getDebugInfo = () => {
+    try {
+      return JSON.stringify({
+        minValue,
+        maxValue,
+        value: gauge.props.value,
+        gradient: gauge.props.arc?.gradient,
+        type: gauge.props.type,
+        subArcs: gauge.props.arc?.subArcs?.map(s => ({ 
+          limit: s.limit, 
+          length: (s as any).length,
+          color: typeof s.color === 'string' ? s.color.substring(0, 10) : s.color
+        }))
+      }, null, 2);
+    } catch (e) {
+      return 'Unable to stringify gauge props';
+    }
+  };
+  
   for (const subArc of gauge.props.arc?.subArcs || []) {
     const limit = subArc.limit;
+    // Only validate if limit is explicitly defined (skip length-based subArcs)
     if (typeof limit !== 'undefined') {
-      // Check if the limit is within the valid range
-      if (limit < minValue || limit > maxValue)
-        throw new Error(`The limit of a subArc must be between the minValue and maxValue. The limit of the subArc is ${limit}`);
+      // Check if the limit is within the valid range - clamp instead of throwing
+      if (limit < minValue || limit > maxValue) {
+        console.warn(
+          `[GaugeComponent] SubArc limit ${limit} is outside range [${minValue}, ${maxValue}]. ` +
+          `Clamping to valid range. Consider updating your subArc limits to match minValue/maxValue.`
+        );
+        // Clamp the limit to valid range
+        subArc.limit = Math.max(minValue, Math.min(maxValue, limit));
+      }
       // Check if the limit is greater than the previous limit
       if (typeof prevLimit !== 'undefined') {
-        if (limit <= prevLimit)
-          throw new Error(`The limit of a subArc must be greater than the limit of the previous subArc. The limit of the subArc is ${limit}. If you're trying to specify length in percent of the arc, use property "length". refer to: https://github.com/antoniolago/react-gauge-component`);
+        if (subArc.limit !== undefined && subArc.limit <= prevLimit) {
+          console.warn(
+            `[GaugeComponent] SubArc limit ${subArc.limit} must be > previous limit ${prevLimit}. ` +
+            `Adjusting automatically.`
+          );
+          // Adjust to be slightly greater than previous
+          subArc.limit = prevLimit + (maxValue - minValue) * 0.01;
+        }
       }
-      prevLimit = limit;
+      prevLimit = subArc.limit;
     }
   }
-  // If the user has defined subArcs, make sure the last subArc has a limit equal to the maxValue
-  if (subArcs.length > 0) {
+  // If the user has defined subArcs with limits, make sure the last one covers maxValue
+  // Only apply to subArcs using limit (not length)
+  if (subArcs && subArcs.length > 0) {
     let lastSubArc = subArcs[subArcs.length - 1];
-    if (lastSubArc.limit as number < maxValue) lastSubArc.limit = maxValue;
+    // Only set limit if this subArc uses limits (not length-based)
+    if (typeof lastSubArc.limit !== 'undefined' && lastSubArc.limit < maxValue) {
+      lastSubArc.limit = maxValue;
+    }
   }
 }

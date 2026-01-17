@@ -1,0 +1,26 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "./src/lib/GaugeComponent/types/GaugeComponentProps.ts",
+    "./src/lib/GaugeComponent/types/Arc.ts",
+    "./src/lib/GaugeComponent/types/Pointer.ts",
+    "./src/lib/GaugeComponent/types/Labels.ts",
+    "./src/lib/GaugeComponent/types/Tick.ts",
+    "./src/lib/GaugeComponent/types/Tooltip.ts"
+  ],
+  "out": "docs/api",
+  "plugin": ["typedoc-plugin-markdown"],
+  "readme": "none",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "hideGenerator": true,
+  "githubPages": false,
+  "disableSources": false,
+  "includeVersion": true,
+  "categorizeByGroup": true,
+  "sort": ["source-order"],
+  "name": "React Gauge Component API",
+  "entryPointStrategy": "expand",
+  "excludeExternals": true
+}
