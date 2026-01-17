@@ -1,17 +1,141 @@
 #!/usr/bin/env node
 /**
- * Complete documentation generator with ALL props recursively.
+ * Documentation generator that extracts JSDoc comments from TypeScript source files.
+ * Descriptions come directly from the code comments.
  */
 
 const fs = require('fs');
 const path = require('path');
 
 const OUTPUT_FILE = path.join(__dirname, '../API.md');
+const TYPES_DIR = path.join(__dirname, '../src/lib/GaugeComponent/types');
 
 /**
- * Generate docs
+ * Parse a TypeScript file and extract interface properties with their JSDoc comments.
  */
-function generateCompleteDocumentation() {
+function parseTypeFile(filePath) {
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const interfaces = {};
+  
+  // Match interface declarations
+  const interfaceRegex = /(?:\/\*\*[\s\S]*?\*\/\s*)?(export\s+)?interface\s+(\w+)(?:\s+extends\s+\w+)?\s*\{([\s\S]*?)\n\}/g;
+  let match;
+  
+  while ((match = interfaceRegex.exec(content)) !== null) {
+    const interfaceName = match[2];
+    const interfaceBody = match[3];
+    interfaces[interfaceName] = parseInterfaceBody(interfaceBody);
+  }
+  
+  return interfaces;
+}
+
+/**
+ * Parse interface body and extract properties with their comments.
+ */
+function parseInterfaceBody(body) {
+  const props = [];
+  const lines = body.split('\n');
+  let currentComment = '';
+  let inMultiLineComment = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Start of multi-line comment
+    if (line.startsWith('/**')) {
+      inMultiLineComment = true;
+      currentComment = '';
+      // Check if single-line JSDoc
+      if (line.includes('*/')) {
+        currentComment = line.replace(/\/\*\*\s*/, '').replace(/\s*\*\//, '').trim();
+        inMultiLineComment = false;
+      }
+      continue;
+    }
+    
+    // Inside multi-line comment
+    if (inMultiLineComment) {
+      if (line.includes('*/')) {
+        inMultiLineComment = false;
+      } else {
+        // Extract comment text, removing leading * and @example blocks
+        const commentLine = line.replace(/^\*\s?/, '').trim();
+        if (!commentLine.startsWith('@')) {
+          currentComment += (currentComment ? ' ' : '') + commentLine;
+        }
+      }
+      continue;
+    }
+    
+    // Property line
+    const propMatch = line.match(/^(\w+)\??:\s*(.+?)[,;]?\s*$/);
+    if (propMatch) {
+      const propName = propMatch[1];
+      let propType = propMatch[2];
+      
+      // Clean up type
+      propType = propType.replace(/[,;]$/, '').trim();
+      
+      props.push({
+        name: propName,
+        type: propType,
+        description: currentComment || ''
+      });
+      currentComment = '';
+    }
+  }
+  
+  return props;
+}
+
+/**
+ * Load all type definitions from the types directory.
+ */
+function loadAllTypes() {
+  const allTypes = {};
+  const files = ['GaugeComponentProps.ts', 'Arc.ts', 'Labels.ts', 'Pointer.ts', 'Tick.ts', 'Tooltip.ts'];
+  
+  for (const file of files) {
+    const filePath = path.join(TYPES_DIR, file);
+    if (fs.existsSync(filePath)) {
+      const interfaces = parseTypeFile(filePath);
+      Object.assign(allTypes, interfaces);
+    }
+  }
+  
+  return allTypes;
+}
+
+/**
+ * Generate markdown for an interface's properties.
+ */
+function generatePropsMarkdown(props, allTypes, indent = 0, visited = new Set()) {
+  let md = '';
+  const prefix = '  '.repeat(indent);
+  
+  for (const prop of props) {
+    const desc = prop.description || `The ${prop.name} property.`;
+    md += `${prefix}- \`${prop.name}\` (\`${prop.type}\`) - ${desc}\n`;
+    
+    // Check if this type has nested properties we should expand
+    const typeMatch = prop.type.match(/^(Arc|Labels|PointerProps|TickLabels|ValueLabel|SubArc|Tooltip|TickValueConfig|TickLineConfig|ArcEffects|PointerEffects|LabelEffects|TickEffects)$/);
+    if (typeMatch && allTypes[typeMatch[1]] && !visited.has(typeMatch[1])) {
+      visited.add(typeMatch[1]);
+      md += generatePropsMarkdown(allTypes[typeMatch[1]], allTypes, indent + 1, visited);
+      visited.delete(typeMatch[1]);
+    }
+  }
+  
+  return md;
+}
+
+/**
+ * Generate the complete API documentation.
+ */
+function generateDocumentation() {
+  const allTypes = loadAllTypes();
+  
   let md = `# React Gauge Component API Reference
 
 > **GaugeComponent props and structure**  
@@ -19,140 +143,86 @@ function generateCompleteDocumentation() {
 
 ## GaugeComponentProps
 
-\`<GaugeComponent />\` props:
+\`<GaugeComponent />\` accepts the following props:
 
-- **\`id\`** (\`string\`) - Gauge element will inherit this.
+`;
 
-- **\`className\`** (\`string\`) - Gauge element will inherit this.
+  // Main component props
+  if (allTypes.GaugeComponentProps) {
+    for (const prop of allTypes.GaugeComponentProps) {
+      const desc = prop.description || `The ${prop.name} property.`;
+      md += `- **\`${prop.name}\`** (\`${prop.type}\`) - ${desc}\n`;
+      
+      // Expand nested types
+      const typeMatch = prop.type.match(/^(Arc|Labels|PointerProps)$/);
+      if (typeMatch && allTypes[typeMatch[1]]) {
+        md += generatePropsMarkdown(allTypes[typeMatch[1]], allTypes, 1, new Set([typeMatch[1]]));
+      }
+      md += '\n';
+    }
+  }
 
-- **\`style\`** (\`React.CSSProperties\`) - Gauge element will inherit this.
+  // Additional type documentation
+  md += `---
 
-- **\`marginInPercent\`** (\`GaugeInnerMarginInPercent | number\`) - This configures the canvas margin in relationship with the gauge.
+## SubArc
 
-- **\`value\`** (\`number\`) - Current pointer value.
+SubArc configuration for arc segments:
 
-- **\`minValue\`** (\`number\`) - Minimum value possible for the Gauge.
+`;
+  if (allTypes.SubArc) {
+    md += generatePropsMarkdown(allTypes.SubArc, allTypes, 0, new Set());
+  }
 
-- **\`maxValue\`** (\`number\`) - Maximum value possible for the Gauge.
-
-- **\`arc\`** (\`Arc\`) - This configures the arc of the Gauge.
-  - \`cornerRadius\` (\`number\`) - The corner radius of the arc.
-  - \`padding\` (\`number\`) - The padding between subArcs, in rad.
-  - \`padEndpoints\` (\`boolean\`) - Remove padding from start and end of the arc.
-  - \`width\` (\`number\`) - The width of the arc given in percent of the radius.
-  - \`nbSubArcs\` (\`number\`) - The number of subArcs, this overrides "subArcs" limits.
-  - \`gradient\` (\`boolean\`) - Boolean flag that enables or disables gradient mode.
-  - \`colorArray\` (\`Array<string>\`) - The colors of the arcs, this overrides "subArcs" colors.
-  - \`emptyColor\` (\`string\`) - Color of the grafana's empty subArc.
-  - \`subArcs\` (\`Array<SubArc>\`) - List of sub arcs segments of the whole arc.
-    - \`limit\` (\`number\`) - The limit of the subArc, in accord to the gauge value.
-    - \`color\` (\`string | number\`) - The color of the subArc.
-    - \`length\` (\`number\`) - The length of the subArc, in percent.
-    - \`showTick\` (\`boolean\`) - Whether or not to show the tick.
-    - \`tooltip\` (\`Tooltip\`) - Tooltip that appears onHover of the subArc.
-    - \`onClick\` (\`() => void\`) - This will trigger onClick of the subArc.
-    - \`onMouseMove\` (\`() => void\`) - This will trigger onMouseMove of the subArc.
-    - \`onMouseLeave\` (\`() => void\`) - This will trigger onMouseLeave of the subArc.
-    - \`effects\` (\`SubArcEffects\`) - Visual effects for this specific subArc.
-  - \`outerArc\` (\`object\`) - Settings for Grafana's outer decorative arc.
-    - \`cornerRadius\` (\`number\`) - Corner radius for outer arc.
-    - \`padding\` (\`number\`) - Padding between outer arc segments.
-    - \`width\` (\`number\`) - Width of the outer arc in pixels (default: 5).
-    - \`effects\` (\`ArcEffects\`) - Visual effects for the outer arc.
-  - \`subArcsStrokeWidth\` (\`number\`) - Stroke/border width for all subArcs.
-  - \`subArcsStrokeColor\` (\`string\`) - Stroke/border color for all subArcs.
-  - \`effects\` (\`ArcEffects\`) - CSS/SVG effects for the arc.
-    - \`glow\` (\`boolean\`) - Enable glow effect on arcs.
-    - \`glowColor\` (\`string\`) - Glow color (defaults to arc color if not set).
-    - \`glowBlur\` (\`number\`) - Glow intensity/blur radius (default: 10).
-    - \`glowSpread\` (\`number\`) - Glow spread (default: 3).
-    - \`filterUrl\` (\`string\`) - Custom SVG filter ID to apply.
-    - \`dropShadow\` (\`object\`) - Drop shadow effect.
-    - \`innerShadow\` (\`boolean\`) - Inner shadow/inset effect for 3D look.
-
-- **\`labels\`** (\`Labels\`) - This configures the labels of the Gauge.
-  - \`valueLabel\` (\`ValueLabel\`) - This configures the central value label.
-    - \`formatTextValue\` (\`(value: any) => string\`) - Format the central value text.
-    - \`renderContent\` (\`(value: number, arcColor: string) => React.ReactNode\`) - Render a custom React element instead of text.
-    - \`matchColorWithArc\` (\`boolean\`) - Sync the value label color with the current value.
-    - \`maxDecimalDigits\` (\`number\`) - Number of decimal digits.
-    - \`style\` (\`React.CSSProperties\`) - Central label value will inherit this.
-    - \`hide\` (\`boolean\`) - Hides the central value label if true.
-    - \`offsetX\` (\`number\`) - Horizontal offset for the value label position.
-    - \`offsetY\` (\`number\`) - Vertical offset for the value label position.
-    - \`contentWidth\` (\`number\`) - Width of the foreignObject container for custom React content.
-    - \`contentHeight\` (\`number\`) - Height of the foreignObject container for custom React content.
-    - \`effects\` (\`LabelEffects\`) - Visual effects for the value label.
-    - \`animateValue\` (\`boolean\`) - The value label updates in real-time during pointer animation.
-    - \`multiPointerDisplay\` (\`'primary' | 'all' | 'none'\`) - How to display values in multi-pointer mode.
-  - \`tickLabels\` (\`TickLabels\`) - This configures the ticks and its values labels.
-    - \`hideMinMax\` (\`boolean\`) - Hide first and last ticks and its values.
-    - \`type\` (\`"inner" | "outer"\`) - Whether the ticks are inside or outside the arcs.
-    - \`autoSpaceTickLabels\` (\`boolean\`) - Automatically detects closely-spaced ticks and separates them.
-    - \`ticks\` (\`Array<Tick>\`) - List of desired ticks.
-    - \`defaultTickValueConfig\` (\`TickValueConfig\`) - Default tick value label configs.
-    - \`defaultTickLineConfig\` (\`TickLineConfig\`) - Default tick line configs.
-    - \`effects\` (\`TickEffects\`) - Visual effects for all ticks.
-
-- **\`pointer\`** (\`PointerProps\`) - This configures the pointer of the Gauge. Used for single pointer mode.
-  - \`type\` (\`"needle" | "blob" | "arrow"\`) - Pointer type.
-  - \`color\` (\`string\`) - Pointer color.
-  - \`hide\` (\`boolean\`) - Enabling this flag will hide the pointer.
-  - \`baseColor\` (\`string\`) - Pointer color of the central circle.
-  - \`length\` (\`number\`) - Pointer length.
-  - \`width\` (\`number\`) - This is a factor to multiply by the width of the gauge.
-  - \`animate\` (\`boolean\`) - This enables pointer animation for transition between values.
-  - \`elastic\` (\`boolean\`) - This gives animation an elastic transition between values.
-  - \`animationDuration\` (\`number\`) - Animation duration in ms.
-  - \`animationDelay\` (\`number\`) - Animation delay in ms.
-  - \`strokeWidth\` (\`number\`) - Stroke width of the pointer border.
-  - \`strokeColor\` (\`string\`) - Stroke/border color of the pointer.
-  - \`arrowOffset\` (\`number\`) - Arrow offset - controls radial position of arrow pointer (0-1, default 0.72).
-  - \`blobOffset\` (\`number\`) - Blob offset - controls radial position of blob pointer (0-1, default 0.5).
-  - \`hideGrabHandle\` (\`boolean\`) - Hide the grab handle circle shown at pointer tip when drag mode is enabled.
-  - \`effects\` (\`PointerEffects\`) - Visual effects for the pointer.
-  - \`maxFps\` (\`number\`) - Maximum frames per second for animation updates (default: 60).
-  - \`animationThreshold\` (\`number\`) - Minimum progress change threshold before updating DOM (default: 0.001).
-
-- **\`pointers\`** (\`PointerWithValue[]\`) - Array of pointers with their own values for multi-pointer mode.
-  - \`value\` (\`number\`) - The value this pointer points to.
-  - \`label\` (\`string\`) - Optional label for this pointer's value.
-  - *(Plus all PointerProps properties above)*
-
-- **\`type\`** (\`"semicircle" | "radial" | "grafana"\`) - This configures the type of the Gauge.
-
-- **\`startAngle\`** (\`number\`) - Custom start angle in degrees. -90 = top left, 0 = top, 90 = top right, -180/180 = bottom.
-
-- **\`endAngle\`** (\`number\`) - Custom end angle in degrees. -90 = top left, 0 = top, 90 = top right, -180/180 = bottom.
-
-- **\`onValueChange\`** (\`(value: number) => void\`) - Callback fired when value changes via pointer drag. Enables input mode.
-
-- **\`onPointerChange\`** (\`(index: number, value: number) => void\`) - Callback fired when any pointer value changes via drag (multi-pointer mode).
-
-- **\`fadeInAnimation\`** (\`boolean\`) - Enable fade-in animation on initial render. Default: false.
-
+  md += `
 ---
 
-## GaugeInnerMarginInPercent
+## PointerWithValue
 
-- **\`top\`** (\`number\`) - Top margin as percentage of gauge size.
+Extended pointer configuration with embedded value (for multi-pointer mode):
 
-- **\`bottom\`** (\`number\`) - Bottom margin as percentage of gauge size.
+`;
+  if (allTypes.PointerWithValue) {
+    md += generatePropsMarkdown(allTypes.PointerWithValue, allTypes, 0, new Set());
+  }
 
-- **\`left\`** (\`number\`) - Left margin as percentage of gauge size.
-
-- **\`right\`** (\`number\`) - Right margin as percentage of gauge size.
-
+  md += `
 ---
 
-## GaugeType
+## Effects
 
-**Enum Values:** \`Semicircle\` | \`Radial\` | \`Grafana\`
+### ArcEffects
 
-- \`semicircle\` - Half-circle gauge
-- \`radial\` - Full circle gauge
-- \`grafana\` - Modern arc-style gauge (default)
+`;
+  if (allTypes.ArcEffects) {
+    md += generatePropsMarkdown(allTypes.ArcEffects, allTypes, 0, new Set());
+  }
 
+  md += `
+### PointerEffects
+
+`;
+  if (allTypes.PointerEffects) {
+    md += generatePropsMarkdown(allTypes.PointerEffects, allTypes, 0, new Set());
+  }
+
+  md += `
+### LabelEffects
+
+`;
+  if (allTypes.LabelEffects) {
+    md += generatePropsMarkdown(allTypes.LabelEffects, allTypes, 0, new Set());
+  }
+
+  md += `
+### TickEffects
+
+`;
+  if (allTypes.TickEffects) {
+    md += generatePropsMarkdown(allTypes.TickEffects, allTypes, 0, new Set());
+  }
+
+  md += `
 ---
 
 ## Common Patterns
@@ -197,27 +267,7 @@ function generateCompleteDocumentation() {
 />
 \`\`\`
 
-### With Tick Labels
-
-\`\`\`jsx
-<GaugeComponent
-  value={50}
-  labels={{
-    tickLabels: {
-      type: 'outer',
-      ticks: [
-        { value: 0 },
-        { value: 25 },
-        { value: 50 },
-        { value: 75 },
-        { value: 100 }
-      ]
-    }
-  }}
-/>
-\`\`\`
-
-### Interactive Gauge
+### Interactive Gauge (Input Mode)
 
 \`\`\`jsx
 <GaugeComponent
@@ -239,21 +289,23 @@ function generateCompleteDocumentation() {
 
 ---
 
-*This documentation is automatically generated. To regenerate: \`yarn docs\`*`;
+*This documentation is auto-generated from TypeScript source comments. To regenerate: \`yarn docs\`*
+`;
 
   return md;
 }
 
 // Main execution
 function main() {
-  console.log('Generating complete API documentation...');
-
-  // Generate documentation
-  const markdown = generateCompleteDocumentation();
+  console.log('Generating API documentation from TypeScript source...');
+  
+  const markdown = generateDocumentation();
   fs.writeFileSync(OUTPUT_FILE, markdown);
-
-  console.log('Generated complete documentation:');
+  
+  console.log('Generated documentation:');
   console.log('  - ' + OUTPUT_FILE);
+  console.log('\nDescriptions are extracted directly from JSDoc comments in:');
+  console.log('  - src/lib/GaugeComponent/types/*.ts');
 }
 
 main();

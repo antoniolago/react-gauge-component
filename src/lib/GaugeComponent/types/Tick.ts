@@ -56,8 +56,7 @@ export interface TickValueConfig {
     contentWidth?: number;
     /** Height of the foreignObject container (only used when renderContent is provided). */
     contentHeight?: number;
-    /** This enables configuration for the number of decimal digits of the 
-     * central value label */
+    /** Maximum number of decimal digits to display. */
     maxDecimalDigits?: number;
     /** The tick value label will inherit this */
     style?: React.CSSProperties;

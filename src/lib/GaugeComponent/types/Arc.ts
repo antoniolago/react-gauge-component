@@ -11,8 +11,7 @@ export interface Arc {
     width?: number,
     /** The number of subArcs, this overrides "subArcs" limits. */
     nbSubArcs?: number,
-    /** Boolean flag that enables or disables gradient mode, which
-     * draws a single arc with provided colors. */
+    /** Enables gradient mode, drawing a single arc with smooth color transitions. */
     gradient?: boolean,
     /** The colors of the arcs, this overrides "subArcs" colors. */
     colorArray?: Array<string>,

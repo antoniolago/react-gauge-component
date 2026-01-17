@@ -40,8 +40,7 @@ export interface ValueLabel {
     renderContent?: (value: number, arcColor: string) => React.ReactNode;
     /** This will sync the value label color with the current value of the Gauge. */
     matchColorWithArc?: boolean;
-    /** This enables configuration for the number of decimal digits of the 
-     * central value label */
+    /** Maximum number of decimal digits to display in the value label. */
     maxDecimalDigits?: number;
     /** Central label value will inherit this */
     style?: React.CSSProperties;
