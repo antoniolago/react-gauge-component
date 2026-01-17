@@ -54,8 +54,12 @@
   ],
   "jest": {
     "moduleNameMapper": {
-      "^d3$": "<rootDir>/src/__mocks__/d3.js"
-    }
+      "^d3$": "<rootDir>/src/__mocks__/d3.js",
+      "\\.(css|less|scss|sass)$": "<rootDir>/src/__mocks__/styleMock.js"
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(lodash-es)/)"
+    ]
   },
   "devDependencies": {
     "@babel/cli": "^7.12.8",
