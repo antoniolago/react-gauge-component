@@ -1,6 +1,7 @@
 import React from "react";
 import GaugeComponent from "../../lib";
-import { GaugePreset, SandboxPreset, ColorPreset, SizePreset } from "./types";
+import { LinearGaugeComponent } from "../../lib";
+import { GaugePreset, SandboxPreset, ColorPreset, SizePreset, LinearGaugePreset } from "./types";
 
 /**
  * Gallery presets for showcasing different gauge configurations
@@ -891,4 +892,127 @@ export const COLOR_THEMES = [
   { name: "neon", colors: ["#ff00ff", "#00ffff", "#ffff00", "#ff0080"] },
   { name: "sunset", colors: ["#ff4757", "#ff6b6b", "#ffa502", "#eccc68"] },
   { name: "arctic", colors: ["#74b9ff", "#81ecec", "#a29bfe", "#dfe6e9"] },
+];
+
+/**
+ * Linear Gauge presets for showcasing the new linear gauge component
+ */
+export const LINEAR_GAUGE_PRESETS: LinearGaugePreset[] = [
+  {
+    name: "Progress Bar",
+    description: "Simple horizontal progress indicator",
+    component: (value) => (
+      <LinearGaugeComponent
+        value={value}
+        minValue={0}
+        maxValue={100}
+        orientation="horizontal"
+        track={{
+          thickness: 16,
+          backgroundColor: "#e0e0e0",
+          borderRadius: 8,
+          segments: [{ color: "#4caf50" }],
+        }}
+        pointer={{ type: "none" }}
+        ticks={{ hideMinMax: true }}
+        valueLabel={{
+          hide: false,
+          formatValue: (v) => `${Math.round(v)}%`,
+          matchColorWithSegment: false,
+          style: { fontSize: "12px", color: "#333" },
+        }}
+      />
+    ),
+  },
+  {
+    name: "Temperature Scale",
+    description: "Vertical thermometer style with color zones",
+    component: (value) => (
+      <LinearGaugeComponent
+        value={value}
+        minValue={-20}
+        maxValue={50}
+        orientation="vertical"
+        track={{
+          thickness: 24,
+          backgroundColor: "#f5f5f5",
+          borderRadius: 12,
+          segments: [
+            { limit: 0, color: "#2196f3" },
+            { limit: 20, color: "#4caf50" },
+            { limit: 35, color: "#ff9800" },
+            { color: "#f44336" },
+          ],
+        }}
+        pointer={{ type: "line", color: "#333", size: 8 }}
+        ticks={{
+          count: 7,
+          position: "left",
+          formatLabel: (v) => `${v}°C`,
+        }}
+        valueLabel={{
+          formatValue: (v) => `${v.toFixed(1)}°C`,
+          matchColorWithSegment: true,
+        }}
+      />
+    ),
+  },
+  {
+    name: "Battery Indicator",
+    description: "Battery level with warning zones",
+    component: (value) => (
+      <LinearGaugeComponent
+        value={value}
+        minValue={0}
+        maxValue={100}
+        orientation="horizontal"
+        track={{
+          thickness: 30,
+          backgroundColor: "#2d2d2d",
+          borderRadius: 4,
+          segments: [
+            { limit: 20, color: "#f44336" },
+            { limit: 50, color: "#ff9800" },
+            { color: "#4caf50" },
+          ],
+        }}
+        pointer={{ type: "none" }}
+        ticks={{ hideMinMax: true }}
+        valueLabel={{
+          formatValue: (v) => `${Math.round(v)}%`,
+          matchColorWithSegment: true,
+          style: { fontSize: "16px", fontWeight: "bold" },
+        }}
+      />
+    ),
+  },
+  {
+    name: "Signal Strength",
+    description: "WiFi/cellular signal meter",
+    component: (value) => (
+      <LinearGaugeComponent
+        value={value}
+        minValue={0}
+        maxValue={100}
+        orientation="horizontal"
+        track={{
+          thickness: 12,
+          backgroundColor: "#333",
+          borderRadius: 6,
+          segments: [
+            { limit: 25, color: "#f44336" },
+            { limit: 50, color: "#ff9800" },
+            { limit: 75, color: "#ffeb3b" },
+            { color: "#4caf50" },
+          ],
+        }}
+        pointer={{ type: "marker", color: "#fff", size: 10 }}
+        ticks={{
+          count: 4,
+          formatLabel: (v) => (v === 0 ? "Weak" : v === 100 ? "Strong" : ""),
+        }}
+        valueLabel={{ hide: true }}
+      />
+    ),
+  },
 ];

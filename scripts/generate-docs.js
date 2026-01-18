@@ -94,7 +94,7 @@ function parseInterfaceBody(body) {
  */
 function loadAllTypes() {
   const allTypes = {};
-  const files = ['GaugeComponentProps.ts', 'Arc.ts', 'Labels.ts', 'Pointer.ts', 'Tick.ts', 'Tooltip.ts'];
+  const files = ['GaugeComponentProps.ts', 'Arc.ts', 'Labels.ts', 'Pointer.ts', 'Tick.ts', 'Tooltip.ts', 'LinearGauge.ts'];
   
   for (const file of files) {
     const filePath = path.join(TYPES_DIR, file);
@@ -119,7 +119,7 @@ function generatePropsMarkdown(props, allTypes, indent = 0, visited = new Set())
     md += `${prefix}- \`${prop.name}\` (\`${prop.type}\`) - ${desc}\n`;
     
     // Check if this type has nested properties we should expand
-    const typeMatch = prop.type.match(/^(Arc|Labels|PointerProps|TickLabels|ValueLabel|SubArc|Tooltip|TickValueConfig|TickLineConfig|ArcEffects|PointerEffects|LabelEffects|TickEffects|OuterArcConfig|DropShadowConfig)$/);
+    const typeMatch = prop.type.match(/^(Arc|Labels|PointerProps|TickLabels|ValueLabel|SubArc|Tooltip|TickValueConfig|TickLineConfig|ArcEffects|PointerEffects|LabelEffects|TickEffects|OuterArcConfig|DropShadowConfig|LinearGaugeTrack|LinearGaugePointer|LinearGaugeTicks|LinearGaugeValueLabel|LinearGaugeSubLine|LinearGaugeSegment)$/);
     if (typeMatch && allTypes[typeMatch[1]] && !visited.has(typeMatch[1])) {
       visited.add(typeMatch[1]);
       md += generatePropsMarkdown(allTypes[typeMatch[1]], allTypes, indent + 1, visited);
@@ -225,6 +225,48 @@ Extended pointer configuration with embedded value (for multi-pointer mode):
   md += `
 ---
 
+## LinearGaugeComponentProps
+
+\`<LinearGaugeComponent />\` accepts the following props:
+
+`;
+  if (allTypes.LinearGaugeComponentProps) {
+    for (const prop of allTypes.LinearGaugeComponentProps) {
+      const desc = prop.description || `The ${prop.name} property.`;
+      md += `- **\`${prop.name}\`** (\`${prop.type}\`) - ${desc}\n`;
+      
+      // Expand nested types
+      const typeMatch = prop.type.match(/^(LinearGaugeTrack|LinearGaugePointer|LinearGaugeTicks|LinearGaugeValueLabel)$/);
+      if (typeMatch && allTypes[typeMatch[1]]) {
+        md += generatePropsMarkdown(allTypes[typeMatch[1]], allTypes, 1, new Set([typeMatch[1]]));
+      }
+      md += '\n';
+    }
+  }
+
+  md += `
+### LinearGaugeSubLine
+
+Sub-line configuration for secondary reference line (like Grafana subarc):
+
+`;
+  if (allTypes.LinearGaugeSubLine) {
+    md += generatePropsMarkdown(allTypes.LinearGaugeSubLine, allTypes, 0, new Set());
+  }
+
+  md += `
+### LinearGaugeSegment
+
+Segment configuration for track coloring:
+
+`;
+  if (allTypes.LinearGaugeSegment) {
+    md += generatePropsMarkdown(allTypes.LinearGaugeSegment, allTypes, 0, new Set());
+  }
+
+  md += `
+---
+
 ## Common Patterns
 
 ### Basic Gauge
@@ -284,6 +326,52 @@ Extended pointer configuration with embedded value (for multi-pointer mode):
     { value: 25, color: '#FF6B6B', label: 'CPU' },
     { value: 60, color: '#4ECDC4', label: 'Memory' }
   ]}
+/>
+\`\`\`
+
+### Basic Linear Gauge
+
+\`\`\`jsx
+<LinearGaugeComponent
+  value={65}
+  orientation="horizontal"
+  track={{
+    thickness: 24,
+    segments: [
+      { limit: 30, color: '#5BE12C' },
+      { limit: 70, color: '#F5CD19' },
+      { color: '#EA4228' }
+    ]
+  }}
+/>
+\`\`\`
+
+### Linear Gauge with SubLine
+
+\`\`\`jsx
+<LinearGaugeComponent
+  value={45}
+  orientation="horizontal"
+  track={{
+    thickness: 30,
+    subLine: { show: true, thickness: 4, opacity: 0.5 },
+    segments: [
+      { limit: 33, color: '#4caf50' },
+      { limit: 66, color: '#ff9800' },
+      { color: '#f44336' }
+    ]
+  }}
+  pointer={{ type: 'triangle', showFill: true }}
+/>
+\`\`\`
+
+### Interactive Linear Gauge (Input Mode)
+
+\`\`\`jsx
+<LinearGaugeComponent
+  value={value}
+  onValueChange={setValue}
+  orientation="horizontal"
 />
 \`\`\`
 
