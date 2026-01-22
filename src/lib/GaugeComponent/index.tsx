@@ -76,6 +76,32 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
   // State to trigger re-render when custom content needs to be rendered
   const [customContentItems, setCustomContentItems] = useState<any[]>([]);
 
+  // Helper function to sync custom content state after chart render
+  // This needs to be called after initChart/renderChart to update React state
+  // with any custom content that was registered during the D3 render pass
+  const syncCustomContentState = () => {
+    const customContentConfig = customContent.current as any;
+    if (Array.isArray(customContentConfig?.items) && customContentConfig.items.length > 0) {
+      // Always update with the new items since DOM nodes change on each render
+      // We can't use JSON.stringify because items contain functions and DOM nodes
+      setCustomContentItems([...customContentConfig.items]);
+    } else if (customContentConfig?.domNode && customContentConfig?.renderContent) {
+      // Backward compatible single-item config
+      setCustomContentItems([{
+        domNode: customContentConfig.domNode,
+        renderContent: customContentConfig.renderContent,
+        value: customContentConfig.value,
+        arcColor: customContentConfig.arcColor,
+      }]);
+    } else {
+      setCustomContentItems(prev => prev.length > 0 ? [] : prev);
+    }
+  };
+  
+  // Store sync function in a ref so ResizeObserver callback always has access to latest version
+  const syncCustomContentStateRef = useRef(syncCustomContentState);
+  syncCustomContentStateRef.current = syncCustomContentState;
+
   // Use a ref for gauge so the ResizeObserver always has access to current props
   const gaugeRef = useRef<Gauge | null>(null);
   
@@ -252,34 +278,8 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     
     gauge.prevProps.current = mergedProps.current;
     
-    // Check if custom content needs to be rendered via React portal
-    // Only update state if custom content actually changed to avoid unnecessary re-renders
-    const customContentConfig = customContent.current as any;
-    if (Array.isArray(customContentConfig?.items) && customContentConfig.items.length > 0) {
-      setCustomContentItems(prev => {
-        if (JSON.stringify(prev) !== JSON.stringify(customContentConfig.items)) {
-          return customContentConfig.items;
-        }
-        return prev;
-      });
-    } else if (customContentConfig?.domNode && customContentConfig?.renderContent) {
-      // Backward compatible single-item config
-      const newItems = [{
-        domNode: customContentConfig.domNode,
-        renderContent: customContentConfig.renderContent,
-        value: customContentConfig.value,
-        arcColor: customContentConfig.arcColor,
-      }];
-      setCustomContentItems(prev => {
-        if (prev.length !== 1 || JSON.stringify(prev) !== JSON.stringify(newItems)) {
-          return newItems;
-        }
-        return prev;
-      });
-    } else if (customContentItems.length > 0) {
-      // Only clear if there were items before
-      setCustomContentItems([]);
-    }
+    // Sync custom content state after chart render
+    syncCustomContentState();
   }, [props]);
 
   // Set up ResizeObserver for responsive resizing
@@ -349,8 +349,13 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
             if (initialRenderDeferred.current) {
               initialRenderDeferred.current = false;
               chartHooks.initChart(gaugeRef.current, true);
+              // CRITICAL: Sync custom content state after deferred initial render
+              // This ensures renderContent labels are displayed on first render
+              syncCustomContentStateRef.current();
             } else {
               chartHooks.renderChart(gaugeRef.current, true);
+              // Sync custom content state after resize render
+              syncCustomContentStateRef.current();
             }
           }
         });
@@ -371,6 +376,8 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
         if (initialRenderDeferred.current && gaugeRef.current) {
           initialRenderDeferred.current = false;
           chartHooks.initChart(gaugeRef.current, true);
+          // CRITICAL: Sync custom content state after fallback initial render
+          syncCustomContentStateRef.current();
         }
       }, 100);
     }

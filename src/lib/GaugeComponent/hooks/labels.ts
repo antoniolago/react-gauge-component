@@ -601,18 +601,17 @@ const addCustomValueContent = (
     .attr("height", contentHeight)
     .style("overflow", "visible");
   
-  // Create a container div - React will render into this via innerHTML
-  // We use a simple approach: render the React element to string
-  const container = foreignObject
-    .append("xhtml:div")
-    .attr("class", "gauge-custom-value-content")
-    .style("width", "100%")
-    .style("height", "100%")
-    .style("display", "flex")
-    .style("align-items", "center")
-    .style("justify-content", "center")
-    .style("overflow", "visible")
-    .style("pointer-events", "none");
+  // Create a container div using standard DOM API for proper React portal compatibility
+  // D3's xhtml:div can have namespace issues with React portals
+  const foreignObjectNode = foreignObject.node() as Element;
+  const containerDiv = document.createElement('div');
+  containerDiv.className = 'gauge-custom-value-content';
+  // Use flex-direction: column to allow block-level elements to stack vertically
+  // This ensures h1, hr, p, etc. render correctly with their default block behavior
+  containerDiv.style.cssText = 'width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: visible; pointer-events: none;';
+  foreignObjectNode.appendChild(containerDiv);
+  
+  const container = { node: () => containerDiv };
   
   // For simple cases, we can render the content directly
   // The renderContent function returns a React element, but we need to handle it
