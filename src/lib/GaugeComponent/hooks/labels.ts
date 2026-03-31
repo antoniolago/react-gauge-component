@@ -91,7 +91,7 @@ export const addArcTicks = (gauge: Gauge, nextIndex?: () => number) => {
   gauge.arcData.current?.map((subArc: SubArc) => {
     if (subArc.showTick) return subArc.limit;
   }).forEach((tickValue: any) => {
-    if (tickValue) addTick(mapTick(tickValue, gauge), gauge, nextIndex ? nextIndex() : undefined);
+    if (tickValue !== undefined && tickValue !== null) addTick(mapTick(tickValue, gauge), gauge, nextIndex ? nextIndex() : undefined);
   });
 }
 
