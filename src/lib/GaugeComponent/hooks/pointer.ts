@@ -238,7 +238,7 @@ export const setupContext = (gauge: Gauge, isFirstAnimation: boolean = false): P
     let maxValue = gauge.props.maxValue as number;
     const { pointerPath } = gauge.pointer.current.context;
     var pointerRadius = getPointerRadius(gauge)
-    let length = pointer.type == PointerType.Needle ? pointerLength : 0.2;
+    let length = pointerLength;
     let typesWithPath = [PointerType.Needle, PointerType.Arrow];
     
     // CRITICAL: Preserve the last rendered progress from previous context
