@@ -8,7 +8,7 @@ import * as chartHooks from "./hooks/chart";
 import * as arcHooks from "./hooks/arc";
 import { isEmptyObject, mergeObjects, shallowEqual } from "./hooks/utils";
 import { Dimensions, defaultDimensions } from "./types/Dimensions";
-import { PointerRef, defaultPointerRef, MultiPointerRef } from "./types/Pointer";
+import { PointerRef, defaultPointerRef, MultiPointerRef, PointerType, getPointerLengthByType, PointerProps } from "./types/Pointer";
 import { Arc, getArcWidthByType } from "./types/Arc";
 import CONSTANTS from "./constants";
 
@@ -152,6 +152,14 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
     }
     if (gauge.props.marginInPercent === defaultGaugeProps.marginInPercent) {
       mergedProps.current.marginInPercent = getGaugeMarginByType(gauge.props.type as GaugeType);
+    }
+    // Apply type-specific pointer length: if user didn't explicitly set length,
+    // override the generic default (0.70) with the type-specific default
+    if (props.pointer?.length === undefined) {
+      const mergedPointer = mergedProps.current.pointer as PointerProps;
+      if (mergedPointer?.type) {
+        mergedPointer.length = getPointerLengthByType(mergedPointer.type as PointerType);
+      }
     }
     
     arcHooks.validateArcs(gauge);

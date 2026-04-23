@@ -3,7 +3,7 @@ import { interpolateNumber } from "d3-interpolate";
 import { drag } from "d3-drag";
 import { select } from "d3-selection";
 import "d3-transition";
-import { PointerContext, PointerProps, PointerType, PointerWithValue, MultiPointerRef, defaultPointerContext } from "../types/Pointer";
+import { PointerContext, PointerProps, PointerType, PointerWithValue, MultiPointerRef, defaultPointerContext, getPointerLengthByType } from "../types/Pointer";
 import { getCoordByValue, getEffectiveAngles } from "./arc";
 import { Gauge } from "../types/Gauge";
 import * as utils from "./utils";
@@ -915,7 +915,12 @@ const drawSingleMultiPointer = (
     
     // Setup context for this pointer
     const pointerRadius = getPointerRadiusForConfig(gauge, pointer);
-    const length = pointer.type === PointerType.Needle ? (pointer.length as number) : 0.2;
+
+    // Use type-specific default length if user didn't explicitly provide one,
+    // otherwise respect user's explicit length value
+    const length = pointerConfig.length !== undefined
+        ? pointerConfig.length
+        : getPointerLengthByType(pointer.type as PointerType);
     const typesWithPath = [PointerType.Needle, PointerType.Arrow];
     
     // Get previous value from prevProps if available

@@ -112,7 +112,7 @@ export const defaultPointer: PointerProps = {
     type: PointerType.Needle,
     color: undefined, // undefined = use arc color by default
     baseColor: "white",
-    length: 0.70,
+    length: 0.70, // Default length for Needle; Arrow and Blob have type-specific defaults applied via getPointerLengthByType
     width: 20, // this is a factor to multiply by the width of the gauge
     animate: true,
     elastic: false,
@@ -127,6 +127,22 @@ export const defaultPointer: PointerProps = {
     // Performance defaults - 60fps, fine threshold
     maxFps: 60,
     animationThreshold: 0.001
+}
+
+/**
+ * Returns the default pointer length for a given pointer type.
+ * Arrow pointers are shorter (0.2) since they're positioned on the arc,
+ * while Needle pointers extend from center (0.7).
+ * Blob pointers don't use pathLength (positioned by blobOffset), so length is irrelevant.
+ */
+export const getPointerLengthByType = (type: string): number => {
+    const pointerTypesLength: Record<string, number> = {
+        [PointerType.Needle]: 0.70,
+        [PointerType.Arrow]: 0.20,
+        [PointerType.Blob]: 0.70,
+    };
+    if (!type) type = PointerType.Needle;
+    return pointerTypesLength[type] ?? 0.70;
 }
 
 /**
