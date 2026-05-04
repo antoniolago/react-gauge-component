@@ -1,7 +1,7 @@
 # React Gauge Component API Reference
 
 > **GaugeComponent props and structure**  
-> Last updated: 2026-01-17
+> Last updated: 2026-01-18
 
 ## GaugeComponentProps
 
@@ -235,6 +235,111 @@ Extended pointer configuration with embedded value (for multi-pointer mode):
 
 ---
 
+## LinearGaugeComponentProps
+
+`<LinearGaugeComponent />` accepts the following props:
+
+- **`id`** (`string`) - Unique identifier for the gauge.
+
+- **`className`** (`string`) - CSS class name.
+
+- **`style`** (`React.CSSProperties`) - Inline styles.
+
+- **`value`** (`number`) - Current value of the gauge. Unit: gauge value units.
+
+- **`minValue`** (`number`) - Minimum value. Unit: gauge value units (default: 0).
+
+- **`maxValue`** (`number`) - Maximum value. Unit: gauge value units (default: 100).
+
+- **`orientation`** (`LinearGaugeOrientation`) - Gauge orientation: 'horizontal' or 'vertical'.
+
+- **`track`** (`LinearGaugeTrack`) - Track configuration.
+  - `thickness` (`number`) - Height/width of the track. Unit: pixels (default: 20).
+  - `backgroundColor` (`string`) - Background color for empty/unfilled portion.
+  - `borderRadius` (`number`) - Border radius for the track. Unit: pixels (default: 0, or half of thickness if rounded).
+  - `strokeWidth` (`number`) - Stroke width for track border. Unit: pixels.
+  - `strokeColor` (`string`) - Stroke color for track border.
+  - `effects` (`LinearGaugeEffects`) - Visual effects for the track.
+  - `segments` (`LinearGaugeSegment[]`) - List of segments (colored sections of the track).
+  - `colorArray` (`string[]`) - Colors array for gradient or segment coloring (overrides segments).
+  - `gradient` (`boolean`) - Enable gradient mode for smooth color transitions.
+  - `subLine` (`LinearGaugeSubLine`) - Sub-line configuration (secondary reference line like Grafana subarc).
+    - `show` (`boolean`) - Show the sub-line.
+    - `color` (`string`) - Sub-line color.
+    - `thickness` (`number`) - Sub-line thickness. Unit: pixels (default: 4).
+    - `offset` (`number`) - Sub-line position offset from main track. Unit: pixels (default: 0 = inside track).
+    - `opacity` (`number`) - Opacity of the sub-line. Unit: 0-1 (default: 0.5).
+
+- **`pointer`** (`LinearGaugePointer`) - Pointer/marker configuration.
+  - `type` (`'arrow' | 'triangle' | 'diamond' | 'line' | 'pill' | 'none'`) - Pointer type: 'arrow' (triangle arrow), 'triangle' (simple triangle), 'diamond', 'line' (line indicator), 'pill' (rounded capsule), or 'none'.
+  - `color` (`string`) - Pointer color.
+  - `size` (`number`) - Pointer size (width). Unit: pixels (default: 12).
+  - `height` (`number`) - Pointer height (for arrow/triangle). Unit: pixels (default: size * 1.5).
+  - `strokeWidth` (`number`) - Stroke width for the pointer. Unit: pixels.
+  - `strokeColor` (`string`) - Stroke color for the pointer.
+  - `animate` (`boolean`) - Whether to animate pointer movement.
+  - `animationDuration` (`number`) - Animation duration. Unit: milliseconds (default: 500).
+  - `position` (`'top' | 'bottom' | 'left' | 'right' | 'inside' | 'both'`) - Position: 'top', 'bottom', 'inside', 'both' for horizontal; 'left', 'right', 'inside', 'both' for vertical.
+  - `effects` (`LinearGaugeEffects`) - Visual effects for the pointer.
+  - `showFill` (`boolean`) - Show the fill/paint from min to current value (Grafana-style). Default: true.
+  - `offsetY` (`number`) - Y offset for pointer position. Unit: pixels (default: 0). Positive = away from track.
+
+- **`ticks`** (`LinearGaugeTicks`) - Tick marks configuration.
+  - `ticks` (`LinearGaugeTick[]`) - Array of tick configurations.
+  - `hideMinMax` (`boolean`) - Hide min/max ticks.
+  - `count` (`number`) - Number of auto-generated major ticks (if ticks array not provided).
+  - `minorTicks` (`number`) - Number of minor ticks between major ticks.
+  - `position` (`'top' | 'bottom' | 'left' | 'right' | 'inside-top' | 'inside-bottom' | 'inside-left' | 'inside-right' | 'both'`) - Tick position: 'top', 'bottom', 'inside-top', 'inside-bottom', or 'both' for horizontal; 'left', 'right', 'inside-left', 'inside-right', or 'both' for vertical.
+  - `labelsInside` (`boolean`) - For inside positions: place labels on same side as tick lines (default: false, labels on opposite side).
+  - `majorLength` (`number`) - Major tick line length. Unit: pixels (default: 12).
+  - `minorLength` (`number`) - Minor tick line length. Unit: pixels (default: 6).
+  - `length` (`number`) - Default tick line length (deprecated, use majorLength). Unit: pixels (default: 8).
+  - `width` (`number`) - Default tick line width. Unit: pixels (default: 1).
+  - `color` (`string`) - Default tick line color.
+  - `distanceFromTrack` (`number`) - Distance from track (for outside ticks). Unit: pixels (default: 2).
+  - `labelsOnMajorOnly` (`boolean`) - Show labels only for major ticks.
+  - `labelStyle` (`React.CSSProperties`) - Label style.
+  - `formatLabel` (`(value: number) => string`) - Function to format tick labels.
+
+- **`valueLabel`** (`LinearGaugeValueLabel`) - Value label configuration.
+  - `hide` (`boolean`) - Hide the value label.
+  - `position` (`'center' | 'right' | 'left' | 'top' | 'bottom'`) - Position of the value label: 'center' (inside track), 'right', 'left', 'top', 'bottom'.
+  - `formatValue` (`(value: number) => string`) - Custom format function for the value.
+  - `style` (`React.CSSProperties`) - Style for the value label.
+  - `maxDecimalDigits` (`number`) - Maximum decimal digits.
+  - `matchColorWithSegment` (`boolean`) - Match color with the current segment.
+  - `offsetX` (`number`) - X offset for value label position. Unit: pixels (default: 0).
+  - `offsetY` (`number`) - Y offset for value label position. Unit: pixels (default: 0).
+
+- **`onValueChange`** (`(value: number) => void`) - Callback when value changes (for interactive mode).
+
+- **`fadeInAnimation`** (`boolean`) - Enable fade-in animation.
+
+- **`margin`** (`number | { top?: number; bottom?: number; left?: number; right?: number }`) - Margin around the gauge. Unit: pixels or ratio.
+
+
+### LinearGaugeSubLine
+
+Sub-line configuration for secondary reference line (like Grafana subarc):
+
+- `show` (`boolean`) - Show the sub-line.
+- `color` (`string`) - Sub-line color.
+- `thickness` (`number`) - Sub-line thickness. Unit: pixels (default: 4).
+- `offset` (`number`) - Sub-line position offset from main track. Unit: pixels (default: 0 = inside track).
+- `opacity` (`number`) - Opacity of the sub-line. Unit: 0-1 (default: 0.5).
+
+### LinearGaugeSegment
+
+Segment configuration for track coloring:
+
+- `limit` (`number`) - The limit value for this segment. Unit: gauge value units.
+- `color` (`string`) - The color of this segment.
+- `length` (`number`) - The length of the segment. Unit: ratio (0-1, e.g., 0.5 = 50% of track).
+- `tooltip` (`string`) - Tooltip text shown on hover.
+- `onClick` (`() => void`) - Click handler for this segment.
+
+---
+
 ## Common Patterns
 
 ### Basic Gauge
@@ -294,6 +399,52 @@ Extended pointer configuration with embedded value (for multi-pointer mode):
     { value: 25, color: '#FF6B6B', label: 'CPU' },
     { value: 60, color: '#4ECDC4', label: 'Memory' }
   ]}
+/>
+```
+
+### Basic Linear Gauge
+
+```jsx
+<LinearGaugeComponent
+  value={65}
+  orientation="horizontal"
+  track={{
+    thickness: 24,
+    segments: [
+      { limit: 30, color: '#5BE12C' },
+      { limit: 70, color: '#F5CD19' },
+      { color: '#EA4228' }
+    ]
+  }}
+/>
+```
+
+### Linear Gauge with SubLine
+
+```jsx
+<LinearGaugeComponent
+  value={45}
+  orientation="horizontal"
+  track={{
+    thickness: 30,
+    subLine: { show: true, thickness: 4, opacity: 0.5 },
+    segments: [
+      { limit: 33, color: '#4caf50' },
+      { limit: 66, color: '#ff9800' },
+      { color: '#f44336' }
+    ]
+  }}
+  pointer={{ type: 'triangle', showFill: true }}
+/>
+```
+
+### Interactive Linear Gauge (Input Mode)
+
+```jsx
+<LinearGaugeComponent
+  value={value}
+  onValueChange={setValue}
+  orientation="horizontal"
 />
 ```
 
