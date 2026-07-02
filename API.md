@@ -17,6 +17,16 @@
 
 - **`value`** (`number`) - Current pointer value.
 
+- **`segmentedProgress`** (`boolean`) - Enables pointerless-style segmented progress coloring for the arc segments.
+
+- **`showPointer`** (`boolean`) - Top-level alias for pointer visibility. When false, the pointer is hidden.
+
+- **`activeSegmentColor`** (`string | Array<string>`) - Color or color palette used for filled segments when segmentedProgress is enabled. Falls back to each segment's configured color.
+
+- **`activeSegmentColors`** (`Array<string>`) - Color palette used for filled segments when segmentedProgress is enabled. Takes precedence over activeSegmentColor.
+
+- **`inactiveSegmentColor`** (`string`) - Color used for unfilled segments when segmentedProgress is enabled.
+
 - **`minValue`** (`number`) - Minimum value possible for the Gauge.
 
 - **`maxValue`** (`number`) - Maximum value possible for the Gauge.
