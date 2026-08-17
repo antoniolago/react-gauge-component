@@ -1,10 +1,31 @@
 import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle, useRef } from 'react';
-import { Copy, Check, Shuffle, ClipboardPaste, Sliders } from 'lucide-react';
+import { Copy, Check, Shuffle, ClipboardPaste, Sliders, BarChart2 } from 'lucide-react';
 import GaugeComponent from '../../../lib';
+import { LinearGaugeComponent } from '../../../lib';
 import { SandboxToolbar } from './SandboxToolbar';
+import { LinearGaugeToolbar } from './LinearGaugeToolbar';
 import { styles, createStyles } from '../styles';
-import { generateRandomConfig, copyToClipboard, getInitialValue, GRAFANA_NEON_CONFIG } from '../utils';
+import { generateRandomConfig, generateRandomLinearConfig, copyToClipboard, getInitialValue, GRAFANA_NEON_CONFIG, parseJsxConfig, evaluateFunctions, stringifyConfig } from '../utils';
 import { GaugeComponentProps } from '../../../lib/GaugeComponent/types/GaugeComponentProps';
+import { LinearGaugeComponentProps } from '../../../lib/GaugeComponent/types/LinearGauge';
+
+// Default linear gauge config
+const DEFAULT_LINEAR_CONFIG: Partial<LinearGaugeComponentProps> = {
+  orientation: 'horizontal',
+  track: {
+    thickness: 24,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 12,
+    segments: [
+      { limit: 30, color: '#4caf50' },
+      { limit: 70, color: '#ff9800' },
+      { color: '#f44336' },
+    ],
+  },
+  pointer: { type: 'triangle', color: '#333', size: 10 },
+  ticks: { count: 5, hideMinMax: false },
+  valueLabel: { hide: false, matchColorWithSegment: true },
+};
 
 interface SandboxEditorProps {
   isLightTheme: boolean;
@@ -24,6 +45,8 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
   
   const [isOpen, setIsOpen] = useState(true);
   const [config, setConfig] = useState<Partial<GaugeComponentProps>>(() => GRAFANA_NEON_CONFIG);
+  const [linearConfig, setLinearConfig] = useState<Partial<LinearGaugeComponentProps>>(() => DEFAULT_LINEAR_CONFIG);
+  const [isLinearMode, setIsLinearMode] = useState(false);
   const [value, setValue] = useState(() => getInitialValue(GRAFANA_NEON_CONFIG));
   const [autoAnimate, setAutoAnimate] = useState(false);
   const [sandboxWidth, setSandboxWidth] = useState('400px');
@@ -80,102 +103,82 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
     // This prevents unnecessary remounts which cause the pointer to animate from 0
   }, []);
 
-  const handleRandomize = useCallback(() => {
-    const newConfig = generateRandomConfig();
-    setConfig(newConfig);
-    setValue(getInitialValue(newConfig));
-    setKey(k => k + 1);
+  const handleLinearConfigChange = useCallback((newConfig: Partial<LinearGaugeComponentProps>) => {
+    setLinearConfig(newConfig);
   }, []);
 
+  const handleRandomize = useCallback(() => {
+    if (isLinearMode) {
+      const newConfig = generateRandomLinearConfig();
+      const initialValue = newConfig.__initialValue ?? getInitialValue(newConfig);
+      delete newConfig.__initialValue;
+      setLinearConfig(newConfig);
+      setValue(initialValue);
+    } else {
+      const newConfig = generateRandomConfig();
+      setConfig(newConfig);
+      setValue(getInitialValue(newConfig));
+    }
+    setKey(k => k + 1);
+  }, [isLinearMode]);
+
   const handleCopy = useCallback(() => {
-    copyToClipboard(config, value, () => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [config, value]);
+    if (isLinearMode) {
+      // Copy linear gauge JSX using proper stringifyConfig
+      const linearConfigWithMinMax = {
+        minValue: linearConfig?.minValue ?? 0,
+        maxValue: linearConfig?.maxValue ?? 100,
+        ...linearConfig
+      };
+      const linearJsx = stringifyConfig(linearConfigWithMinMax, value, 'LinearGaugeComponent');
+      navigator.clipboard.writeText(linearJsx).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    } else {
+      copyToClipboard(config, value, () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }, [config, linearConfig, value, isLinearMode]);
 
   const handlePaste = useCallback(() => {
     navigator.clipboard.readText().then(text => {
       try {
-        let parsed: any = {};
+        const { config: parsedConfig, value: parsedValue, strippedFunctions } = parseJsxConfig(text);
         
-        // Check if it's JSX/hybrid format
-        if (text.includes('<GaugeComponent') || text.includes('<Gauge')) {
-          // Parse JSX props
-          const extractValue = (str: string, start: number): { value: string, end: number } => {
-            if (str[start] === '"' || str[start] === "'") {
-              const quote = str[start];
-              let end = start + 1;
-              while (end < str.length && str[end] !== quote) {
-                if (str[end] === '\\') end++;
-                end++;
-              }
-              return { value: str.slice(start + 1, end), end: end + 1 };
-            }
-            if (str[start] === '{') {
-              let depth = 1;
-              let end = start + 1;
-              while (end < str.length && depth > 0) {
-                if (str[end] === '{') depth++;
-                if (str[end] === '}') depth--;
-                if (str[end] === '"' || str[end] === "'") {
-                  const quote = str[end];
-                  end++;
-                  while (end < str.length && str[end] !== quote) {
-                    if (str[end] === '\\') end++;
-                    end++;
-                  }
-                }
-                end++;
-              }
-              return { value: str.slice(start + 1, end - 1), end };
-            }
-            return { value: '', end: start };
-          };
+        // Update value if present
+        if (parsedValue !== undefined) {
+          setValue(Number(parsedValue));
+        }
+        
+        // Update config and force full re-render
+        if (Object.keys(parsedConfig).length > 0 || parsedValue !== undefined) {
+          // Reset to empty config first to ensure clean state
+          setConfig({});
           
-          const propPattern = /(\w+)=(?={|"|')/g;
-          let match;
-          while ((match = propPattern.exec(text)) !== null) {
-            const propName = match[1];
-            const startIdx = match.index + match[0].length;
-            const { value: rawValue } = extractValue(text, startIdx);
+          // Use setTimeout to ensure state is cleared before setting new config
+          setTimeout(() => {
+            // Evaluate function strings to actual functions
+            const configWithFunctions = evaluateFunctions(parsedConfig);
+            setConfig(configWithFunctions);
+            // Force full re-render by incrementing key
+            setKey(k => k + 1);
             
-            let propValue: any = rawValue;
-            
-            if (text[startIdx] === '"' || text[startIdx] === "'") {
-              propValue = rawValue;
-            } else {
-              try {
-                let jsonStr = rawValue
-                  .replace(/(\w+)\s*:/g, '"$1":')
-                  .replace(/'/g, '"')
-                  .replace(/,(\s*[}\]])/g, '$1');
-                propValue = JSON.parse(jsonStr);
-              } catch {
-                try {
-                  propValue = eval(`(${rawValue})`);
-                } catch {
-                  propValue = rawValue;
-                }
-              }
+            // Inform user about functions
+            if (strippedFunctions.length > 0) {
+              alert(
+                `Note: The following function properties were evaluated:\n\n` +
+                `• ${strippedFunctions.join('\n• ')}\n\n` +
+                `Functions are executed in a limited sandbox for security.`
+              );
             }
-            parsed[propName] = propValue;
-          }
-        } else {
-          parsed = JSON.parse(text);
-        }
-        
-        if (parsed.value !== undefined) {
-          setValue(Number(parsed.value));
-          delete parsed.value;
-        }
-        if (Object.keys(parsed).length > 0) {
-          setConfig(parsed);
-          setKey(k => k + 1);
+          }, 0);
         }
       } catch (e) {
         console.error('Parse error:', e);
-        alert('Could not parse clipboard. Use <GaugeComponent .../> JSX format.');
+        alert('Could not parse clipboard. Use <GaugeComponent .../> JSX or JSON format.');
       }
     }).catch(() => {
       alert('Could not read clipboard. Please allow clipboard access.');
@@ -230,22 +233,33 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
             }}>
               
               <div style={{ width: '100%', height: 'calc(100% - 30px)' }}>
-                <GaugeComponent
-                  key={key}
-                  {...config}
-                  value={value}
-                  onValueChange={interactionEnabled ? setValue : undefined}
-                  onPointerChange={interactionEnabled ? (index, newValue) => {
-                    // Handle multi-pointer drag
-                    if (config.pointers && config.pointers.length > 0) {
-                      const newPointers = [...config.pointers];
-                      newPointers[index] = { ...newPointers[index], value: newValue };
-                      setConfig({ ...config, pointers: newPointers });
-                    }
-                    // Also update main value for primary pointer
-                    if (index === 0) setValue(newValue);
-                  } : undefined}
-                />
+                {isLinearMode ? (
+                  <LinearGaugeComponent
+                    key={key}
+                    {...linearConfig}
+                    value={value}
+                    minValue={linearConfig?.minValue ?? 0}
+                    maxValue={linearConfig?.maxValue ?? 100}
+                    onValueChange={interactionEnabled ? setValue : undefined}
+                  />
+                ) : (
+                  <GaugeComponent
+                    key={key}
+                    {...config}
+                    value={value}
+                    onValueChange={interactionEnabled ? setValue : undefined}
+                    onPointerChange={interactionEnabled ? (index, newValue) => {
+                      // Handle multi-pointer drag
+                      if (config.pointers && config.pointers.length > 0) {
+                        const newPointers = [...config.pointers];
+                        newPointers[index] = { ...newPointers[index], value: newValue };
+                        setConfig({ ...config, pointers: newPointers });
+                      }
+                      // Also update main value for primary pointer
+                      if (index === 0) setValue(newValue);
+                    } : undefined}
+                  />
+                )}
               </div>
               
               {/* Action buttons */}
@@ -353,17 +367,19 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <Sliders size={14} style={{ opacity: 0.6 }} />
-                <input type="range" min={config?.minValue ?? 0} max={config?.maxValue ?? 100} value={value} 
+                <input type="range" min={isLinearMode ? (linearConfig?.minValue ?? 0) : (config?.minValue ?? 0)} max={isLinearMode ? (linearConfig?.maxValue ?? 100) : (config?.maxValue ?? 100)} value={value} 
                   onChange={(e) => { 
                     const newValue = Number(e.target.value);
                     setValue(newValue); 
                     if (autoAnimate) setAutoAnimate(false);
-                    // Sync to pointers[0] if in multi-pointer mode
-                    const cfg = config as any;
-                    if (cfg?.pointers?.length > 0) {
-                      const pointers = [...cfg.pointers];
-                      pointers[0] = { ...pointers[0], value: newValue };
-                      setConfig({ ...config, pointers });
+                    if (!isLinearMode) {
+                      // Sync to pointers[0] if in multi-pointer mode
+                      const cfg = config as any;
+                      if (cfg?.pointers?.length > 0) {
+                        const pointers = [...cfg.pointers];
+                        pointers[0] = { ...pointers[0], value: newValue };
+                        setConfig({ ...config, pointers });
+                      }
                     }
                   }} 
                   style={{ ...styles.slider, flex: 1, minWidth: '100px' }} step="0.1" />
@@ -375,19 +391,27 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>Min</span>
-                <input type="number" value={config?.minValue ?? 0} 
+                <input type="number" value={isLinearMode ? (linearConfig?.minValue ?? 0) : (config?.minValue ?? 0)} 
                   onChange={(e) => {
                     const newMin = Number(e.target.value);
-                    setConfig({ ...config, minValue: newMin });
+                    if (isLinearMode) {
+                      setLinearConfig({ ...linearConfig, minValue: newMin });
+                    } else {
+                      setConfig({ ...config, minValue: newMin });
+                    }
                     if (value < newMin) setValue(newMin);
                   }}
                   style={{ ...styles.toolBtn, width: '55px', padding: '3px 5px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)', fontSize: '0.75rem' }}
                 />
                 <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>Max</span>
-                <input type="number" value={config?.maxValue ?? 100} 
+                <input type="number" value={isLinearMode ? (linearConfig?.maxValue ?? 100) : (config?.maxValue ?? 100)} 
                   onChange={(e) => {
                     const newMax = Number(e.target.value);
-                    setConfig({ ...config, maxValue: newMax });
+                    if (isLinearMode) {
+                      setLinearConfig({ ...linearConfig, maxValue: newMax });
+                    } else {
+                      setConfig({ ...config, maxValue: newMax });
+                    }
                     if (value > newMax) setValue(newMax);
                   }}
                   style={{ ...styles.toolBtn, width: '55px', padding: '3px 5px', textAlign: 'center' as const, border: '1px solid rgba(255,255,255,0.2)', fontSize: '0.75rem' }}
@@ -406,11 +430,11 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
               {(['semicircle', 'radial', 'grafana'] as const).map((gaugeType) => (
                 <button 
                   key={gaugeType}
-                  onClick={() => setConfig({ ...config, type: gaugeType })} 
+                  onClick={() => { setIsLinearMode(false); setConfig({ ...config, type: gaugeType }); }} 
                   style={{ 
                     flex: 1,
-                    background: config?.type === gaugeType ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                    border: config?.type === gaugeType ? '2px solid #3b82f6' : '2px solid transparent',
+                    background: !isLinearMode && config?.type === gaugeType ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    border: !isLinearMode && config?.type === gaugeType ? '2px solid #3b82f6' : '2px solid transparent',
                     borderRadius: '8px',
                     padding: '6px 4px',
                     cursor: 'pointer',
@@ -434,14 +458,45 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
                   </div>
                   <span style={{ 
                     fontSize: '0.65rem', 
-                    fontWeight: config?.type === gaugeType ? 600 : 400,
-                    color: config?.type === gaugeType ? '#60a5fa' : 'rgba(255,255,255,0.6)',
+                    fontWeight: !isLinearMode && config?.type === gaugeType ? 600 : 400,
+                    color: !isLinearMode && config?.type === gaugeType ? '#60a5fa' : 'rgba(255,255,255,0.6)',
                     marginTop: '2px',
                   }}>
                     {gaugeType.charAt(0).toUpperCase() + gaugeType.slice(1)}
                   </span>
                 </button>
               ))}
+              {/* Linear Gauge Option */}
+              <button 
+                onClick={() => { setIsLinearMode(true); setKey(k => k + 1); }} 
+                style={{ 
+                  flex: 1,
+                  background: isLinearMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                  border: isLinearMode ? '2px solid #3b82f6' : '2px solid transparent',
+                  borderRadius: '8px',
+                  padding: '6px 4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  transition: 'all 0.15s ease',
+                  minWidth: 0,
+                }} 
+                title="Linear Gauge" 
+                type="button"
+              >
+                <div style={{ width: '100%', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BarChart2 size={28} style={{ color: isLinearMode ? '#60a5fa' : 'rgba(255,255,255,0.5)', transform: 'rotate(90deg)' }} />
+                </div>
+                <span style={{ 
+                  fontSize: '0.65rem', 
+                  fontWeight: isLinearMode ? 600 : 400,
+                  color: isLinearMode ? '#60a5fa' : 'rgba(255,255,255,0.6)',
+                  marginTop: '2px',
+                }}>
+                  Linear
+                </span>
+              </button>
             </div>
           </div>
           
@@ -450,22 +505,29 @@ export const SandboxEditor = forwardRef<SandboxEditorHandle, SandboxEditorProps>
             flex: isHorizontalLayout ? '1' : '0 0 auto',
             minWidth: 0,
           }}>
-            <SandboxToolbar
-              config={config}
-              value={value}
-              autoAnimate={autoAnimate}
-              sandboxWidth={sandboxWidth}
-              sandboxHeight={sandboxHeight}
-              gaugeAlign={gaugeAlign}
-              onConfigChange={handleConfigChange}
-              onValueChange={setValue}
-              onAutoAnimateChange={setAutoAnimate}
-              onSizeChange={handleSizeChange}
-              onAlignChange={setGaugeAlign}
-              interactionEnabled={interactionEnabled}
-              onInteractionChange={setInteractionEnabled}
-              onForceRemount={() => setKey(k => k + 1)}
-            />
+            {isLinearMode ? (
+              <LinearGaugeToolbar
+                config={linearConfig}
+                onConfigChange={handleLinearConfigChange}
+              />
+            ) : (
+              <SandboxToolbar
+                config={config}
+                value={value}
+                autoAnimate={autoAnimate}
+                sandboxWidth={sandboxWidth}
+                sandboxHeight={sandboxHeight}
+                gaugeAlign={gaugeAlign}
+                onConfigChange={handleConfigChange}
+                onValueChange={setValue}
+                onAutoAnimateChange={setAutoAnimate}
+                onSizeChange={handleSizeChange}
+                onAlignChange={setGaugeAlign}
+                interactionEnabled={interactionEnabled}
+                onInteractionChange={setInteractionEnabled}
+                onForceRemount={() => setKey(k => k + 1)}
+              />
+            )}
           </div>
         </div>
       )}

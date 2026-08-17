@@ -1,4 +1,5 @@
 import { GaugeComponentProps } from '../../lib/GaugeComponent/types/GaugeComponentProps';
+import { LinearGaugeComponentProps } from '../../lib/GaugeComponent/types/LinearGauge';
 import { ReactElement } from 'react';
 
 export interface GaugePreset {
@@ -10,6 +11,15 @@ export interface GaugePreset {
   component: (value: number) => ReactElement;
   /** Optional config override for editor - extracted from component if not provided */
   config?: Partial<GaugeComponentProps>;
+}
+
+export interface LinearGaugePreset {
+  name: string;
+  description: string;
+  /** Render function that returns LinearGaugeComponent JSX */
+  component: (value: number) => ReactElement;
+  /** Optional config override for editor */
+  config?: Partial<LinearGaugeComponentProps>;
 }
 
 export interface SandboxPreset {
