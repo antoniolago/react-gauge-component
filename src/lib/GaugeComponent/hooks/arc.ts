@@ -11,6 +11,12 @@ import { GaugeType } from '../types/GaugeComponentProps';
 import { throttle } from './throttle';
 import { Arc, SubArc } from '../types/Arc';
 
+type ArcDatum = SubArc & {
+  value?: number;
+  segmentedProgressActive?: boolean;
+  segmentedProgressGradientActive?: boolean;
+};
+
 /**
  * Get effective angles for a gauge, with fallback to type defaults if not yet calculated.
  * This ensures ticks are positioned correctly even on first render before dimensions are set.
@@ -90,6 +96,91 @@ const onArcMouseClick = (event: any, d: any) => {
   if (d.data.onMouseClick != undefined) d.data.onMouseClick(event);
 }
 
+export const getSegmentedProgressColor = (
+  segmentEndPercentage: number,
+  progressPercentage: number,
+  activeColor: string | string[] | undefined,
+  inactiveColor: string,
+  fallbackActiveColor: string | number | undefined,
+  segmentIndex: number = 0
+): string | number => {
+  const fillReachedSegmentEnd = segmentEndPercentage <= progressPercentage + 0.000000000001;
+  if (!fillReachedSegmentEnd) return inactiveColor;
+
+  if (Array.isArray(activeColor) && activeColor.length > 0) {
+    return activeColor[segmentIndex % activeColor.length];
+  }
+
+  if (typeof activeColor === 'string') {
+    return activeColor;
+  }
+
+  return fallbackActiveColor ?? inactiveColor;
+};
+
+const applySegmentedProgressColors = (gauge: Gauge) => {
+  if (!gauge.props.segmentedProgress) return;
+
+  const minValue = gauge.props.minValue as number;
+  const maxValue = gauge.props.maxValue as number;
+  const value = gauge.props.value as number;
+  const progressPercentage = utils.calculatePercentage(minValue, maxValue, value);
+  const inactiveColor = gauge.props.inactiveSegmentColor || "#E6E6E9";
+  const activeColor = gauge.props.activeSegmentColors || gauge.props.activeSegmentColor;
+  const arcData = gauge.arcData.current as ArcDatum[];
+  const totalSegmentValue = arcData.reduce((sum: number, subArcData: ArcDatum) => {
+    return sum + (Number(subArcData.value) || 0);
+  }, 0);
+
+  if (totalSegmentValue <= 0) return;
+
+  let currentSegmentEnd = 0;
+  gauge.arcData.current = arcData.map((subArcData: ArcDatum, index: number) => {
+    currentSegmentEnd += Number(subArcData.value) || 0;
+    const segmentEndPercentage = currentSegmentEnd / totalSegmentValue;
+    const segmentedProgressActive = segmentEndPercentage <= progressPercentage + 0.000000000001;
+    return {
+      ...subArcData,
+      segmentedProgressActive,
+      color: getSegmentedProgressColor(
+        segmentEndPercentage,
+        progressPercentage,
+        activeColor,
+        inactiveColor,
+        subArcData.color,
+        index
+      )
+    };
+  });
+};
+
+const clampPercentage = (percentage: number) => Math.max(0, Math.min(1, percentage));
+
+export const isSegmentedProgressGradient = (gauge: Gauge) =>
+  gauge.props?.arc?.gradient === true && gauge.props.segmentedProgress === true;
+
+export const getSegmentedProgressGradientArcData = (gauge: Gauge, percent: number | undefined = undefined) => {
+  const currentPercentage = clampPercentage(percent != undefined ? percent : utils.calculatePercentage(
+    gauge.props.minValue as number,
+    gauge.props.maxValue as number,
+    gauge.props.value as number
+  ));
+  const inactiveColor = gauge.props.inactiveSegmentColor || "#E6E6E9";
+
+  return [
+    {
+      value: currentPercentage,
+      color: getColorByPercentage(currentPercentage, gauge),
+      segmentedProgressGradientActive: true,
+    },
+    {
+      value: 1 - currentPercentage,
+      color: inactiveColor,
+      segmentedProgressGradientActive: false,
+    },
+  ];
+};
+
 export const setArcData = (gauge: Gauge) => {
   let arc = gauge.props.arc as Arc;
   let minValue = gauge.props.minValue as number;
@@ -158,6 +249,8 @@ export const setArcData = (gauge: Gauge) => {
       tooltip: undefined,
     }));
   }
+
+  applySegmentedProgressColors(gauge);
 };
 
 const getGrafanaMainArcData = (gauge: Gauge, percent: number | undefined = undefined) => {
@@ -255,7 +348,8 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
       ? Math.min(outerArcConfig.cornerRadius, maxCornerRadius) 
       : (cornerRadius ? Math.min(cornerRadius, maxCornerRadius) : 0);
     // Outer arc has its own padding - does NOT inherit from main arc
-    const outerPadding = outerArcConfig?.padding ?? 0;
+    const isSegmentedGradientProgress = isSegmentedProgressGradient(gauge);
+    const outerPadding = isSegmentedGradientProgress ? 0 : (outerArcConfig?.padding ?? 0);
     const padEndpoints = gauge.props.arc?.padEndpoints;
     // Gap between main arc and outer arc is 2px
     const gap = 2;
@@ -266,7 +360,10 @@ const drawGrafanaOuterArc = (gauge: Gauge, resize: boolean = false) => {
       .padAngle(padEndpoints === false ? 0 : outerPadding);
     
     // Generate pie data
-    let outerPieData = gauge.pieChart.current(gauge.arcData.current);
+    const outerArcData = isSegmentedGradientProgress
+      ? getSegmentedProgressGradientArcData(gauge)
+      : gauge.arcData.current;
+    let outerPieData = gauge.pieChart.current(outerArcData);
     
     // Apply manual padding when padEndpoints is false
     if (padEndpoints === false && outerPadding > 0 && outerPieData.length > 1) {
@@ -302,16 +399,19 @@ export const drawArc = (gauge: Gauge, percent: number | undefined = undefined) =
   const { innerRadius, outerRadius } = gauge.dimensions.current;
 
   let data: any = {}
+  const isSegmentedGradientProgress = isSegmentedProgressGradient(gauge);
   //When gradient enabled, it'll have only 1 arc
-  if (gauge.props?.arc?.gradient) {
+  if (gauge.props?.arc?.gradient && !gauge.props.segmentedProgress) {
     data = [{ value: 1 }];
+  } else if (isSegmentedGradientProgress) {
+    data = getSegmentedProgressGradientArcData(gauge, percent);
   } else {
     data = gauge.arcData.current
   }
-  if (gauge.props.type == GaugeType.Grafana) {
+  if (gauge.props.type == GaugeType.Grafana && !gauge.props.segmentedProgress) {
     data = getGrafanaMainArcData(gauge, percent);
   }
-  let arcPadding = padding || 0;
+  let arcPadding = isSegmentedGradientProgress ? 0 : (padding || 0);
   let arcCornerRadius = cornerRadius || 0;
   const padEndpoints = gauge.props.arc?.padEndpoints;
   
@@ -381,11 +481,16 @@ export const setupTooltip = (gauge: Gauge) => {
 }
 
 export const applyColors = (subArcsPath: any, gauge: Gauge) => {
-  if (gauge.props?.arc?.gradient) {
+  if (gauge.props?.arc?.gradient && !gauge.props.segmentedProgress) {
     let uniqueId = `subArc-linear-gradient-${Math.random()}`
     let gradEl = createGradientElement(gauge.doughnut.current, uniqueId);
     applyGradientColors(gradEl, gauge)
     subArcsPath.style("fill", (d: any) => `url(#${uniqueId})`);
+  } else if (gauge.props?.arc?.gradient && gauge.props.segmentedProgress) {
+    let uniqueId = `segmented-progress-gradient-${Math.random()}`
+    let gradEl = createSegmentedProgressGradientElement(gauge.doughnut.current, uniqueId, gauge);
+    applySegmentedProgressGradientColors(gradEl, gauge);
+    subArcsPath.style("fill", (d: any) => d.data.segmentedProgressGradientActive ? `url(#${uniqueId})` : d.data.color);
   } else {
     subArcsPath.style("fill", (d: any) => d.data.color);
   }
@@ -527,6 +632,20 @@ export const getArcDataByPercentage = (percentage: number, gauge: Gauge): SubArc
  * Falls back to getArcDataByPercentage for non-gradient mode.
  */
 export const getColorByPercentage = (percentage: number, gauge: Gauge): string => {
+  if (gauge.props.segmentedProgress && gauge.props.activeSegmentColors?.length) {
+    const colorIndex = Math.max(0, Math.ceil(percentage * gauge.props.activeSegmentColors.length) - 1);
+    return gauge.props.activeSegmentColors[colorIndex % gauge.props.activeSegmentColors.length];
+  }
+
+  if (gauge.props.segmentedProgress && Array.isArray(gauge.props.activeSegmentColor) && gauge.props.activeSegmentColor.length) {
+    const colorIndex = Math.max(0, Math.ceil(percentage * gauge.props.activeSegmentColor.length) - 1);
+    return gauge.props.activeSegmentColor[colorIndex % gauge.props.activeSegmentColor.length];
+  }
+
+  if (gauge.props.segmentedProgress && typeof gauge.props.activeSegmentColor === 'string') {
+    return gauge.props.activeSegmentColor;
+  }
+
   // For non-gradient mode, use the existing arc data lookup
   if (!gauge.props?.arc?.gradient) {
     const arcData = getArcDataByPercentage(percentage, gauge);
@@ -583,6 +702,33 @@ export const applyGradientColors = (gradEl: any, gauge: Gauge) => {
   )
 }
 
+export const applySegmentedProgressGradientColors = (gradEl: any, gauge: Gauge) => {
+  const activeArcData = (gauge.arcData.current as ArcDatum[])
+    .filter((subArcData) => subArcData.segmentedProgressActive);
+
+  if (activeArcData.length === 0) return;
+
+  if (activeArcData.length === 1) {
+    gradEl.append("stop")
+      .attr("offset", "0%")
+      .style("stop-color", activeArcData[0].color)
+      .style("stop-opacity", 1);
+    gradEl.append("stop")
+      .attr("offset", "100%")
+      .style("stop-color", activeArcData[0].color)
+      .style("stop-opacity", 1);
+    return;
+  }
+
+  activeArcData.forEach((subArcData, index) => {
+    const offset = (index / (activeArcData.length - 1)) * 100;
+    gradEl.append("stop")
+      .attr("offset", `${offset}%`)
+      .style("stop-color", subArcData.color)
+      .style("stop-opacity", 1);
+  });
+}
+
 //Depending on the number of levels in the chart
 //This function returns the same number of colors
 export const getColors = (nbArcsToDisplay: number, gauge: Gauge) => {
@@ -630,6 +776,18 @@ export const createGradientElement = (div: any, uniqueId: string) => {
     .attr("y1", "0%")
     .attr("y2", "0%")
     ;
+  return lg
+}
+
+export const createSegmentedProgressGradientElement = (div: any, uniqueId: string, gauge: Gauge) => {
+  const { outerRadius } = gauge.dimensions.current;
+  var lg = div.append("defs").append("linearGradient")
+    .attr("id", uniqueId)
+    .attr("gradientUnits", "userSpaceOnUse")
+    .attr("x1", -outerRadius)
+    .attr("x2", outerRadius)
+    .attr("y1", 0)
+    .attr("y2", 0);
   return lg
 }
 

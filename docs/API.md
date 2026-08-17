@@ -51,6 +51,14 @@ To regenerate, run: `yarn docs`
 | `id` | `string` | No | Gauge element will inherit this. |
 | `className` | `string` | No | Gauge element will inherit this. |
 | `style` | `React.CSSProperties` | No | Gauge element will inherit this. |
+| `value` | `number` | No | Current pointer value. |
+| `segmentedProgress` | `boolean` | No | Enables pointerless-style segmented progress coloring for the arc segments. |
+| `showPointer` | `boolean` | No | Top-level alias for pointer visibility. When false, the pointer is hidden. |
+| `activeSegmentColor` | `string \| Array&lt;string&gt;` | No | Color or color palette used for filled segments when segmentedProgress is enabled. Falls back to each segment's configured color. |
+| `activeSegmentColors` | `Array&lt;string&gt;` | No | Color palette used for filled segments when segmentedProgress is enabled. Takes precedence over activeSegmentColor. |
+| `inactiveSegmentColor` | `string` | No | Color used for unfilled segments when segmentedProgress is enabled. |
+| `minValue` | `number` | No | Minimum value possible for the Gauge. |
+| `maxValue` | `number` | No | Maximum value possible for the Gauge. |
 
 ---
 
@@ -305,4 +313,3 @@ Enum values: Needle, Blob, Arrow
 | `text` | `string` | No | - |
 
 ---
-

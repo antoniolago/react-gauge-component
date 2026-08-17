@@ -396,7 +396,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         const isFirstAnimation = !gauge.initialAnimationTriggered?.current;
         const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
         
-        if (isGrafana && shouldAnimate) {
+        if (isGrafana && shouldAnimate && !gauge.props.segmentedProgress) {
             const minValue = gauge.props.minValue as number;
             const maxValue = gauge.props.maxValue as number;
             
@@ -443,8 +443,9 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                 pointerHooks.drawPointer(gauge, resize);
             }
             
-            // For Grafana, always update arc fill (even with 0 pointers)
-            if (gauge.props.type === GaugeType.Grafana) {
+            // For Grafana, always update arc fill (even with 0 pointers).
+            // Segmented progress owns its own arc segment colors.
+            if (gauge.props.type === GaugeType.Grafana && !gauge.props.segmentedProgress) {
                 const minValue = gauge.props.minValue as number;
                 const maxValue = gauge.props.maxValue as number;
                 const currentPercent = utilHooks.calculatePercentage(minValue, maxValue, gauge.props.value as number);
@@ -573,6 +574,12 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         let valueChanged = gauge.prevProps.current.value !== gauge.props.value;
         let ticksChanged = !shallowEqual(gauge.prevProps.current.labels?.tickLabels, labels.tickLabels);
         let valueLabelChanged = !shallowEqual(gauge.prevProps.current.labels?.valueLabel, labels.valueLabel);
+        let showPointerChanged = gauge.prevProps.current.showPointer !== gauge.props.showPointer;
+        let segmentedProgressPropsChanged =
+            gauge.prevProps.current.segmentedProgress !== gauge.props.segmentedProgress ||
+            gauge.prevProps.current.activeSegmentColor !== gauge.props.activeSegmentColor ||
+            !shallowEqual(gauge.prevProps.current.activeSegmentColors, gauge.props.activeSegmentColors) ||
+            gauge.prevProps.current.inactiveSegmentColor !== gauge.props.inactiveSegmentColor;
         
         // Check for multi-pointer changes (value OR props like type, color, etc.)
         const isMultiPointer = pointerHooks.isMultiPointerMode(gauge);
@@ -592,7 +599,7 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
                            p.length !== prev.length || p.width !== prev.width ||
                            p.baseColor !== prev.baseColor || p.strokeWidth !== prev.strokeWidth ||
                            p.strokeColor !== prev.strokeColor || p.arrowOffset !== prev.arrowOffset ||
-                           p.blobOffset !== prev.blobOffset;
+                           p.blobOffset !== prev.blobOffset || p.hide !== prev.hide;
                 });
             } else if (Array.isArray(currPointers) && !Array.isArray(prevPointers)) {
                 // Transitioning from single to multi-pointer mode
@@ -601,13 +608,13 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
             }
         }
         
-        let shouldRedrawArcs = arcsPropsChanged;
+        let shouldRedrawArcs = arcsPropsChanged || segmentedProgressPropsChanged || (gauge.props.segmentedProgress && valueChanged);
         if (shouldRedrawArcs) {
             // Calculate initialArcPercent for Grafana gauges to prevent arc flicker
             let initialArcPercent: number | undefined = undefined;
             const isGrafana = gauge.props.type === GaugeType.Grafana;
             const shouldAnimate = gauge.props.pointer?.animate !== false;
-            if (isGrafana && shouldAnimate) {
+            if (isGrafana && shouldAnimate && !gauge.props.segmentedProgress) {
                 const minValue = gauge.props.minValue as number;
                 const maxValue = gauge.props.maxValue as number;
                 const prevValue = gauge.prevProps?.current.value ?? minValue;
@@ -623,9 +630,12 @@ export const renderChart = (gauge: Gauge, resize: boolean = false) => {
         const hasPointers = pointerHooks.hasPointersToRender(gauge);
         const isGrafana = gauge.props.type === GaugeType.Grafana;
         
-        if (isMultiPointer && hasPointers) {
+        if (!hasPointers) {
+            pointerHooks.clearPointerElement(gauge);
+            pointerHooks.clearMultiPointers(gauge);
+        } else if (isMultiPointer && hasPointers) {
             // In multi-pointer mode, redraw if pointer values OR props changed
-            if (multiPointerValuesChanged || multiPointerPropsChanged) {
+            if (multiPointerValuesChanged || multiPointerPropsChanged || showPointerChanged) {
                 pointerHooks.drawMultiPointers(gauge, multiPointerPropsChanged);
             }
         } else if (!isMultiPointer && (hasPointers || isGrafana)) {

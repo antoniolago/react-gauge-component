@@ -8,6 +8,50 @@ import { GaugePreset, SandboxPreset, ColorPreset, SizePreset } from "./types";
  */
 export const GAUGE_PRESETS: GaugePreset[] = [
   {
+    name: "Segmented Progress",
+    description: "Pointerless progress rendered by filled segments",
+    initialValue: 67.2,
+    component: (value) => (
+      <GaugeComponent
+        value={value}
+        minValue={0}
+        maxValue={100}
+        type="semicircle"
+        showPointer={false}
+        segmentedProgress
+        inactiveSegmentColor="#E6E6E9"
+        arc={{
+          gradient: true,
+          nbSubArcs: 15,
+          colorArray: ["#5147E8", "#5F5BFF", "#7A5CFF"],
+          width: 0.28,
+          padding: 0.035,
+          cornerRadius: 4,
+        }}
+        labels={{
+          valueLabel: {
+            renderContent: (value) => (
+              <div style={{ textAlign: "center", lineHeight: 1.1 }}>
+                <div style={{ fontSize: "30px", fontWeight: 700, color: "#111111" }}>
+                  {value.toFixed(1)}%
+                </div>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "#4b4b4b" }}>
+                  sales goals
+                </div>
+              </div>
+            ),
+            contentWidth: 120,
+            contentHeight: 60,
+            offsetY: 10,
+          },
+          tickLabels: {
+            hideMinMax: true,
+          },
+        }}
+      />
+    ),
+  },
+  {
     name: "Server Temperature",
     description: "Datacenter monitoring with zones",
     component: (value) => (

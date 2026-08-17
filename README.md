@@ -36,6 +36,24 @@ import { GaugeComponent } from 'react-gauge-component';
 <GaugeComponent />
 ```
 
+Pointerless segmented progress:
+
+```jsx
+<GaugeComponent
+  value={67.2}
+  minValue={0}
+  maxValue={100}
+  showPointer={false}
+  segmentedProgress
+  inactiveSegmentColor="#E6E6E9"
+  arc={{
+    gradient: true,
+    nbSubArcs: 15,
+    colorArray: ["#5147E8", "#5F5BFF", "#7A5CFF"],
+  }}
+/>
+```
+
 For next.js you'll have to do dynamic import:
 ```jsx
 import dynamic from "next/dynamic";
@@ -54,4 +72,3 @@ API reference is auto-generated from the TypeScript types:
 
 ## 
 Forked from [@Martin36/react-gauge-chart](https://github.com/Martin36/react-gauge-chart) [0b24a45](https://github.com/Martin36/react-gauge-chart/pull/131).
-

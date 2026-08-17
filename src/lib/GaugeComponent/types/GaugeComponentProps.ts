@@ -23,6 +23,16 @@ export interface GaugeComponentProps {
     marginInPercent?: GaugeInnerMarginInPercent | number,
     /** Current pointer value. */
     value?: number,
+    /** Enables pointerless-style segmented progress coloring for the arc segments. */
+    segmentedProgress?: boolean,
+    /** Top-level alias for pointer visibility. When false, the pointer is hidden. */
+    showPointer?: boolean,
+    /** Color or color palette used for filled segments when segmentedProgress is enabled. Falls back to each segment's configured color. */
+    activeSegmentColor?: string | string[],
+    /** Color palette used for filled segments when segmentedProgress is enabled. Takes precedence over activeSegmentColor. */
+    activeSegmentColors?: string[],
+    /** Color used for unfilled segments when segmentedProgress is enabled. */
+    inactiveSegmentColor?: string,
     /** Minimum value possible for the Gauge. */
     minValue?: number,
     /** Maximum value possible for the Gauge. */
@@ -71,6 +81,9 @@ export const defaultGaugeProps: GaugeComponentProps = {
     style: { width: "100%"},
     marginInPercent: 0.07,
     value: 33,
+    segmentedProgress: false,
+    showPointer: true,
+    inactiveSegmentColor: "#E6E6E9",
     minValue: 0,
     maxValue: 100,
     arc: defaultArc,

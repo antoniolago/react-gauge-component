@@ -161,6 +161,12 @@ const GaugeComponent = (props: Partial<GaugeComponentProps>) => {
         mergedPointer.length = getPointerLengthByType(mergedPointer.type as PointerType);
       }
     }
+    if (props.showPointer !== undefined) {
+      mergedProps.current.pointer = {
+        ...(mergedProps.current.pointer as PointerProps),
+        hide: props.showPointer === false
+      };
+    }
     
     arcHooks.validateArcs(gauge);
   };

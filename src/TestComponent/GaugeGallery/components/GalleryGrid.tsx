@@ -45,6 +45,9 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ isLightTheme, autoAnim
 
   const [values, setValues] = useState<number[]>(() => 
     GAUGE_PRESETS.map(preset => {
+      if (preset.initialValue !== undefined) {
+        return preset.initialValue;
+      }
       const config = getPresetConfig(preset);
       const min = config?.minValue ?? 0;
       const max = config?.maxValue ?? 100;

@@ -10,6 +10,8 @@ export interface GaugePreset {
   component: (value: number) => ReactElement;
   /** Optional config override for editor - extracted from component if not provided */
   config?: Partial<GaugeComponentProps>;
+  /** Optional initial gallery value before manual changes or auto-animation */
+  initialValue?: number;
 }
 
 export interface SandboxPreset {

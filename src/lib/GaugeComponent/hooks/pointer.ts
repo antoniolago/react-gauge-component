@@ -85,13 +85,25 @@ export const ensurePointerExists = (gauge: Gauge): boolean => {
 };
 
 export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
+    let pointer = gauge.props.pointer as PointerProps;
+    const isGrafana = gauge.props.type == GaugeType.Grafana;
+    const isSegmentedProgress = gauge.props.segmentedProgress === true;
+    const userExplicitlyConfiguredPointer = gauge.originalProps?.pointer !== undefined;
+    const showPointerForGrafana = isGrafana && userExplicitlyConfiguredPointer && !pointer.hide;
+    
+    if (isGrafana && isSegmentedProgress && !showPointerForGrafana) {
+        if (gauge.initialAnimationTriggered) {
+            gauge.initialAnimationTriggered.current = true;
+        }
+        clearPointerElement(gauge);
+        return;
+    }
+
     // CRITICAL: Check if pointer exists before drawing, recreate if vanished
     if (!ensurePointerExists(gauge)) {
         addPointerElement(gauge);
     }
-    
-    let pointer = gauge.props.pointer as PointerProps;
-    
+
     // Use initialAnimationTriggered flag to handle ResizeObserver firing after prevProps is set
     const isFirstAnimation = !gauge.initialAnimationTriggered?.current;
     
@@ -100,11 +112,6 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
     
     // When resize=true (config change, not value change), draw directly at currentPercent
     const useCurrentPercent = resize && !isFirstAnimation;
-    
-    // Initialize pointer for all types except Grafana (which uses arc fill by default)
-    const isGrafana = gauge.props.type == GaugeType.Grafana;
-    const userExplicitlyConfiguredPointer = gauge.originalProps?.pointer !== undefined;
-    const showPointerForGrafana = isGrafana && userExplicitlyConfiguredPointer && !pointer.hide;
     
     // Only init pointer on first animation OR on resize when animation is enabled
     const shouldInitPointer = isFirstAnimation || (resize && pointer.animate !== false);
@@ -129,7 +136,7 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
         
         // For Grafana type without pointer, animate the doughnut (arc fill animation)
         // For other types or Grafana with pointer, animate the pointer element
-        const animationTarget = (isGrafana && !showPointerForGrafana)
+        const animationTarget = (isGrafana && !isSegmentedProgress && !showPointerForGrafana)
             ? gauge.doughnut.current 
             : gauge.pointer.current?.element;
         
@@ -179,8 +186,8 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
                     
                     const progress = currentInterpolatedPercent(percentOfPercent);
                     if (isProgressValid(progress, prevProgress, gauge)) {
-                        // Always update Grafana arc fill
-                        if (isGrafana) {
+                        // Always update Grafana arc fill unless segmented progress owns the segment colors
+                        if (isGrafana && !isSegmentedProgress) {
                             arcHooks.updateGrafanaArc(gauge, progress);
                         }
                         // Update pointer if not Grafana, or if Grafana with pointer shown
@@ -220,8 +227,8 @@ export const drawPointer = (gauge: Gauge, resize: boolean = false) => {
         if (isFirstAnimation && gauge.initialAnimationTriggered) {
             gauge.initialAnimationTriggered.current = true;
         }
-        // For Grafana, always update the arc fill
-        if (isGrafana) {
+        // For Grafana, always update the arc fill unless segmented progress owns the segment colors
+        if (isGrafana && !isSegmentedProgress) {
             arcHooks.updateGrafanaArc(gauge, currentPercent);
         }
         // Update pointer if not Grafana, or if Grafana with pointer shown
@@ -704,7 +711,7 @@ export const setupPointerDrag = (gauge: Gauge) => {
             updatePointer(percent, gauge);
             
             // Update Grafana arc if applicable
-            if (gauge.props.type === GaugeType.Grafana) {
+            if (gauge.props.type === GaugeType.Grafana && !gauge.props.segmentedProgress) {
                 arcHooks.updateGrafanaArc(gauge, percent);
             }
             
@@ -797,6 +804,9 @@ export const isMultiPointerMode = (gauge: Gauge): boolean => {
  * Check if gauge has any pointers to draw
  */
 export const hasPointersToRender = (gauge: Gauge): boolean => {
+    if (gauge.props.showPointer === false) {
+        return false;
+    }
     if (Array.isArray(gauge.props.pointers)) {
         return gauge.props.pointers.length > 0;
     }
@@ -870,7 +880,7 @@ export const drawMultiPointers = (gauge: Gauge, resize: boolean = false) => {
     });
     
     // For Grafana, use primary (first) pointer value for arc fill
-    if (isGrafana && pointers.length > 0) {
+    if (isGrafana && !gauge.props.segmentedProgress && pointers.length > 0) {
         const primaryPercent = utils.calculatePercentage(minValue, maxValue, pointers[0].value);
         arcHooks.updateGrafanaArc(gauge, primaryPercent);
     }
@@ -1118,7 +1128,7 @@ const animateMultiPointer = (
                     pointerRef.context.prevProgress = progress;
                     
                     // For Grafana, animate arc fill using primary pointer's progress
-                    if (isGrafana && isPrimaryPointer) {
+                    if (isGrafana && !gauge.props.segmentedProgress && isPrimaryPointer) {
                         arcHooks.updateGrafanaArc(gauge, progress);
                     }
                 }
